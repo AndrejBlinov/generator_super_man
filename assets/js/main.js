@@ -1,9 +1,9 @@
 import { gameState, resetGameState } from './state.js';
 import { loadGame, saveGame, clearSave } from './storage.js';
 import { startGameLoop } from './gameLoop.js';
-import { recalculateStats, buyUpgrade, buyItem} from './upgrades.js';
-import { renderUI, updateUI, showCritPopup, showMessage, renderCrystals, renderUpgrades, canTrain } from './ui.js';
-import { createCrystal, selectCrystal } from './crystals.js';
+import { recalculateStats, buyUpgradeBulk, buyItemBulk } from './upgrades.js';
+import { renderUI, updateUI, showCritPopup, showMessage, renderCrystals, renderUpgrades, renderNeeds, canTrain } from './ui.js';
+import { createCrystalBulk, selectCrystal, getMaxAffordableCrystals } from './crystals.js';
 import { initPanels, setOnPanelOpenCallback } from './panels.js';
 import { NEEDS_CONFIG } from './config.js';
 
@@ -24,15 +24,8 @@ function animateHeroTraining() {
 function clickTrain(event) {
     if (gameState.isGameOver) return;
 
-    // 🔑 Используем новую функцию canTrain()
     if (!canTrain()) {
         showMessage("Персонаж не может тренироваться в таком состоянии!");
-        return;
-    }
-
-    // 🔑 Проверка комфорта
-    if (gameState.needs.comfort <= 0) {
-        showMessage("Персонаж слишком устал! Восстановите комфорт.");
         return;
     }
 
@@ -72,7 +65,6 @@ function clickTrain(event) {
     updateUI();
 }
 
-// 🔑 Восстановление потребности
 function restoreNeed(needId) {
     const config = NEEDS_CONFIG[needId];
     
@@ -90,6 +82,11 @@ function restoreNeed(needId) {
     return true;
 }
 
+function getActualCount(baseCount, maxAffordable) {
+    if (baseCount === 'max') return maxAffordable;
+    return Math.min(parseInt(baseCount), maxAffordable);
+}
+
 function init() {
     loadGame();
     recalculateStats();
@@ -99,7 +96,11 @@ function init() {
     document.getElementById('trainBtn').addEventListener('click', clickTrain);
 
     document.getElementById('createCrystalBtn').addEventListener('click', () => {
-        if (createCrystal()) {
+        const maxAffordable = getMaxAffordableCrystals();
+        const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
+        
+        if (actualCount > 0 && createCrystalBulk(actualCount)) {
+            renderCrystals();
             updateUI();
         }
     });
@@ -125,22 +126,31 @@ function init() {
     });
 
     document.getElementById('upgradesContainer').addEventListener('click', (e) => {
-        // Обработка покупки способности
+        const multiplierBtn = e.target.closest('.multiplier-btn');
+        if (multiplierBtn) {
+            const multiplierValue = multiplierBtn.dataset.multiplier;
+            gameState.purchaseMultiplier = multiplierValue === 'max' ? 'max' : parseInt(multiplierValue);
+            renderUpgrades();
+            updateUI();
+            return;
+        }
+
         const upgradeBtn = e.target.closest('.upgrade-btn[data-upgrade]');
         if (upgradeBtn && !upgradeBtn.disabled) {
             const upgradeId = upgradeBtn.dataset.upgrade;
-            if (buyUpgrade(upgradeId)) {
+            const count = parseInt(upgradeBtn.dataset.count) || 1;
+            if (buyUpgradeBulk(upgradeId, count)) {
                 renderUpgrades();
                 updateUI();
             }
             return;
         }
 
-        // 🔑 Обработка покупки вещи
         const itemBtn = e.target.closest('.item-btn[data-item]');
         if (itemBtn && !itemBtn.disabled) {
             const itemId = itemBtn.dataset.item;
-            if (buyItem(itemId)) {
+            const count = parseInt(itemBtn.dataset.count) || 1;
+            if (buyItemBulk(itemId, count)) {
                 renderUpgrades();
                 updateUI();
             }
@@ -148,13 +158,25 @@ function init() {
         }
     });
 
-    // 🔑 Обработчик кнопок восстановления потребностей
     document.getElementById('needsContainer').addEventListener('click', (e) => {
-        const btn = e.target.closest('.need-restore-btn');
+        const btn = e.target.closest('.need-restore-btn-compact');
         if (!btn || btn.disabled) return;
 
         const needId = btn.dataset.need;
         restoreNeed(needId);
+    });
+
+    // 🔑 Обработчик кнопок автообмена
+    document.getElementById('autoExchangeButtons').addEventListener('click', (e) => {
+        const btn = e.target.closest('.exchange-btn');
+        if (!btn) return;
+
+        const percent = parseInt(btn.dataset.percent);
+        gameState.autoExchangePercent = percent;
+        
+        const label = percent === 0 ? "выключен" : `${percent}%`;
+        showMessage(`Автообмен: ${label}`);
+        updateUI();
     });
 
     document.getElementById('saveBtn').addEventListener('click', () => {
@@ -175,7 +197,38 @@ function init() {
         }
     });
 
+        // 🔑 Обработчик кнопки авто-траты
+    document.getElementById('autoSpendToggle').addEventListener('click', () => {
+        gameState.autoSpendEnabled = !gameState.autoSpendEnabled;
+        
+        const status = gameState.autoSpendEnabled ? 'включена' : 'выключена';
+        showMessage(`Авто-трата денег: ${status}`);
+        updateUI();
+    });
+
+    // 🔑 Обработчик кнопок автообмена (фиксированное количество)
+    document.getElementById('autoExchangeButtons').addEventListener('click', (e) => {
+        const btn = e.target.closest('.exchange-btn');
+        if (!btn) return;
+
+        const amount = parseInt(btn.dataset.amount);
+        gameState.autoExchangeAmount = amount;
+        
+        const label = amount === 0 ? "выключен" : `${amount} ОЭ/тик`;
+        showMessage(`Автообмен: ${label}`);
+        updateUI();
+    });
+
     setInterval(saveGame, 30000);
+
+    setOnPanelOpenCallback((panelId) => {
+        if (panelId === 'shopPanel') {
+            renderUpgrades();
+        } else if (panelId === 'crystalsPanel') {
+            renderCrystals();
+            updateUI();
+        }
+    });
 
     initPanels();
 }

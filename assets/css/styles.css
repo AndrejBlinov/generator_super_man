@@ -1081,3 +1081,387 @@ body.panel-open {
     height: 100%;
     pointer-events: none;
 }
+
+
+
+/* ========================= */
+/* Переключатель множителей */
+/* ========================= */
+
+.multiplier-switcher {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 2px solid #667eea;
+}
+
+.multiplier-label {
+    font-weight: 600;
+    color: #4b56b2;
+    font-size: 14px;
+    margin-right: 4px;
+}
+
+.multiplier-btn {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #667eea;
+    background: white;
+    border: 2px solid #667eea;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.multiplier-btn:hover {
+    background: #f1f3ff;
+}
+
+.multiplier-btn.active {
+    background: #667eea;
+    color: white;
+    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+}
+
+
+
+
+/* ========================= */
+/* Автообмен ОЭ → 💰 */
+/* ========================= */
+
+.auto-exchange-control {
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    border: 2px solid #ffc107;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+}
+
+.auto-exchange-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.auto-exchange-label {
+    font-weight: 600;
+    color: #f57c00;
+    font-size: 14px;
+}
+
+.auto-exchange-value {
+    font-weight: 700;
+    color: #e65100;
+    font-size: 16px;
+    background: white;
+    padding: 2px 10px;
+    border-radius: 6px;
+    border: 1px solid #ffc107;
+}
+
+.auto-exchange-buttons {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+}
+
+.exchange-btn {
+    padding: 8px 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #f57c00;
+    background: white;
+    border: 2px solid #ffc107;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.exchange-btn:hover {
+    background: #fff3e0;
+}
+
+.exchange-btn.active {
+    background: #ffc107;
+    color: white;
+    border-color: #f57c00;
+    box-shadow: 0 2px 6px rgba(255, 193, 7, 0.4);
+}
+
+/* ========================= */
+/* Фоны жилья (весь блок character-stage) */
+/* ========================= */
+
+.character-stage {
+    position: relative;
+    background: linear-gradient(180deg, #f8f9ff 0%, #eef1ff 100%);
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    min-height: 240px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+    transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* 🏰 Роскошный замок (80-100%) */
+.character-stage.env-luxury {
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
+        linear-gradient(180deg, #fff9e6 0%, #ffeaa7 50%, #ffd700 100%);
+    border-color: #ffd700;
+    box-shadow: 
+        0 0 30px rgba(255, 215, 0, 0.4),
+        inset 0 0 20px rgba(255, 215, 0, 0.1);
+}
+
+.character-stage.env-luxury::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255, 215, 0, 0.08) 20px, rgba(255, 215, 0, 0.08) 21px);
+    pointer-events: none;
+}
+
+/* 🏠 Обычный дом (50-80%) */
+.character-stage.env-normal {
+    background: 
+        linear-gradient(180deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%);
+    border-color: #64b5f6;
+    box-shadow: 0 4px 12px rgba(100, 181, 246, 0.2);
+}
+
+.character-stage.env-normal::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        linear-gradient(90deg, transparent 49%, rgba(255, 255, 255, 0.3) 49%, rgba(255, 255, 255, 0.3) 51%, transparent 51%),
+        linear-gradient(0deg, transparent 49%, rgba(255, 255, 255, 0.3) 49%, rgba(255, 255, 255, 0.3) 51%, transparent 51%);
+    background-size: 40px 40px;
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+/* 🏚️ Старый дом (30-50%) */
+.character-stage.env-poor {
+    background: 
+        linear-gradient(180deg, #cfd8dc 0%, #90a4ae 50%, #607d8b 100%);
+    border-color: #78909c;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.2);
+}
+
+.character-stage.env-poor::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(0, 0, 0, 0.1) 30px, rgba(0, 0, 0, 0.1) 31px),
+        repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(0, 0, 0, 0.08) 50px, rgba(0, 0, 0, 0.08) 51px);
+    pointer-events: none;
+}
+
+.character-stage.env-poor::after {
+    content: "";
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    width: 40px;
+    height: 2px;
+    background: rgba(0, 0, 0, 0.3);
+    transform: rotate(-15deg);
+    box-shadow: 
+        20px 15px 0 rgba(0, 0, 0, 0.2),
+        -10px 30px 0 rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+}
+
+/* 🌧️ Улица / бездомный (<30%) */
+.character-stage.env-homeless {
+    background: 
+        linear-gradient(180deg, #263238 0%, #37474f 50%, #455a64 100%);
+    border-color: #546e7a;
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+.character-stage.env-homeless::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        repeating-linear-gradient(
+            100deg,
+            transparent,
+            transparent 8px,
+            rgba(150, 200, 255, 0.15) 8px,
+            rgba(150, 200, 255, 0.15) 9px
+        );
+    animation: rainFall 0.8s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes rainFall {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 20px 40px;
+    }
+}
+
+.character-stage.env-homeless::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+    pointer-events: none;
+}
+
+/* Подпись и потребности должны быть поверх фона */
+.character-caption,
+.needs-compact,
+.pixel-human {
+    position: relative;
+    z-index: 2;
+}
+
+/* Адаптив для автообмена */
+@media (max-width: 480px) {
+    .auto-exchange-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+
+
+
+/* ========================= */
+/* Автообмен ОЭ → 💰 */
+/* ========================= */
+
+.auto-exchange-control {
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    border: 2px solid #ffc107;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+}
+
+.auto-exchange-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.auto-exchange-label {
+    font-weight: 600;
+    color: #f57c00;
+    font-size: 14px;
+}
+
+.auto-exchange-toggle {
+    display: flex;
+    align-items: center;
+}
+
+.auto-spend-toggle-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #f57c00;
+    background: white;
+    border: 2px solid #ffc107;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.auto-spend-toggle-btn:hover {
+    background: #fff3e0;
+}
+
+.auto-spend-toggle-btn.active {
+    background: #4caf50;
+    color: white;
+    border-color: #388e3c;
+}
+
+.auto-exchange-value {
+    font-weight: 700;
+    color: #e65100;
+    font-size: 14px;
+    background: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #ffc107;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.auto-exchange-buttons {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+.exchange-btn {
+    padding: 8px 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #f57c00;
+    background: white;
+    border: 2px solid #ffc107;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.exchange-btn:hover {
+    background: #fff3e0;
+}
+
+.exchange-btn.active {
+    background: #ffc107;
+    color: white;
+    border-color: #f57c00;
+    box-shadow: 0 2px 6px rgba(255, 193, 7, 0.4);
+}
+
+/* Адаптив для автообмена */
+@media (max-width: 480px) {
+    .auto-exchange-buttons {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}

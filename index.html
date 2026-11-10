@@ -43,13 +43,32 @@
             💪 ТРЕНИРОВАТЬСЯ
         </button>
 
-        <!-- 🔑 Блок персонажа с потребностями -->
-        <div class="character-stage">
-            <!-- Контейнер окружения (дом/улица) -->
-            <div class="environment-container" id="environmentContainer">
-                <div class="environment luxury" id="environment"></div>
+        <!-- 🔑 Контрол автообмена -->
+        <div class="auto-exchange-control">
+            <div class="auto-exchange-header">
+                <span class="auto-exchange-label">💱 Автообмен ОЭ → 💰</span>
+                <div class="auto-exchange-toggle">
+                    <button class="auto-spend-toggle-btn" id="autoSpendToggle" title="Авто-трата денег на потребности">
+                        💸 Авто-трата: <span id="autoSpendStatus">ВКЛ</span>
+                    </button>
+                </div>
             </div>
+            <div class="auto-exchange-value">
+                Обмен: <span id="autoExchangeValue">0 ОЭ</span> / тик
+            </div>
+            <div class="auto-exchange-buttons" id="autoExchangeButtons">
+                <button class="exchange-btn" data-amount="0">Выкл</button>
+                <button class="exchange-btn" data-amount="1">1 ОЭ</button>
+                <button class="exchange-btn" data-amount="2">2 ОЭ</button>
+                <button class="exchange-btn" data-amount="5">5 ОЭ</button>
+                <button class="exchange-btn" data-amount="10">10 ОЭ</button>
+                <button class="exchange-btn" data-amount="20">20 ОЭ</button>
+                <button class="exchange-btn" data-amount="50">50 ОЭ</button>
+            </div>
+        </div>
 
+        <!-- 🔑 Блок персонажа с фоном жилья -->
+        <div class="character-stage" id="characterStage">
             <div class="pixel-human" id="pixelHuman">
                 <div class="pixel-shadow"></div>
 
@@ -68,10 +87,7 @@
                 <div class="pixel-leg pixel-leg-left"></div>
                 <div class="pixel-leg pixel-leg-right"></div>
 
-                <!-- 🔑 Контейнер для эффектов здоровья -->
                 <div class="health-effects" id="healthEffects"></div>
-
-                <!-- 🔑 Контейнер для эффектов голода -->
                 <div class="hunger-effects" id="hungerEffects"></div>
             </div>
 
@@ -79,7 +95,6 @@
                 Герой готов к тренировкам
             </div>
 
-            <!-- Потребности внутри блока персонажа -->
             <div class="needs-compact" id="needsContainer"></div>
         </div>
 
@@ -89,7 +104,7 @@
             </button>
 
             <button class="panel-open-btn" data-panel-target="shopPanel">
-                🧬 Магазин
+                🛒 Магазин
             </button>
         </div>
 

@@ -1,9 +1,8 @@
 import { gameState } from './state.js';
-import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, NEEDS_CONFIG } from './config.js';
-import { calculatePassiveIncome, getSelection } from './crystals.js';
-import { calculateUpgradeCost} from './upgrades.js';
+import { UPGRADES_CONFIG, ITEMS_CONFIG, NEEDS_CONFIG, GAME_START_DATE } from './config.js';
+import { calculatePassiveIncome, getSelection, getMaxAffordableCrystals } from './crystals.js';
+import { calculateBulkCost, getMaxAffordableCount, getMaxAffordableItemCount } from './upgrades.js';
 
-// Функция для преобразования дней в дату YYYY-MM-DD
 function formatCalendarDate(years, days) {
     const startDate = new Date(
         GAME_START_DATE.year,
@@ -11,19 +10,20 @@ function formatCalendarDate(years, days) {
         GAME_START_DATE.day
     );
     
-    // 🔑 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: 
-    // Берем количество прошедших лет, умножаем на 365 и прибавляем текущие дни.
-    // (years у нас начинается с 30, поэтому вычитаем 30, чтобы считать только прошедшее время)
-    const totalDaysPassed = ((years - 30) * 365) + days;
+    startDate.setFullYear(startDate.getFullYear() + (years - 30));
+    startDate.setDate(startDate.getDate() + days);
     
-    // Объект Date в JS сам умеет правильно переносить месяцы и годы при сложении дней!
-    startDate.setDate(startDate.getDate() + totalDaysPassed);
-    
-    const finalYear = startDate.getFullYear();
+    const year = startDate.getFullYear();
     const month = String(startDate.getMonth() + 1).padStart(2, '0');
     const day = String(startDate.getDate()).padStart(2, '0');
     
-    return `${finalYear}-${month}-${day}`;
+    return `${year}-${month}-${day}`;
+}
+
+// 🔑 Получает реальное количество покупки с учётом множителя
+function getActualCount(baseCount, maxAffordable) {
+    if (baseCount === 'max') return maxAffordable;
+    return Math.min(parseInt(baseCount), maxAffordable);
 }
 
 export function renderUI() {
@@ -33,7 +33,35 @@ export function renderUI() {
     updateUI();
 }
 
-// 🔑 Рендер потребностей
+export function updateUI() {
+    const bioDays = Math.floor(gameState.currentDayInYear);
+
+    document.getElementById('bioAge').textContent = 
+        `${gameState.ageInYears} лет ${bioDays} дн. / ${gameState.maxAgeInYears} лет`;
+    
+    document.getElementById('calendarAge').textContent = 
+        formatCalendarDate(gameState.absoluteAgeInYears, gameState.absoluteCurrentDayInYear);
+        
+    document.getElementById('points').textContent = 
+        Math.round(gameState.evolutionPoints);
+    
+    document.getElementById('money').textContent = 
+        `${gameState.money} 💰`;
+        
+    document.getElementById('passive').textContent = 
+        `${calculatePassiveIncome()} ОЭ/день`;
+    document.getElementById('clickPower').textContent = 
+        `${Math.round(gameState.clickPower)} ОЭ`;
+
+    updateNeedsBars();
+    updateShopButtons();
+    updateCrystalCreateButton();
+    updateItemButtons();
+    updateNeedRestoreButtons();
+    updateAutoExchangeButtons();
+    applyCharacterStates();
+}
+
 export function renderNeeds() {
     const container = document.getElementById('needsContainer');
     if (!container) return;
@@ -66,48 +94,6 @@ export function renderNeeds() {
     });
 }
 
-export function updateUI() {
-    const bioDays = Math.floor(gameState.currentDayInYear);
-
-    document.getElementById('bioAge').textContent = 
-        `${gameState.ageInYears} лет ${bioDays} дн. / ${gameState.maxAgeInYears} лет`;
-    
-    document.getElementById('calendarAge').textContent = 
-        formatCalendarDate(gameState.absoluteAgeInYears, gameState.absoluteCurrentDayInYear);
-        
-    document.getElementById('points').textContent = 
-        Math.round(gameState.evolutionPoints);
-    
-    // 🔑 Добавляем отображение денег
-    document.getElementById('money').textContent = 
-        `${gameState.money} 💰`;
-        
-    document.getElementById('passive').textContent = 
-        `${calculatePassiveIncome()} ОЭ/день`;
-    document.getElementById('clickPower').textContent = 
-        `${Math.round(gameState.clickPower)} ОЭ`;
-
-    updateShopButtons();
-    updateCrystalCreateButton();
-    updateItemButtons(); // 🔑 Обновляем кнопки вещей
-    updateNeedRestoreButtons();
-    updateNeedsBars();
-    updateShopButtons();
-    applyCharacterStates(); // 🔑 Применяем визуальные состояния
-}
-
-// 🔑 Обновляет доступность кнопок восстановления потребностей
-export function updateNeedRestoreButtons() {
-    document.querySelectorAll('.need-restore-btn').forEach((btn) => {
-        const needId = btn.dataset.need;
-        if (!needId) return;
-
-        const config = NEEDS_CONFIG[needId];
-        btn.disabled = gameState.money < config.restoreCost;
-    });
-}
-
-// 🔑 Обновляет только прогресс-бары потребностей (без перерисовки DOM)
 export function updateNeedsBars() {
     Object.keys(NEEDS_CONFIG).forEach(needId => {
         const config = NEEDS_CONFIG[needId];
@@ -133,35 +119,14 @@ export function updateNeedsBars() {
     });
 }
 
-// Обновляет доступность кнопок магазина без перерисовки всего DOM
-export function updateShopButtons() {
-    document.querySelectorAll('.upgrade-btn').forEach((btn) => {
-        const upgradeId = btn.dataset.upgrade;
-        if (!upgradeId) return;
+export function updateNeedRestoreButtons() {
+    document.querySelectorAll('.need-restore-btn-compact').forEach((btn) => {
+        const needId = btn.dataset.need;
+        if (!needId) return;
 
-        const config = UPGRADES_CONFIG[upgradeId];
-        const currentLevel = gameState.upgrades[upgradeId];
-
-        if (currentLevel >= config.maxLevel) {
-            btn.disabled = true;
-            btn.textContent = 'МАКС';
-            return;
-        }
-
-        const cost = calculateUpgradeCost(upgradeId);
-        btn.disabled = gameState.evolutionPoints < cost;
-        btn.textContent = `${cost} ОЭ`;
+        const config = NEEDS_CONFIG[needId];
+        btn.disabled = gameState.money < config.restoreCost;
     });
-}
-
-// Обновляет доступность кнопки создания кристалла
-export function updateCrystalCreateButton() {
-    const createBtn = document.getElementById('createCrystalBtn');
-    if (!createBtn) return;
-
-    const hasActiveSlot = gameState.crystals.some(c => c === null);
-    const hasInventorySlot = gameState.crystalsInventory.some(c => c === null);
-    createBtn.disabled = gameState.evolutionPoints < 100 || (!hasActiveSlot && !hasInventorySlot);
 }
 
 export function renderCrystals() {
@@ -208,7 +173,19 @@ export function renderUpgrades() {
     const container = document.getElementById('upgradesContainer');
     container.innerHTML = '';
 
-    // 🔑 Заголовок блока способностей
+    // 🔑 Переключатель множителей
+    const multiplierSwitcher = document.createElement('div');
+    multiplierSwitcher.className = 'multiplier-switcher';
+    multiplierSwitcher.innerHTML = `
+        <span class="multiplier-label">Количество:</span>
+        <button class="multiplier-btn ${gameState.purchaseMultiplier === 1 ? 'active' : ''}" data-multiplier="1">x1</button>
+        <button class="multiplier-btn ${gameState.purchaseMultiplier === 10 ? 'active' : ''}" data-multiplier="10">x10</button>
+        <button class="multiplier-btn ${gameState.purchaseMultiplier === 100 ? 'active' : ''}" data-multiplier="100">x100</button>
+        <button class="multiplier-btn ${gameState.purchaseMultiplier === 'max' ? 'active' : ''}" data-multiplier="max">MAX</button>
+    `;
+    container.appendChild(multiplierSwitcher);
+
+    // Заголовок блока способностей
     const abilitiesHeader = document.createElement('div');
     abilitiesHeader.className = 'shop-section-header';
     abilitiesHeader.innerHTML = `<h3>🧬 Способности</h3><p>Постоянные улучшения с уровнями</p>`;
@@ -218,9 +195,15 @@ export function renderUpgrades() {
     Object.keys(UPGRADES_CONFIG).forEach(upgradeId => {
         const config = UPGRADES_CONFIG[upgradeId];
         const currentLevel = gameState.upgrades[upgradeId];
-        const cost = currentLevel < config.maxLevel 
-            ? calculateUpgradeCost(upgradeId)
-            : 0;
+        const remainingToMax = config.maxLevel - currentLevel;
+        
+        // 🔑 Реальное количество с учётом множителя и максимума
+        const maxAffordable = getMaxAffordableCount(upgradeId);
+        const actualCount = getActualCount(gameState.purchaseMultiplier, Math.min(remainingToMax, maxAffordable > 0 ? maxAffordable : 0));
+        const cost = actualCount > 0 ? calculateBulkCost(upgradeId, actualCount) : calculateBulkCost(upgradeId, 1);
+        
+        const isMaxed = currentLevel >= config.maxLevel;
+        const canAfford = gameState.evolutionPoints >= cost && actualCount > 0;
 
         const item = document.createElement('div');
         item.className = 'upgrade-item';
@@ -232,20 +215,31 @@ export function renderUpgrades() {
         
         const finalBuffText = config.finalBuff ? config.finalBuff(config.maxLevel) : '';
 
+        // 🔑 Формируем текст кнопки с учётом количества
+        let btnText = 'МАКС';
+        if (!isMaxed) {
+            if (gameState.purchaseMultiplier === 'max') {
+                btnText = maxAffordable > 0 ? `${maxAffordable} ур. за ${cost} ОЭ` : 'Недоступно';
+            } else {
+                const displayCount = Math.min(parseInt(gameState.purchaseMultiplier), remainingToMax);
+                btnText = displayCount > 1 ? `${displayCount} ур. за ${cost} ОЭ` : `${cost} ОЭ`;
+            }
+        }
+
         item.innerHTML = `
             <div class="upgrade-info">
                 <div class="upgrade-name">${config.name} [Ур. ${currentLevel}/${config.maxLevel}]</div>
                 <div class="upgrade-desc">${effectText}</div>
                 ${finalBuffText ? `<div class="upgrade-final-buff">${finalBuffText}</div>` : ''}
             </div>
-            <button class="upgrade-btn" data-upgrade="${upgradeId}" ${currentLevel >= config.maxLevel || gameState.evolutionPoints < cost ? 'disabled' : ''}>
-                ${currentLevel >= config.maxLevel ? 'МАКС' : `${cost} ОЭ`}
+            <button class="upgrade-btn" data-upgrade="${upgradeId}" data-count="${actualCount || 1}" ${isMaxed || !canAfford ? 'disabled' : ''}>
+                ${btnText}
             </button>
         `;
         container.appendChild(item);
     });
 
-    // 🔑 Заголовок блока вещей
+    // Заголовок блока вещей
     const itemsHeader = document.createElement('div');
     itemsHeader.className = 'shop-section-header';
     itemsHeader.innerHTML = `<h3>🛍️ Вещи</h3><p>Одноразовые покупки и ресурсы</p>`;
@@ -254,31 +248,77 @@ export function renderUpgrades() {
     // Рендер вещей
     Object.keys(ITEMS_CONFIG).forEach(itemId => {
         const config = ITEMS_CONFIG[itemId];
+        const maxAffordable = getMaxAffordableItemCount(itemId);
+        const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
+        const totalCost = config.cost * (actualCount > 0 ? actualCount : 1);
+        const totalReward = config.reward * (actualCount > 0 ? actualCount : 1);
         
+        const canAfford = gameState.evolutionPoints >= totalCost && actualCount > 0;
+
         const item = document.createElement('div');
         item.className = 'upgrade-item item-item';
+        
+        // 🔑 Исправленный лейбл: показываем количество ПОЛУЧЕННОГО ресурса, а не операций
+        let btnText = `Купить за ${config.cost} ОЭ`;
+        if (gameState.purchaseMultiplier === 'max') {
+            btnText = maxAffordable > 0 
+                ? `+${totalReward} за ${totalCost} ОЭ` 
+                : 'Недоступно';
+        } else if (parseInt(gameState.purchaseMultiplier) > 1) {
+            btnText = `+${totalReward} за ${totalCost} ОЭ`;
+        }
         
         item.innerHTML = `
             <div class="upgrade-info">
                 <div class="upgrade-name">${config.icon} ${config.name}</div>
                 <div class="upgrade-desc">${config.desc}</div>
             </div>
-            <button class="upgrade-btn item-btn" data-item="${itemId}" ${gameState.evolutionPoints < config.cost ? 'disabled' : ''}>
-                Купить за ${config.cost} ОЭ
+            <button class="upgrade-btn item-btn" data-item="${itemId}" data-count="${actualCount || 1}" ${!canAfford ? 'disabled' : ''}>
+                ${btnText}
             </button>
         `;
         container.appendChild(item);
     });
 }
 
-// 🔑 Обновляет доступность кнопок покупки вещей
+export function updateShopButtons() {
+    // Перерисовываем магазин целиком, чтобы обновить цены с учётом множителя
+    renderUpgrades();
+}
+
+export function updateCrystalCreateButton() {
+    const createBtn = document.getElementById('createCrystalBtn');
+    if (!createBtn) return;
+
+    const maxAffordable = getMaxAffordableCrystals();
+    const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
+    const totalCost = 100 * (actualCount > 0 ? actualCount : 1);
+    
+    createBtn.disabled = actualCount <= 0 || gameState.evolutionPoints < totalCost;
+    
+    // 🔑 Обновляем текст кнопки
+    if (gameState.purchaseMultiplier === 'max') {
+        createBtn.textContent = maxAffordable > 0 
+            ? `Создать ${maxAffordable} кристалл(ов) за ${totalCost} ОЭ`
+            : 'Нет свободных слотов';
+    } else if (parseInt(gameState.purchaseMultiplier) > 1) {
+        createBtn.textContent = `Создать ${parseInt(gameState.purchaseMultiplier)} кристалл(ов) за ${totalCost} ОЭ`;
+    } else {
+        createBtn.textContent = 'Создать кристалл (100 ОЭ)';
+    }
+}
+
 export function updateItemButtons() {
     document.querySelectorAll('.item-btn').forEach((btn) => {
         const itemId = btn.dataset.item;
         if (!itemId) return;
 
         const config = ITEMS_CONFIG[itemId];
-        btn.disabled = gameState.evolutionPoints < config.cost;
+        const maxAffordable = getMaxAffordableItemCount(itemId);
+        const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
+        const totalCost = config.cost * (actualCount > 0 ? actualCount : 1);
+        
+        btn.disabled = gameState.evolutionPoints < totalCost || actualCount <= 0;
     });
 }
 
@@ -323,7 +363,7 @@ export function showGameOver(reason = "Ваш персонаж умер!") {
     });
 }
 
-// 🔑 Определяет состояние потребности
+// Состояния персонажа
 export function getNeedState(needId) {
     const config = NEEDS_CONFIG[needId];
     const value = gameState.needs[needId];
@@ -338,75 +378,76 @@ export function getNeedState(needId) {
     return { key: 'unknown', percentage };
 }
 
-// 🔑 Применяет визуальные состояния к человечку
 export function applyCharacterStates() {
     const human = document.getElementById('pixelHuman');
-    const environment = document.getElementById('environment');
+    const stage = document.getElementById('characterStage'); // 🔑 Теперь меняем фон блока
     const caption = document.getElementById('characterCaption');
     const healthEffects = document.getElementById('healthEffects');
     const hungerEffects = document.getElementById('hungerEffects');
 
-    if (!human || !environment || !caption) return;
+    if (!human || !stage || !caption) return;
 
-    // Очищаем старые классы
     human.className = 'pixel-human';
-    environment.className = 'environment';
-    healthEffects.innerHTML = '';
-    hungerEffects.innerHTML = '';
+    // 🔑 Очищаем классы фона
+    stage.classList.remove('env-luxury', 'env-normal', 'env-poor', 'env-homeless');
+    
+    if (healthEffects) healthEffects.innerHTML = '';
+    if (hungerEffects) hungerEffects.innerHTML = '';
 
     let statusMessages = [];
 
-    // Обработка комфорта (окружение)
+    // 🔑 Обработка комфорта — меняем ФОН блока
     const comfortState = getNeedState('comfort');
     if (comfortState.environment) {
-        environment.classList.add(comfortState.environment);
+        stage.classList.add(`env-${comfortState.environment}`);
     }
+    
     if (comfortState.key === 'homeless') {
-        statusMessages.push("Бездомный");
+        statusMessages.push("🌧️ На улице");
     } else if (comfortState.key === 'poor') {
-        statusMessages.push("Живёт в бедности");
+        statusMessages.push("🏚️ В старом доме");
+    } else if (comfortState.key === 'normal') {
+        statusMessages.push("🏠 В обычном доме");
+    } else if (comfortState.key === 'luxury') {
+        statusMessages.push("🏰 В замке");
     }
 
     // Обработка голода
     const hungerState = getNeedState('hunger');
     if (hungerState.key === 'hungry') {
         human.classList.add('hungry');
-        statusMessages.push("Голоден");
-        // Добавляем эффект урчания
-        hungerEffects.innerHTML = '<div class="hunger-rumble"></div>';
+        statusMessages.push("🍔 Голоден");
+        if (hungerEffects) hungerEffects.innerHTML = '<div class="hunger-rumble"></div>';
     } else if (hungerState.key === 'starving') {
         human.classList.add('starving', 'lying-down');
-        statusMessages.push("Голодает!");
+        statusMessages.push("💀 Голодает!");
     } else if (hungerState.key === 'happy') {
-        statusMessages.push("Сытый и довольный");
+        // Не добавляем в статус — и так видно по фону
     }
 
     // Обработка здоровья
     const healthState = getNeedState('health');
     if (healthState.key === 'sick') {
         human.classList.add('sick');
-        statusMessages.push("Болеет");
-        // Рандомный эффект болезни
+        statusMessages.push("🤒 Болеет");
         const randomEffect = healthState.effects[Math.floor(Math.random() * healthState.effects.length)];
         human.classList.add(`effect-${randomEffect}`);
-        healthEffects.innerHTML = `<div class="health-effect-${randomEffect}"></div>`;
+        if (healthEffects) healthEffects.innerHTML = `<div class="health-effect-${randomEffect}"></div>`;
     } else if (healthState.key === 'critical') {
         human.classList.add('in-hospital', 'lying-down');
-        statusMessages.push("В больнице");
+        statusMessages.push("🏥 В больнице");
     } else if (healthState.key === 'coma') {
         human.classList.add('in-coma', 'lying-down');
-        statusMessages.push("В КОМЕ!");
+        statusMessages.push("💤 В КОМЕ!");
     }
 
-    // Обновляем подпись
     if (statusMessages.length > 0) {
         caption.textContent = statusMessages.join(' • ');
     } else {
-        caption.textContent = "Герой готов к тренировкам";
+        caption.textContent = "✨ Герой готов к тренировкам";
     }
 }
 
-// 🔑 Проверяет, может ли персонаж тренироваться
 export function canTrain() {
     const comfortState = getNeedState('comfort');
     const hungerState = getNeedState('hunger');
@@ -417,4 +458,28 @@ export function canTrain() {
     if (healthState.key === 'critical' || healthState.key === 'coma') return false;
 
     return true;
+}
+
+// 🔑 Обновляет подсветку кнопок автообмена и статус авто-траты
+export function updateAutoExchangeButtons() {
+    document.querySelectorAll('.exchange-btn').forEach((btn) => {
+        const amount = parseInt(btn.dataset.amount);
+        btn.classList.toggle('active', amount === gameState.autoExchangeAmount);
+    });
+    
+    const valueDisplay = document.getElementById('autoExchangeValue');
+    if (valueDisplay) {
+        valueDisplay.textContent = gameState.autoExchangeAmount === 0 
+            ? 'Выкл' 
+            : `${gameState.autoExchangeAmount} ОЭ`;
+    }
+    
+    // 🔑 Обновляем кнопку авто-траты
+    const autoSpendBtn = document.getElementById('autoSpendToggle');
+    const autoSpendStatus = document.getElementById('autoSpendStatus');
+    
+    if (autoSpendBtn && autoSpendStatus) {
+        autoSpendStatus.textContent = gameState.autoSpendEnabled ? 'ВКЛ' : 'ВЫКЛ';
+        autoSpendBtn.classList.toggle('active', gameState.autoSpendEnabled);
+    }
 }

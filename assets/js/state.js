@@ -1,25 +1,28 @@
-import { GAME_VERSION, NEEDS_CONFIG} from './config.js';
+import { GAME_VERSION, NEEDS_CONFIG, AUTO_EXCHANGE_CONFIG } from './config.js';
 
 export const defaultGameState = {
     evolutionPoints: 0,
     totalPointsEarned: 0,
-    
-    // 🔑 валюта
     money: 0,
-
-    // 🔑 Потребности персонажа
+    
+    // 🔑 Автообмен ОЭ на деньги (фиксированное количество)
+    autoExchangeAmount: AUTO_EXCHANGE_CONFIG.default,
+    
+    // 🔑 Авто-трата денег на потребности (вкл/выкл)
+    autoSpendEnabled: true,
+    
+    purchaseMultiplier: 1,
+    
     needs: {
         hunger: NEEDS_CONFIG.hunger.max,
         comfort: NEEDS_CONFIG.comfort.max,
         health: NEEDS_CONFIG.health.max
     },
-
-    // Биологический возраст (замедляется улучшениями)
+    
     ageInYears: 30,
     currentDayInYear: 0,
     maxAgeInYears: 100,
     
-    // Календарное время (абсолютное, не замедляется)
     absoluteAgeInYears: 30,
     absoluteCurrentDayInYear: 0,
     
@@ -28,26 +31,22 @@ export const defaultGameState = {
     clickPower: 1,
     ageTickRate: 1.0,
     
-    // Новые характеристики
-    doubleClickChance: 0.0,      // Шанс двойного клика (от левитации)
-    critChance: 0.0,             // Шанс крита (от рентгена)
-    critMultiplier: 2,           // Множитель крита
-    diseaseResistance: 0.0,      // Сопротивление болезням (от регенерации)
-    extraTrainingChance: 0.0,    // Шанс доп. тренировки (от телекинеза)
+    doubleClickChance: 0.0,
+    critChance: 0.0,
+    critMultiplier: 2,
+    diseaseResistance: 0.0,
+    extraTrainingChance: 0.0,
     
-    // Активные кристаллы (генерируют доход)
     crystals: [null, null, null, null, null],
-    
-    // Инвентарь (только хранение)
     crystalsInventory: [null, null, null, null, null, null, null, null, null, null],
     
     upgrades: {
         slowAging: 0,
-        crystals: 0,        // Новая способность
+        crystals: 0,
         levitation: 0,
         xrayVision: 0,
-        regeneration: 0,    // Новая способность
-        telekinesis: 0      // Новая способность
+        regeneration: 0,
+        telekinesis: 0
     },
     gameVersion: GAME_VERSION,
     isGameOver: false
@@ -56,7 +55,6 @@ export const defaultGameState = {
 export let gameState = { ...defaultGameState };
 
 export function setGameState(newState) {
-    // Миграция старых сохранений
     if (newState.absoluteAgeInYears === undefined) {
         newState.absoluteAgeInYears = newState.ageInYears || 30;
         newState.absoluteCurrentDayInYear = newState.currentDayInYear || 0;
@@ -64,29 +62,26 @@ export function setGameState(newState) {
     if (newState.crystalsInventory === undefined) {
         newState.crystalsInventory = [null, null, null, null, null, null, null, null, null, null];
     }
-
-    if (newState.upgrades.regeneration === undefined) {
-        newState.upgrades.regeneration = 0;
-    }
-    if (newState.upgrades.telekinesis === undefined) {
-        newState.upgrades.telekinesis = 0;
-    }
-    if (newState.doubleClickChance === undefined) {
-        newState.doubleClickChance = 0.0;
-    }
-    if (newState.diseaseResistance === undefined) {
-        newState.diseaseResistance = 0.0;
-    }
-    if (newState.extraTrainingChance === undefined) {
-        newState.extraTrainingChance = 0.0;
-    }
-
-    // 🔑 Миграция для денег
-    if (newState.money === undefined) {
-        newState.money = 0;
-    }
+    if (newState.upgrades.crystals === undefined) newState.upgrades.crystals = 0;
+    if (newState.upgrades.regeneration === undefined) newState.upgrades.regeneration = 0;
+    if (newState.upgrades.telekinesis === undefined) newState.upgrades.telekinesis = 0;
+    if (newState.doubleClickChance === undefined) newState.doubleClickChance = 0.0;
+    if (newState.diseaseResistance === undefined) newState.diseaseResistance = 0.0;
+    if (newState.extraTrainingChance === undefined) newState.extraTrainingChance = 0.0;
+    if (newState.money === undefined) newState.money = 0;
+    if (newState.purchaseMultiplier === undefined) newState.purchaseMultiplier = 1;
     
-    // 🔑 Миграция потребностей
+    // 🔑 Миграция для новых полей
+    if (newState.autoExchangeAmount === undefined) {
+        // Если есть старое поле autoExchangePercent, конвертируем
+        if (newState.autoExchangePercent !== undefined) {
+            newState.autoExchangeAmount = 0; // По умолчанию 0
+        } else {
+            newState.autoExchangeAmount = AUTO_EXCHANGE_CONFIG.default;
+        }
+    }
+    if (newState.autoSpendEnabled === undefined) newState.autoSpendEnabled = true;
+    
     if (newState.needs === undefined) {
         newState.needs = {
             hunger: NEEDS_CONFIG.hunger.max,
@@ -94,12 +89,11 @@ export function setGameState(newState) {
             health: NEEDS_CONFIG.health.max
         };
     } else {
-        // Убедимся, что все потребности есть
         if (newState.needs.hunger === undefined) newState.needs.hunger = NEEDS_CONFIG.hunger.max;
         if (newState.needs.comfort === undefined) newState.needs.comfort = NEEDS_CONFIG.comfort.max;
         if (newState.needs.health === undefined) newState.needs.health = NEEDS_CONFIG.health.max;
     }
-
+    
     gameState = { ...gameState, ...newState };
 }
 

@@ -4,10 +4,9 @@ import { showMessage } from './ui.js';
 import { renderCrystals } from './ui.js';
 
 let selectedCrystalIndex = -1;
-let selectedCrystalZone = null; // 'active' или 'inventory'
+let selectedCrystalZone = null;
 
 export function calculatePassiveIncome() {
-    // Только активные кристаллы генерируют доход
     return gameState.crystals.reduce((sum, crystal) => {
         return sum + (crystal ? crystal.income : 0);
     }, 0);
@@ -19,11 +18,9 @@ export function createCrystal() {
         return false;
     }
 
-    // Сначала ищем место в активных слотах
     let emptySlotIndex = gameState.crystals.findIndex(c => c === null);
     let zone = 'active';
 
-    // Если активных слотов нет, ищем в инвентаре
     if (emptySlotIndex === -1) {
         emptySlotIndex = gameState.crystalsInventory.findIndex(c => c === null);
         zone = 'inventory';
@@ -48,16 +45,61 @@ export function createCrystal() {
     return true;
 }
 
+// 🔑 Массовое создание кристаллов
+export function createCrystalBulk(count) {
+    let created = 0;
+    
+    for (let i = 0; i < count; i++) {
+        if (gameState.evolutionPoints < CRYSTAL_COST) break;
+        
+        let emptySlotIndex = gameState.crystals.findIndex(c => c === null);
+        let zone = 'active';
+        
+        if (emptySlotIndex === -1) {
+            emptySlotIndex = gameState.crystalsInventory.findIndex(c => c === null);
+            zone = 'inventory';
+        }
+        
+        if (emptySlotIndex === -1) break;
+        
+        gameState.evolutionPoints -= CRYSTAL_COST;
+        const newCrystal = { level: 1, income: 1 };
+        
+        if (zone === 'active') {
+            gameState.crystals[emptySlotIndex] = newCrystal;
+        } else {
+            gameState.crystalsInventory[emptySlotIndex] = newCrystal;
+        }
+        
+        created++;
+    }
+    
+    if (created > 0) {
+        showMessage(`Создано ${created} кристалл(ов)!`);
+        renderCrystals();
+        return true;
+    } else {
+        showMessage("Недостаточно очков или нет свободных слотов!");
+        return false;
+    }
+}
+
+// 🔑 Максимальное количество кристаллов, которое можно создать
+export function getMaxAffordableCrystals() {
+    const affordableByMoney = Math.floor(gameState.evolutionPoints / CRYSTAL_COST);
+    const emptyActiveSlots = gameState.crystals.filter(c => c === null).length;
+    const emptyInventorySlots = gameState.crystalsInventory.filter(c => c === null).length;
+    const totalEmptySlots = emptyActiveSlots + emptyInventorySlots;
+    return Math.min(affordableByMoney, totalEmptySlots);
+}
+
 export function selectCrystal(zone, index) {
     const crystalsArray = zone === 'active' ? gameState.crystals : gameState.crystalsInventory;
     
     if (crystalsArray[index] === null) {
-        // Клик по пустому слоту
         if (selectedCrystalIndex !== -1 && selectedCrystalZone !== zone) {
-            // Попытка переместить кристалл из другой зоны
             moveCrystal(selectedCrystalZone, selectedCrystalIndex, zone, index);
         } else {
-            // Просто сброс выбора
             selectedCrystalIndex = -1;
             selectedCrystalZone = null;
         }
@@ -66,25 +108,20 @@ export function selectCrystal(zone, index) {
     }
 
     if (selectedCrystalIndex === -1) {
-        // Первый выбор
         selectedCrystalIndex = index;
         selectedCrystalZone = zone;
         renderCrystals();
     } else if (selectedCrystalIndex === index && selectedCrystalZone === zone) {
-        // Клик по тому же кристаллу - сброс
         selectedCrystalIndex = -1;
         selectedCrystalZone = null;
         renderCrystals();
     } else {
-        // Клик по другому кристаллу
         const firstCrystal = getCrystal(selectedCrystalZone, selectedCrystalIndex);
         const secondCrystal = getCrystal(zone, index);
 
         if (firstCrystal.level === secondCrystal.level) {
-            // Попытка слияния
             tryMerge(selectedCrystalZone, selectedCrystalIndex, zone, index);
         } else {
-            // Переключение выбора
             selectedCrystalIndex = index;
             selectedCrystalZone = zone;
             renderCrystals();
@@ -108,7 +145,6 @@ function moveCrystal(fromZone, fromIndex, toZone, toIndex) {
     const crystal = getCrystal(fromZone, fromIndex);
     if (!crystal) return;
 
-    // Проверяем, что целевой слот пуст
     if (getCrystal(toZone, toIndex) !== null) {
         showMessage("Целевой слот занят!");
         selectedCrystalIndex = -1;
@@ -117,7 +153,6 @@ function moveCrystal(fromZone, fromIndex, toZone, toIndex) {
         return;
     }
 
-    // Перемещаем
     setCrystal(toZone, toIndex, crystal);
     setCrystal(fromZone, fromIndex, null);
     
@@ -131,11 +166,9 @@ function tryMerge(zone1, index1, zone2, index2) {
     const crystal1 = getCrystal(zone1, index1);
     const crystal2 = getCrystal(zone2, index2);
 
-    // Ищем третий кристалл того же уровня среди ВСЕХ 15 слотов
     let thirdZone = null;
     let thirdIndex = -1;
 
-    // Ищем в активных слотах
     for (let i = 0; i < gameState.crystals.length; i++) {
         if (zone1 === 'active' && i === index1) continue;
         if (zone2 === 'active' && i === index2) continue;
@@ -147,7 +180,6 @@ function tryMerge(zone1, index1, zone2, index2) {
         }
     }
 
-    // Если не нашли, ищем в инвентаре
     if (thirdIndex === -1) {
         for (let i = 0; i < gameState.crystalsInventory.length; i++) {
             if (zone1 === 'inventory' && i === index1) continue;
@@ -169,14 +201,10 @@ function tryMerge(zone1, index1, zone2, index2) {
         return;
     }
 
-    // Слияние
     const newLevel = crystal1.level + 1;
     const newIncome = Math.pow(2, newLevel - 1);
 
-    // Новый кристалл остается в слоте первого
     setCrystal(zone1, index1, { level: newLevel, income: newIncome });
-    
-    // Очищаем второй и третий слоты
     setCrystal(zone2, index2, null);
     setCrystal(thirdZone, thirdIndex, null);
 
