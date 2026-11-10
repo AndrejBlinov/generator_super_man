@@ -219,6 +219,13 @@ function init() {
         updateUI();
     });
 
+    // 🔑 Обработчик кнопки помощи
+    document.getElementById('helpButton').addEventListener('click', () => {
+        import('./panels.js').then(module => {
+            module.openPanel('helpPanel');
+        });
+    });
+
     setInterval(saveGame, 30000);
 
     setOnPanelOpenCallback((panelId) => {

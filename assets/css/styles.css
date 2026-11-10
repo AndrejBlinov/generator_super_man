@@ -1465,3 +1465,88 @@ body.panel-open {
         grid-template-columns: repeat(4, 1fr);
     }
 }
+
+
+
+/* ========================= */
+/* Кнопка помощи */
+/* ========================= */
+
+.help-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    z-index: 100;
+}
+
+.help-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+}
+
+.help-button:active {
+    transform: scale(1);
+}
+
+/* ========================= */
+/* Секции помощи */
+/* ========================= */
+
+.help-section {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    border-left: 4px solid #667eea;
+}
+
+.help-section h3 {
+    margin: 0 0 10px 0;
+    color: #4b56b2;
+    font-size: 16px;
+}
+
+.help-section p {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.help-section ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+}
+
+.help-section li {
+    margin-bottom: 6px;
+    color: #555;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.help-section strong {
+    color: #667eea;
+}
+
+.help-tips {
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    border-left-color: #ffc107;
+}
+
+.help-tips h3 {
+    color: #f57c00;
+}
+
+.help-tips li {
+    color: #666;
+}
