@@ -19,7 +19,7 @@
             </div>
             <div class="stat-item">
                 <span class="stat-label">Календарное время:</span>
-                <span class="stat-value" id="calendarAge">30 лет 0 дн.</span>
+                <span class="stat-value" id="calendarAge">2026-01-01</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Очки Эволюции:</span>
@@ -39,30 +39,107 @@
             💪 ТРЕНИРОВАТЬСЯ
         </button>
 
-        <div class="section">
-            <div class="section-title">💎 Активные кристаллы (5 слотов)</div>
-            <div class="crystals-grid active-crystals" id="activeCrystalsGrid"></div>
+        <!-- Сцена с персонажем -->
+        <div class="character-stage">
+            <div class="pixel-human" id="pixelHuman">
+                <div class="pixel-shadow"></div>
+
+                <div class="pixel-head">
+                    <div class="pixel-hair"></div>
+                    <div class="pixel-eye pixel-eye-left"></div>
+                    <div class="pixel-eye pixel-eye-right"></div>
+                </div>
+
+                <div class="pixel-neck"></div>
+                <div class="pixel-body"></div>
+
+                <div class="pixel-arm pixel-arm-left"></div>
+                <div class="pixel-arm pixel-arm-right"></div>
+
+                <div class="pixel-leg pixel-leg-left"></div>
+                <div class="pixel-leg pixel-leg-right"></div>
+            </div>
+
+            <div class="character-caption">
+                Герой готов к тренировкам
+            </div>
         </div>
 
-        <div class="section">
-            <div class="section-title">🎒 Инвентарь (10 слотов)</div>
-            <div class="crystals-grid inventory-crystals" id="inventoryCrystalsGrid"></div>
-            <button class="create-crystal-btn" id="createCrystalBtn">
-                Создать кристалл (100 ОЭ)
+        <!-- Кнопки открытия панелей -->
+        <div class="panel-actions">
+            <button class="panel-open-btn" data-panel-target="crystalsPanel">
+                💎 Кристаллы
+            </button>
+
+            <button class="panel-open-btn" data-panel-target="shopPanel">
+                🧬 Способности
             </button>
         </div>
 
-        <div class="section">
-            <div class="section-title">🛒 Магазин способностей</div>
-            <div id="upgradesContainer"></div>
-        </div>
-
+        <!-- Кнопки управления -->
         <div class="controls">
             <button class="control-btn save-btn" id="saveBtn">💾 Сохранить</button>
             <button class="control-btn reset-btn" id="resetBtn">🔄 Сбросить</button>
         </div>
     </div>
 
+    <!-- Затемнение для панелей -->
+    <div class="drawer-backdrop" id="panelBackdrop"></div>
+
+    <!-- Панель кристаллов -->
+    <aside class="side-panel" id="crystalsPanel" aria-hidden="true">
+        <div class="side-panel-header">
+            <div>
+                <h2>💎 Кристаллы</h2>
+                <p>Активные кристаллы генерируют ОЭ. Инвентарь нужен для хранения и слияния.</p>
+            </div>
+
+            <button class="side-panel-close" data-panel-close>
+                ✕
+            </button>
+        </div>
+
+        <div class="side-panel-content">
+            <div class="section">
+                <div class="section-title">Активные кристаллы — 5 слотов</div>
+                <div class="crystals-grid active-crystals" id="activeCrystalsGrid"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Инвентарь — 10 слотов</div>
+                <div class="crystals-grid inventory-crystals" id="inventoryCrystalsGrid"></div>
+            </div>
+
+            <button class="create-crystal-btn" id="createCrystalBtn">
+                Создать кристалл (100 ОЭ)
+            </button>
+
+            <div class="panel-hint">
+                Выберите кристалл, затем другой такого же уровня для слияния.
+                Для слияния нужны 3 кристалла одного уровня.
+            </div>
+        </div>
+    </aside>
+
+    <!-- Панель магазина -->
+    <aside class="side-panel" id="shopPanel" aria-hidden="true">
+        <div class="side-panel-header">
+            <div>
+                <h2>🧬 Способности</h2>
+                <p>Улучшайте тело и разум, чтобы приблизиться к сверхчеловеку.</p>
+            </div>
+
+            <button class="side-panel-close" data-panel-close>
+                ✕
+            </button>
+        </div>
+
+        <div class="side-panel-content">
+            <div id="upgradesContainer"></div>
+        </div>
+    </aside>
+
+    <!-- Уведомления -->
     <div class="message" id="message"></div>
 
     <script type="module" src="./assets/js/main.js"></script>

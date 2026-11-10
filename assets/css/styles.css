@@ -176,6 +176,14 @@ h1 {
     color: #666;
 }
 
+.upgrade-final-buff {
+    font-size: 11px;
+    color: #28a745;
+    font-weight: 500;
+    margin-top: 5px;
+    font-style: italic;
+}
+
 .upgrade-btn {
     padding: 10px 20px;
     font-size: 14px;
@@ -287,43 +295,450 @@ h1 {
         transform: translateY(0);
         opacity: 1;
     }
-
     100% {
         transform: translateY(-50px);
         opacity: 0;
     }
 }
 
-/* Разделение активной зоны и инвентаря */
-.active-crystals {
-    background: rgba(102, 126, 234, 0.1);
-    padding: 15px;
-    border-radius: 10px;
-    border: 2px solid rgba(102, 126, 234, 0.3);
+/* ========================= */
+/* Основной экран персонажа */
+/* ========================= */
+
+.character-stage {
+    background: linear-gradient(180deg, #f8f9ff 0%, #eef1ff 100%);
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    min-height: 190px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
 }
 
-.inventory-crystals {
-    background: rgba(118, 75, 162, 0.1);
-    padding: 15px;
-    border-radius: 10px;
-    border: 2px dashed rgba(118, 75, 162, 0.3);
-    margin-bottom: 15px;
+.character-caption {
+    margin-top: 12px;
+    font-size: 13px;
+    color: #666;
 }
 
-.crystals-grid {
+/* ========================= */
+/* Пиксельный человечек */
+/* ========================= */
+
+.pixel-human {
+    position: relative;
+    width: 96px;
+    height: 128px;
+    image-rendering: pixelated;
+    animation: heroIdle 1.4s steps(2, end) infinite;
+}
+
+.pixel-human div {
+    position: absolute;
+    border-radius: 0;
+}
+
+/* Тень */
+.pixel-shadow {
+    width: 64px;
+    height: 8px;
+    left: 16px;
+    bottom: 4px;
+    background: rgba(0, 0, 0, 0.18);
+}
+
+/* Голова */
+.pixel-head {
+    width: 32px;
+    height: 32px;
+    left: 32px;
+    top: 8px;
+    background: #f1c27d;
+    box-shadow:
+        -4px 4px 0 #d9a45f,
+        4px 4px 0 #d9a45f;
+}
+
+/* Волосы */
+.pixel-hair {
+    width: 32px;
+    height: 8px;
+    left: 0;
+    top: 0;
+    background: #3b2a1a;
+    box-shadow:
+        -4px 4px 0 #3b2a1a,
+        4px 4px 0 #3b2a1a;
+}
+
+/* Глаза */
+.pixel-eye {
+    width: 4px;
+    height: 4px;
+    top: 16px;
+    background: #222;
+}
+
+.pixel-eye-left {
+    left: 8px;
+}
+
+.pixel-eye-right {
+    right: 8px;
+}
+
+/* Шея */
+.pixel-neck {
+    width: 16px;
+    height: 8px;
+    left: 40px;
+    top: 44px;
+    background: #d9a45f;
+}
+
+/* Тело */
+.pixel-body {
+    width: 40px;
+    height: 40px;
+    left: 28px;
+    top: 52px;
+    background: #667eea;
+    box-shadow:
+        -4px 4px 0 #4d5ec7,
+        4px 4px 0 #4d5ec7;
+}
+
+/* Руки */
+.pixel-arm {
+    width: 12px;
+    height: 40px;
+    top: 56px;
+    background: #f1c27d;
+    transform-origin: top center;
+}
+
+.pixel-arm-left {
+    left: 12px;
+    animation: armLeftIdle 1.4s steps(2, end) infinite;
+}
+
+.pixel-arm-right {
+    right: 12px;
+    animation: armRightIdle 1.4s steps(2, end) infinite;
+}
+
+/* Ноги */
+.pixel-leg {
+    width: 14px;
+    height: 32px;
+    top: 92px;
+    background: #2f3b52;
+}
+
+.pixel-leg-left {
+    left: 32px;
+    animation: legLeftIdle 1.4s steps(2, end) infinite;
+}
+
+.pixel-leg-right {
+    right: 32px;
+    animation: legRightIdle 1.4s steps(2, end) infinite;
+}
+
+/* Idle-анимации */
+@keyframes heroIdle {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@keyframes armLeftIdle {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(6deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes armRightIdle {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(-6deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes legLeftIdle {
+    0% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(-2px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+@keyframes legRightIdle {
+    0% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(2px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+/* Усиленная анимация при клике тренировки */
+.pixel-human.is-training {
+    animation: heroTraining 0.35s steps(3, end);
+}
+
+.pixel-human.is-training .pixel-arm-left {
+    animation: trainingArmLeft 0.35s steps(3, end);
+}
+
+.pixel-human.is-training .pixel-arm-right {
+    animation: trainingArmRight 0.35s steps(3, end);
+}
+
+@keyframes heroTraining {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        transform: translateY(-8px) scale(1.04);
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes trainingArmLeft {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(-35deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes trainingArmRight {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(35deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+/* ========================= */
+/* Кнопки открытия панелей */
+/* ========================= */
+
+.panel-actions {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
 }
 
-.inventory-crystals {
-    grid-template-columns: repeat(5, 1fr);
+.panel-open-btn {
+    padding: 14px 12px;
+    border: none;
+    border-radius: 12px;
+    background: #f1f3ff;
+    color: #4b56b2;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
 }
 
-.upgrade-final-buff {
-    font-size: 11px;
-    color: #28a745;
-    font-weight: 500;
-    margin-top: 5px;
-    font-style: italic;
+.panel-open-btn:hover {
+    background: #e4e8ff;
+    transform: translateY(-1px);
+}
+
+.panel-open-btn:active {
+    transform: translateY(0);
+}
+
+/* ========================= */
+/* Выезжающие панели */
+/* ========================= */
+
+.drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 1800;
+}
+
+.drawer-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.side-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+
+    width: min(520px, 92vw);
+    height: 100dvh;
+
+    background: #ffffff;
+    box-shadow: -12px 0 40px rgba(0, 0, 0, 0.25);
+
+    transform: translateX(105%);
+    transition: transform 0.28s ease;
+
+    z-index: 1900;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.side-panel.is-open {
+    transform: translateX(0);
+}
+
+.side-panel-header {
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8f9ff;
+
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.side-panel-header h2 {
+    margin: 0 0 6px;
+    color: #4b56b2;
+    font-size: 22px;
+}
+
+.side-panel-header p {
+    margin: 0;
+    color: #666;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.side-panel-close {
+    width: 36px;
+    height: 36px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: #e9ecef;
+    color: #333;
+
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.side-panel-close:hover {
+    background: #dee2e6;
+}
+
+.side-panel-content {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.panel-hint {
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #f8f9fa;
+    color: #666;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+body.panel-open {
+    overflow: hidden;
+}
+
+/* Улучшения для магазина внутри панели */
+.side-panel .upgrade-item {
+    gap: 12px;
+}
+
+.side-panel .upgrade-btn {
+    white-space: nowrap;
+}
+
+/* Адаптив */
+@media (max-width: 480px) {
+    .panel-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .side-panel {
+        width: 100vw;
+    }
+
+    .side-panel-content {
+        padding: 16px;
+    }
+
+    .crystals-grid {
+        gap: 8px;
+    }
 }

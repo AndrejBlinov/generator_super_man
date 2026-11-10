@@ -11,14 +11,19 @@ function formatCalendarDate(years, days) {
         GAME_START_DATE.day
     );
     
-    startDate.setFullYear(startDate.getFullYear());
-    startDate.setDate(startDate.getDate() + days);
+    // 🔑 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: 
+    // Берем количество прошедших лет, умножаем на 365 и прибавляем текущие дни.
+    // (years у нас начинается с 30, поэтому вычитаем 30, чтобы считать только прошедшее время)
+    const totalDaysPassed = ((years - 30) * 365) + days;
     
-    const year = startDate.getFullYear();
+    // Объект Date в JS сам умеет правильно переносить месяцы и годы при сложении дней!
+    startDate.setDate(startDate.getDate() + totalDaysPassed);
+    
+    const finalYear = startDate.getFullYear();
     const month = String(startDate.getMonth() + 1).padStart(2, '0');
     const day = String(startDate.getDate()).padStart(2, '0');
     
-    return `${year}-${month}-${day}`;
+    return `${finalYear}-${month}-${day}`;
 }
 
 export function renderUI() {
