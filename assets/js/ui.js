@@ -11,7 +11,7 @@ function formatCalendarDate(years, days) {
         GAME_START_DATE.day
     );
     
-    startDate.setFullYear(startDate.getFullYear() + years);
+    startDate.setFullYear(startDate.getFullYear());
     startDate.setDate(startDate.getDate() + days);
     
     const year = startDate.getFullYear();

@@ -92,15 +92,20 @@ function init() {
         showMessage("Игра сохранена!");
     });
 
-    // 🔧 ИСПРАВЛЕННЫЙ СБРОС
     document.getElementById('resetBtn').addEventListener('click', () => {
-        if (confirm("Вы уверены? Весь прогресс будет потерян!")) {
-            // 1. Явно сбрасываем состояние в памяти
+        if (confirm("Вы уверены? Весь прогресс будет потерян, а дата сброшена к 2026-01-01!")) {
+            console.log("🔄 Начинаем процесс ПОЛНОГО сброса...");
+            
+            // 1. Жестко удаляем сохранение по точному ключу
+            localStorage.removeItem('evolutionGame');
+            console.log("🗑️ localStorage очищен!");
+            
+            // 2. Сбрасываем переменные в памяти (на всякий случай)
             resetGameState();
-            // 2. Очищаем localStorage
-            clearSave();
-            // 3. Перезагружаем страницу
-            location.reload();
+            
+            // 3. Агрессивная перезагрузка, обходящая кэш браузера (bfcache)
+            // Это гарантирует, что JS загрузится заново и возьмет defaultGameState
+            window.location.replace(window.location.href);
         }
     });
 
