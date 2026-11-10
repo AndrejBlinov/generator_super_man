@@ -1,5 +1,3 @@
-// Игровой цикл
-
 import { gameState } from './state.js';
 import { calculatePassiveIncome } from './crystals.js';
 import { updateUI } from './ui.js';
@@ -11,19 +9,25 @@ export function startGameLoop() {
     gameLoopInterval = setInterval(() => {
         if (gameState.isGameOver) return;
 
-        // Пассивный доход от кристаллов
+        // 1. Пассивный доход от кристаллов
         const passiveIncome = calculatePassiveIncome();
         gameState.evolutionPoints += passiveIncome;
         gameState.totalPointsEarned += passiveIncome;
 
-        // Старение
+        // 2. Календарное время (всегда тикает на 1.0 день в секунду)
+        gameState.absoluteCurrentDayInYear += 1.0;
+        if (gameState.absoluteCurrentDayInYear >= gameState.daysInYear) {
+            gameState.absoluteCurrentDayInYear -= gameState.daysInYear;
+            gameState.absoluteAgeInYears++;
+        }
+
+        // 3. Биологическое время (тикает с учетом модификаторов)
         gameState.currentDayInYear += gameState.ageTickRate;
-        
         if (gameState.currentDayInYear >= gameState.daysInYear) {
             gameState.currentDayInYear -= gameState.daysInYear;
             gameState.ageInYears++;
             
-            // Проверка смерти от старости
+            // Проверка смерти от старости (только по биологическому возрасту!)
             if (gameState.ageInYears >= gameState.maxAgeInYears) {
                 gameState.isGameOver = true;
                 showGameOver();
@@ -31,7 +35,7 @@ export function startGameLoop() {
         }
 
         updateUI();
-    }, 1000); // 1 секунда = 1 игровой день
+    }, 1000); // 1 реальная секунда = 1 календарный день
 }
 
 export function stopGameLoop() {

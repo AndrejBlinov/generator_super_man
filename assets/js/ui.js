@@ -1,8 +1,6 @@
-// Рендеринг интерфейса
-
 import { gameState } from './state.js';
 import { UPGRADES_CONFIG } from './config.js';
-import { calculatePassiveIncome, getSelectedCrystalIndex } from './crystals.js';
+import { calculatePassiveIncome, getSelection } from './crystals.js';
 import { calculateUpgradeCost } from './upgrades.js';
 
 export function renderUI() {
@@ -12,8 +10,15 @@ export function renderUI() {
 }
 
 export function updateUI() {
-    document.getElementById('age').textContent = 
-        `${gameState.ageInYears} / ${gameState.maxAgeInYears} лет`;
+    const bioDays = Math.floor(gameState.currentDayInYear);
+    const calDays = Math.floor(gameState.absoluteCurrentDayInYear);
+
+    document.getElementById('bioAge').textContent = 
+        `${gameState.ageInYears} лет ${bioDays} дн. / ${gameState.maxAgeInYears} лет`;
+    
+    document.getElementById('calendarAge').textContent = 
+        `${gameState.absoluteAgeInYears} лет ${calDays} дн.`;
+        
     document.getElementById('points').textContent = 
         Math.round(gameState.evolutionPoints);
     document.getElementById('passive').textContent = 
@@ -22,37 +27,51 @@ export function updateUI() {
         `${Math.round(gameState.clickPower)} ОЭ`;
 
     const createBtn = document.getElementById('createCrystalBtn');
-    const hasEmptySlot = gameState.crystals.some(c => c === null);
-    createBtn.disabled = gameState.evolutionPoints < 100 || !hasEmptySlot;
+    const hasActiveSlot = gameState.crystals.some(c => c === null);
+    const hasInventorySlot = gameState.crystalsInventory.some(c => c === null);
+    createBtn.disabled = gameState.evolutionPoints < 100 || (!hasActiveSlot && !hasInventorySlot);
 }
 
 export function renderCrystals() {
-    const grid = document.getElementById('crystalsGrid');
-    grid.innerHTML = '';
+    const { index: selectedIndex, zone: selectedZone } = getSelection();
 
-    const selectedIndex = getSelectedCrystalIndex();
-
+    // Рендер активных кристаллов
+    const activeGrid = document.getElementById('activeCrystalsGrid');
+    activeGrid.innerHTML = '';
+    
     gameState.crystals.forEach((crystal, index) => {
-        const slot = document.createElement('div');
-        slot.className = 'crystal-slot';
-        if (index === selectedIndex) {
-            slot.classList.add('selected');
-        }
-
-        if (crystal) {
-            slot.innerHTML = `
-                <div class="crystal-level">Lvl ${crystal.level}</div>
-                <div class="crystal-income">+${crystal.income}/день</div>
-            `;
-        }
-
-        slot.onclick = () => {
-            import('./crystals.js').then(module => {
-                module.selectCrystal(index);
-            });
-        };
-        grid.appendChild(slot);
+        const slot = createCrystalSlot(crystal, 'active', index, selectedIndex === index && selectedZone === 'active');
+        activeGrid.appendChild(slot);
     });
+
+    // Рендер инвентаря
+    const inventoryGrid = document.getElementById('inventoryCrystalsGrid');
+    inventoryGrid.innerHTML = '';
+    
+    gameState.crystalsInventory.forEach((crystal, index) => {
+        const slot = createCrystalSlot(crystal, 'inventory', index, selectedIndex === index && selectedZone === 'inventory');
+        inventoryGrid.appendChild(slot);
+    });
+}
+
+function createCrystalSlot(crystal, zone, index, isSelected) {
+    const slot = document.createElement('div');
+    slot.className = 'crystal-slot';
+    slot.dataset.zone = zone;
+    slot.dataset.index = index;
+    
+    if (isSelected) {
+        slot.classList.add('selected');
+    }
+
+    if (crystal) {
+        slot.innerHTML = `
+            <div class="crystal-level">Lvl ${crystal.level}</div>
+            <div class="crystal-income">+${crystal.income}/день</div>
+        `;
+    }
+    
+    return slot;
 }
 
 export function renderUpgrades() {
@@ -73,17 +92,10 @@ export function renderUpgrades() {
                 <div class="upgrade-name">${config.name} [Ур. ${currentLevel}/${config.maxLevel}]</div>
                 <div class="upgrade-desc">${currentLevel > 0 ? config.effect(currentLevel) : config.desc}</div>
             </div>
-            <button class="upgrade-btn" ${currentLevel >= config.maxLevel || gameState.evolutionPoints < cost ? 'disabled' : ''}>
+            <button class="upgrade-btn" data-upgrade="${upgradeId}" ${currentLevel >= config.maxLevel || gameState.evolutionPoints < cost ? 'disabled' : ''}>
                 ${currentLevel >= config.maxLevel ? 'МАКС' : `${cost} ОЭ`}
             </button>
         `;
-
-        const btn = item.querySelector('.upgrade-btn');
-        btn.onclick = () => {
-            import('./upgrades.js').then(module => {
-                module.buyUpgrade(upgradeId);
-            });
-        };
         container.appendChild(item);
     });
 }
@@ -102,7 +114,6 @@ export function showCritPopup(event, amount) {
     popup.style.left = event.clientX + 'px';
     popup.style.top = event.clientY + 'px';
     document.body.appendChild(popup);
-
     setTimeout(() => popup.remove(), 1000);
 }
 
@@ -114,10 +125,17 @@ export function showGameOver() {
             <h2>💀 Игра окончена</h2>
             <p>Ваш персонаж прожил ${gameState.ageInYears} лет</p>
             <p>Всего заработано: ${Math.round(gameState.totalPointsEarned)} ОЭ</p>
-            <button onclick="location.reload()" style="margin-top: 20px; padding: 15px 30px; font-size: 18px; background: #667eea; color: white; border: none; border-radius: 10px; cursor: pointer;">
+            <button id="restartBtn" style="margin-top: 20px; padding: 15px 30px; font-size: 18px; background: #667eea; color: white; border: none; border-radius: 10px; cursor: pointer;">
                 Начать заново
             </button>
         </div>
     `;
     document.body.appendChild(overlay);
+    
+    document.getElementById('restartBtn').addEventListener('click', () => {
+        import('./storage.js').then(storage => {
+            storage.clearSave();
+            location.reload();
+        });
+    });
 }

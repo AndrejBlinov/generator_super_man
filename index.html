@@ -1,19 +1,25 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Эволюция: Путь Сверхчеловека</title>
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
+
 <body>
     <div class="game-container">
         <h1>🧬 Эволюция: Путь Сверхчеловека</h1>
-        
+
         <div class="stats">
             <div class="stat-item">
-                <span class="stat-label">Возраст:</span>
-                <span class="stat-value" id="age">30 / 100 лет</span>
+                <span class="stat-label">Биологический возраст:</span>
+                <span class="stat-value" id="bioAge">30 лет 0 дн. / 100 лет</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Календарное время:</span>
+                <span class="stat-value" id="calendarAge">30 лет 0 дн.</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Очки Эволюции:</span>
@@ -34,8 +40,13 @@
         </button>
 
         <div class="section">
-            <div class="section-title">💎 Кристаллы (5 слотов)</div>
-            <div class="crystals-grid" id="crystalsGrid"></div>
+            <div class="section-title">💎 Активные кристаллы (5 слотов)</div>
+            <div class="crystals-grid active-crystals" id="activeCrystalsGrid"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🎒 Инвентарь (10 слотов)</div>
+            <div class="crystals-grid inventory-crystals" id="inventoryCrystalsGrid"></div>
             <button class="create-crystal-btn" id="createCrystalBtn">
                 Создать кристалл (100 ОЭ)
             </button>
@@ -54,6 +65,7 @@
 
     <div class="message" id="message"></div>
 
-    <script type="module" src="assets/js/main.js"></script>
+    <script type="module" src="./assets/js/main.js"></script>
 </body>
+
 </html>

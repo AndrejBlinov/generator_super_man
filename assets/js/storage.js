@@ -1,5 +1,3 @@
-// Работа с localStorage
-
 import { gameState, setGameState, defaultGameState } from './state.js';
 
 const SAVE_KEY = 'evolutionGame';
