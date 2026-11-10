@@ -14,14 +14,20 @@ export function startGameLoop() {
         gameState.evolutionPoints += passiveIncome;
         gameState.totalPointsEarned += passiveIncome;
 
-        // 2. Календарное время (всегда тикает на 1.0 день в секунду)
+        // 2. Телекинез: шанс доп. тренировки (+1 ОЭ/день)
+        if (Math.random() < gameState.extraTrainingChance) {
+            gameState.evolutionPoints += 1;
+            gameState.totalPointsEarned += 1;
+        }
+
+        // 3. Календарное время (всегда тикает на 1.0 день в секунду)
         gameState.absoluteCurrentDayInYear += 1.0;
         if (gameState.absoluteCurrentDayInYear >= gameState.daysInYear) {
             gameState.absoluteCurrentDayInYear -= gameState.daysInYear;
             gameState.absoluteAgeInYears++;
         }
 
-        // 3. Биологическое время (тикает с учетом модификаторов)
+        // 4. Биологическое время (тикает с учетом модификаторов)
         gameState.currentDayInYear += gameState.ageTickRate;
         if (gameState.currentDayInYear >= gameState.daysInYear) {
             gameState.currentDayInYear -= gameState.daysInYear;

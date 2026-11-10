@@ -17,8 +17,13 @@ export const defaultGameState = {
     lastSaveTimestamp: Date.now(),
     clickPower: 1,
     ageTickRate: 1.0,
-    critChance: 0.0,
-    critMultiplier: 5,
+    
+    // Новые характеристики
+    doubleClickChance: 0.0,      // Шанс двойного клика (от левитации)
+    critChance: 0.0,             // Шанс крита (от рентгена)
+    critMultiplier: 2,           // Множитель крита
+    diseaseResistance: 0.0,      // Сопротивление болезням (от регенерации)
+    extraTrainingChance: 0.0,    // Шанс доп. тренировки (от телекинеза)
     
     // Активные кристаллы (генерируют доход)
     crystals: [null, null, null, null, null],
@@ -28,8 +33,11 @@ export const defaultGameState = {
     
     upgrades: {
         slowAging: 0,
+        crystals: 0,        // Новая способность
         levitation: 0,
-        xrayVision: 0
+        xrayVision: 0,
+        regeneration: 0,    // Новая способность
+        telekinesis: 0      // Новая способность
     },
     gameVersion: GAME_VERSION,
     isGameOver: false
@@ -46,6 +54,25 @@ export function setGameState(newState) {
     if (newState.crystalsInventory === undefined) {
         newState.crystalsInventory = [null, null, null, null, null, null, null, null, null, null];
     }
+    if (newState.upgrades.crystals === undefined) {
+        newState.upgrades.crystals = 0;
+    }
+    if (newState.upgrades.regeneration === undefined) {
+        newState.upgrades.regeneration = 0;
+    }
+    if (newState.upgrades.telekinesis === undefined) {
+        newState.upgrades.telekinesis = 0;
+    }
+    if (newState.doubleClickChance === undefined) {
+        newState.doubleClickChance = 0.0;
+    }
+    if (newState.diseaseResistance === undefined) {
+        newState.diseaseResistance = 0.0;
+    }
+    if (newState.extraTrainingChance === undefined) {
+        newState.extraTrainingChance = 0.0;
+    }
+    
     gameState = { ...gameState, ...newState };
 }
 

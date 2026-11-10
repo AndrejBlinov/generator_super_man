@@ -319,3 +319,11 @@ h1 {
 .inventory-crystals {
     grid-template-columns: repeat(5, 1fr);
 }
+
+.upgrade-final-buff {
+    font-size: 11px;
+    color: #28a745;
+    font-weight: 500;
+    margin-top: 5px;
+    font-style: italic;
+}

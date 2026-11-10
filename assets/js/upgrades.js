@@ -1,23 +1,27 @@
-// Логика магазина улучшений
-
 import { gameState } from './state.js';
 import { UPGRADES_CONFIG, AGING_SLOWDOWN_RATES } from './config.js';
 import { showMessage } from './ui.js';
 import { renderUpgrades } from './ui.js';
+import { createCrystal } from './crystals.js';
 
 export function recalculateStats() {
-    // Сила клика (базовая + бонус от левитации)
-    const levitationBonus = gameState.upgrades.levitation * 0.10;
-    gameState.clickPower = 1 * (1 + levitationBonus);
-
     // Скорость старения
     const slowAgingLevel = gameState.upgrades.slowAging;
     gameState.ageTickRate = slowAgingLevel > 0 
         ? AGING_SLOWDOWN_RATES[slowAgingLevel - 1] 
         : 1.0;
 
-    // Шанс крита
-    gameState.critChance = gameState.upgrades.xrayVision * 0.02;
+    // Шанс двойного клика (левитация)
+    gameState.doubleClickChance = gameState.upgrades.levitation * 0.05;
+
+    // Шанс крита (рентген)
+    gameState.critChance = gameState.upgrades.xrayVision * 0.05;
+
+    // Сопротивление болезням (регенерация)
+    gameState.diseaseResistance = gameState.upgrades.regeneration * 0.10;
+
+    // Шанс доп. тренировки (телекинез)
+    gameState.extraTrainingChance = gameState.upgrades.telekinesis * 0.05;
 }
 
 export function buyUpgrade(upgradeId) {
@@ -38,6 +42,12 @@ export function buyUpgrade(upgradeId) {
 
     gameState.evolutionPoints -= cost;
     gameState.upgrades[upgradeId]++;
+    
+    // Специальная логика для генерации кристаллов
+    if (upgradeId === 'crystals') {
+        createCrystal(); // Автоматически создаем кристалл при покупке
+    }
+    
     recalculateStats();
     renderUpgrades();
     showMessage(`${config.name} улучшено!`);

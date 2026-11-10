@@ -171,7 +171,7 @@ function tryMerge(zone1, index1, zone2, index2) {
 
     // Слияние
     const newLevel = crystal1.level + 1;
-    const newIncome = Math.pow(3, newLevel - 1);
+    const newIncome = Math.pow(2, newLevel - 1);
 
     // Новый кристалл остается в слоте первого
     setCrystal(zone1, index1, { level: newLevel, income: newIncome });

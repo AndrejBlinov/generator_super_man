@@ -1,4 +1,4 @@
-import { gameState } from './state.js';
+import { gameState, resetGameState } from './state.js';
 import { loadGame, saveGame, clearSave } from './storage.js';
 import { startGameLoop } from './gameLoop.js';
 import { recalculateStats, buyUpgrade } from './upgrades.js';
@@ -9,15 +9,37 @@ function clickTrain(event) {
     if (gameState.isGameOver) return;
     
     let earned = gameState.clickPower;
+    let isDoubleClick = false;
+    let isCrit = false;
 
+    // Проверка двойного клика (левитация)
+    if (Math.random() < gameState.doubleClickChance) {
+        earned *= 2;
+        isDoubleClick = true;
+    }
+
+    // Проверка крита (рентген)
     if (Math.random() < gameState.critChance) {
         earned *= gameState.critMultiplier;
-        showCritPopup(event, earned);
+        isCrit = true;
+    }
+
+    // Показываем попап только если был крит или двойной клик
+    if (isCrit || isDoubleClick) {
+        let popupText = '';
+        if (isDoubleClick && isCrit) {
+            popupText = `ДВОЙНОЙ + КРИТ! +${Math.round(earned)}`;
+        } else if (isDoubleClick) {
+            popupText = `ДВОЙНОЙ! +${Math.round(earned)}`;
+        } else {
+            popupText = `КРИТ! +${Math.round(earned)}`;
+        }
+        showCritPopup(event, earned, popupText);
     }
 
     gameState.evolutionPoints += earned;
     gameState.totalPointsEarned += earned;
-    updateUI(); // Мгновенное обновление интерфейса после клика
+    updateUI();
 }
 
 function init() {
@@ -26,17 +48,14 @@ function init() {
     renderUI();
     startGameLoop();
 
-    // 1. Кнопка тренировки
     document.getElementById('trainBtn').addEventListener('click', clickTrain);
     
-    // 2. Кнопка создания кристалла
     document.getElementById('createCrystalBtn').addEventListener('click', () => {
         if (createCrystal()) {
             updateUI();
         }
     });
 
-    // 3. Делегирование событий для АКТИВНЫХ кристаллов
     document.getElementById('activeCrystalsGrid').addEventListener('click', (e) => {
         const slot = e.target.closest('.crystal-slot');
         if (!slot) return;
@@ -47,7 +66,6 @@ function init() {
         updateUI();
     });
 
-    // 4. Делегирование событий для ИНВЕНТАРЯ
     document.getElementById('inventoryCrystalsGrid').addEventListener('click', (e) => {
         const slot = e.target.closest('.crystal-slot');
         if (!slot) return;
@@ -58,7 +76,6 @@ function init() {
         updateUI();
     });
 
-    // 5. Делегирование событий для кнопок магазина
     document.getElementById('upgradesContainer').addEventListener('click', (e) => {
         const btn = e.target.closest('.upgrade-btn');
         if (!btn || btn.disabled) return;
@@ -70,20 +87,23 @@ function init() {
         }
     });
 
-    // 6. Кнопки управления
     document.getElementById('saveBtn').addEventListener('click', () => {
         saveGame();
         showMessage("Игра сохранена!");
     });
 
+    // 🔧 ИСПРАВЛЕННЫЙ СБРОС
     document.getElementById('resetBtn').addEventListener('click', () => {
         if (confirm("Вы уверены? Весь прогресс будет потерян!")) {
+            // 1. Явно сбрасываем состояние в памяти
+            resetGameState();
+            // 2. Очищаем localStorage
             clearSave();
+            // 3. Перезагружаем страницу
             location.reload();
         }
     });
 
-    // Автосохранение каждые 30 секунд
     setInterval(saveGame, 30000);
 }
 

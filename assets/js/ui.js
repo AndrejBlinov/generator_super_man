@@ -1,7 +1,25 @@
 import { gameState } from './state.js';
-import { UPGRADES_CONFIG } from './config.js';
+import { UPGRADES_CONFIG, GAME_START_DATE } from './config.js';
 import { calculatePassiveIncome, getSelection } from './crystals.js';
 import { calculateUpgradeCost } from './upgrades.js';
+
+// Функция для преобразования дней в дату YYYY-MM-DD
+function formatCalendarDate(years, days) {
+    const startDate = new Date(
+        GAME_START_DATE.year,
+        GAME_START_DATE.month - 1,
+        GAME_START_DATE.day
+    );
+    
+    startDate.setFullYear(startDate.getFullYear() + years);
+    startDate.setDate(startDate.getDate() + days);
+    
+    const year = startDate.getFullYear();
+    const month = String(startDate.getMonth() + 1).padStart(2, '0');
+    const day = String(startDate.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+}
 
 export function renderUI() {
     renderCrystals();
@@ -17,7 +35,7 @@ export function updateUI() {
         `${gameState.ageInYears} лет ${bioDays} дн. / ${gameState.maxAgeInYears} лет`;
     
     document.getElementById('calendarAge').textContent = 
-        `${gameState.absoluteAgeInYears} лет ${calDays} дн.`;
+        formatCalendarDate(gameState.absoluteAgeInYears, calDays);
         
     document.getElementById('points').textContent = 
         Math.round(gameState.evolutionPoints);
@@ -35,7 +53,6 @@ export function updateUI() {
 export function renderCrystals() {
     const { index: selectedIndex, zone: selectedZone } = getSelection();
 
-    // Рендер активных кристаллов
     const activeGrid = document.getElementById('activeCrystalsGrid');
     activeGrid.innerHTML = '';
     
@@ -44,7 +61,6 @@ export function renderCrystals() {
         activeGrid.appendChild(slot);
     });
 
-    // Рендер инвентаря
     const inventoryGrid = document.getElementById('inventoryCrystalsGrid');
     inventoryGrid.innerHTML = '';
     
@@ -87,10 +103,20 @@ export function renderUpgrades() {
 
         const item = document.createElement('div');
         item.className = 'upgrade-item';
+        
+        // Формируем описание с текущим эффектом и финальным баффом
+        let effectText = config.desc;
+        if (currentLevel > 0) {
+            effectText = config.effect(currentLevel);
+        }
+        
+        const finalBuffText = config.finalBuff ? config.finalBuff(config.maxLevel) : '';
+
         item.innerHTML = `
             <div class="upgrade-info">
                 <div class="upgrade-name">${config.name} [Ур. ${currentLevel}/${config.maxLevel}]</div>
-                <div class="upgrade-desc">${currentLevel > 0 ? config.effect(currentLevel) : config.desc}</div>
+                <div class="upgrade-desc">${effectText}</div>
+                ${finalBuffText ? `<div class="upgrade-final-buff">${finalBuffText}</div>` : ''}
             </div>
             <button class="upgrade-btn" data-upgrade="${upgradeId}" ${currentLevel >= config.maxLevel || gameState.evolutionPoints < cost ? 'disabled' : ''}>
                 ${currentLevel >= config.maxLevel ? 'МАКС' : `${cost} ОЭ`}
@@ -107,10 +133,10 @@ export function showMessage(text) {
     setTimeout(() => msg.classList.remove('show'), 2000);
 }
 
-export function showCritPopup(event, amount) {
+export function showCritPopup(event, amount, customText = null) {
     const popup = document.createElement('div');
     popup.className = 'crit-popup';
-    popup.textContent = `КРИТ! +${Math.round(amount)}`;
+    popup.textContent = customText || `КРИТ! +${Math.round(amount)}`;
     popup.style.left = event.clientX + 'px';
     popup.style.top = event.clientY + 'px';
     document.body.appendChild(popup);
