@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Эволюция: Путь Сверхчеловека</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <h1>🧬 Эволюция: Путь Сверхчеловека</h1>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-label">Возраст:</span>
+                <span class="stat-value" id="age">30 / 100 лет</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Очки Эволюции:</span>
+                <span class="stat-value" id="points">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Пассивный доход:</span>
+                <span class="stat-value" id="passive">0 ОЭ/день</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Сила клика:</span>
+                <span class="stat-value" id="clickPower">1 ОЭ</span>
+            </div>
+        </div>
+
+        <button class="train-button" id="trainBtn">
+            💪 ТРЕНИРОВАТЬСЯ
+        </button>
+
+        <div class="section">
+            <div class="section-title">💎 Кристаллы (5 слотов)</div>
+            <div class="crystals-grid" id="crystalsGrid"></div>
+            <button class="create-crystal-btn" id="createCrystalBtn">
+                Создать кристалл (100 ОЭ)
+            </button>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🛒 Магазин способностей</div>
+            <div id="upgradesContainer"></div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn save-btn" id="saveBtn">💾 Сохранить</button>
+            <button class="control-btn reset-btn" id="resetBtn">🔄 Сбросить</button>
+        </div>
+    </div>
+
+    <div class="message" id="message"></div>
+
+    <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>
