@@ -1,4 +1,9 @@
 let activePanelId = null;
+let onPanelOpenCallback = null;
+
+export function setOnPanelOpenCallback(callback) {
+    onPanelOpenCallback = callback;
+}
 
 export function initPanels() {
     const backdrop = document.getElementById('panelBackdrop');
@@ -43,6 +48,11 @@ export function openPanel(panelId) {
 
     backdrop.classList.add('is-open');
     document.body.classList.add('panel-open');
+
+    // 🔑 Вызываем callback при открытии панели
+    if (onPanelOpenCallback) {
+        onPanelOpenCallback(panelId);
+    }
 }
 
 export function closePanel() {

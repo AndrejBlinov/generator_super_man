@@ -26,6 +26,10 @@
                 <span class="stat-value" id="points">0</span>
             </div>
             <div class="stat-item">
+                <span class="stat-label">Деньги:</span>
+                <span class="stat-value" id="money">0 💰</span>
+            </div>
+            <div class="stat-item">
                 <span class="stat-label">Пассивный доход:</span>
                 <span class="stat-value" id="passive">0 ОЭ/день</span>
             </div>
@@ -39,8 +43,13 @@
             💪 ТРЕНИРОВАТЬСЯ
         </button>
 
-        <!-- Сцена с персонажем -->
+        <!-- 🔑 Блок персонажа с потребностями -->
         <div class="character-stage">
+            <!-- Контейнер окружения (дом/улица) -->
+            <div class="environment-container" id="environmentContainer">
+                <div class="environment luxury" id="environment"></div>
+            </div>
+
             <div class="pixel-human" id="pixelHuman">
                 <div class="pixel-shadow"></div>
 
@@ -58,35 +67,40 @@
 
                 <div class="pixel-leg pixel-leg-left"></div>
                 <div class="pixel-leg pixel-leg-right"></div>
+
+                <!-- 🔑 Контейнер для эффектов здоровья -->
+                <div class="health-effects" id="healthEffects"></div>
+
+                <!-- 🔑 Контейнер для эффектов голода -->
+                <div class="hunger-effects" id="hungerEffects"></div>
             </div>
 
-            <div class="character-caption">
+            <div class="character-caption" id="characterCaption">
                 Герой готов к тренировкам
             </div>
+
+            <!-- Потребности внутри блока персонажа -->
+            <div class="needs-compact" id="needsContainer"></div>
         </div>
 
-        <!-- Кнопки открытия панелей -->
         <div class="panel-actions">
             <button class="panel-open-btn" data-panel-target="crystalsPanel">
                 💎 Кристаллы
             </button>
 
             <button class="panel-open-btn" data-panel-target="shopPanel">
-                🧬 Способности
+                🧬 Магазин
             </button>
         </div>
 
-        <!-- Кнопки управления -->
         <div class="controls">
             <button class="control-btn save-btn" id="saveBtn">💾 Сохранить</button>
             <button class="control-btn reset-btn" id="resetBtn">🔄 Сбросить</button>
         </div>
     </div>
 
-    <!-- Затемнение для панелей -->
     <div class="drawer-backdrop" id="panelBackdrop"></div>
 
-    <!-- Панель кристаллов -->
     <aside class="side-panel" id="crystalsPanel" aria-hidden="true">
         <div class="side-panel-header">
             <div>
@@ -121,7 +135,6 @@
         </div>
     </aside>
 
-    <!-- Панель магазина -->
     <aside class="side-panel" id="shopPanel" aria-hidden="true">
         <div class="side-panel-header">
             <div>
@@ -139,7 +152,6 @@
         </div>
     </aside>
 
-    <!-- Уведомления -->
     <div class="message" id="message"></div>
 
     <script type="module" src="./assets/js/main.js"></script>

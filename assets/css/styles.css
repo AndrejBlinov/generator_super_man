@@ -742,3 +742,342 @@ body.panel-open {
         gap: 8px;
     }
 }
+
+
+
+
+/* ========================= */
+/* Потребности персонажа */
+/* ========================= */
+
+/* ========================= */
+/* Потребности персонажа (компактные) */
+/* ========================= */
+
+.needs-compact {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(102, 126, 234, 0.2);
+    width: 100%;
+}
+
+.need-compact-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.need-icon-wrapper {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.need-icon-wrapper.warning {
+    background: #fff3e0;
+    border-color: #ff9800;
+}
+
+.need-icon-wrapper.critical {
+    background: #ffebee;
+    border-color: #f44336;
+    animation: pulse 1s infinite;
+}
+
+.need-icon {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.need-value-compact {
+    font-size: 11px;
+    font-weight: 700;
+    color: #333;
+    margin-top: 2px;
+}
+
+.need-restore-btn-compact {
+    padding: 6px 10px;
+    font-size: 11px;
+    color: white;
+    background: #ff9800;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.need-restore-btn-compact:hover {
+    background: #f57c00;
+}
+
+.need-restore-btn-compact:disabled {
+    background: #bdbdbd;
+    cursor: not-allowed;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.05);
+    }
+}
+
+
+
+
+/* ========================= */
+/* Окружение (дом/улица) */
+/* ========================= */
+
+.environment-container {
+    position: relative;
+    width: 100%;
+    height: 140px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.environment {
+    width: 200px;
+    height: 120px;
+    position: relative;
+    transition: all 0.5s ease;
+}
+
+.environment.luxury {
+    background: linear-gradient(180deg, #87ceeb 0%, #98d8e8 100%);
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.environment.luxury::before {
+    content: "🏰";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 80px;
+}
+
+.environment.normal {
+    background: linear-gradient(180deg, #b0c4de 0%, #d3d3d3 100%);
+    border-radius: 4px 4px 0 0;
+}
+
+.environment.normal::before {
+    content: "🏠";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 70px;
+}
+
+.environment.poor {
+    background: linear-gradient(180deg, #a9a9a9 0%, #808080 100%);
+    border-radius: 2px 2px 0 0;
+    opacity: 0.8;
+}
+
+.environment.poor::before {
+    content: "🏚️";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 70px;
+    filter: grayscale(50%);
+}
+
+.environment.homeless {
+    background: linear-gradient(180deg, #696969 0%, #505050 100%);
+    border-radius: 0;
+}
+
+.environment.homeless::before {
+    content: "🌧️";
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 40px;
+    animation: rain 1s infinite;
+}
+
+@keyframes rain {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ========================= */
+/* Состояния человечка */
+/* ========================= */
+
+/* Голодный */
+.pixel-human.hungry {
+    animation: heroIdle 1.4s steps(2, end) infinite, hungryShake 2s infinite;
+}
+
+@keyframes hungryShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+/* Голодает */
+.pixel-human.starving {
+    filter: grayscale(50%) brightness(0.8);
+}
+
+.pixel-human.starving .pixel-body {
+    width: 30px;
+    height: 35px;
+}
+
+/* Эффект урчания в животе */
+.hunger-effects {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.hunger-rumble {
+    width: 40px;
+    height: 20px;
+    border: 2px solid #ff9800;
+    border-radius: 50%;
+    animation: rumble 1.5s infinite;
+    opacity: 0;
+}
+
+@keyframes rumble {
+    0% {
+        transform: scale(0.5);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Лежащий */
+.pixel-human.lying-down {
+    transform: rotate(90deg) translateY(30px);
+}
+
+/* Больной */
+.pixel-human.sick {
+    animation: sickShake 0.5s infinite;
+}
+
+@keyframes sickShake {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    25% { transform: translateX(-1px) rotate(-1deg); }
+    75% { transform: translateX(1px) rotate(1deg); }
+}
+
+/* Эффекты болезней */
+.pixel-human.effect-blisters::after {
+    content: "🔴";
+    position: absolute;
+    top: 30px;
+    left: 20px;
+    font-size: 12px;
+    animation: blisterPulse 1s infinite;
+}
+
+@keyframes blisterPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.pixel-human.effect-greenSkin .pixel-head,
+.pixel-human.effect-greenSkin .pixel-body {
+    background: #90ee90 !important;
+}
+
+.pixel-human.effect-vomit::before {
+    content: "🤮";
+    position: absolute;
+    top: 20px;
+    right: 10px;
+    font-size: 20px;
+    animation: vomitAnim 2s infinite;
+}
+
+@keyframes vomitAnim {
+    0%, 90%, 100% { opacity: 0; transform: translateY(0); }
+    50% { opacity: 1; transform: translateY(10px); }
+}
+
+/* В больнице */
+.pixel-human.in-hospital {
+    filter: brightness(0.9);
+}
+
+.pixel-human.in-hospital::after {
+    content: "🏥";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 30px;
+}
+
+/* В коме */
+.pixel-human.in-coma {
+    filter: grayscale(100%) brightness(0.7);
+    animation: comaBreath 3s infinite;
+}
+
+@keyframes comaBreath {
+    0%, 100% { transform: rotate(90deg) translateY(30px) scale(1); }
+    50% { transform: rotate(90deg) translateY(30px) scale(1.02); }
+}
+
+.pixel-human.in-coma::after {
+    content: "💤";
+    position: absolute;
+    top: -20px;
+    right: 0;
+    font-size: 24px;
+    animation: zzz 2s infinite;
+}
+
+@keyframes zzz {
+    0%, 100% { opacity: 0; transform: translateY(0); }
+    50% { opacity: 1; transform: translateY(-10px); }
+}
+
+/* Эффекты здоровья (контейнер) */
+.health-effects {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
