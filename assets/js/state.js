@@ -37,16 +37,15 @@ export const defaultGameState = {
         slowAging: 0, crystals: 0, levitation: 0, xrayVision: 0, regeneration: 0, telekinesis: 0
     },
     
-    // 🔑 НОВОЕ: Наследие и Статистика
     legacy: {
-        exchangeRateBonus: 0,       // +5% за каждые 10к потраченных денег
-        startingCrystalsCount: 0,   // Кол-во кристаллов 1 ур. на старте
-        startingAbilities: []       // Массив ID способностей 1 ур. на старте
+        exchangeRateBonus: 0,
+        startingCrystalsCount: 0,
+        startingAbilities: []
     },
     stats: {
         runsCompleted: 0,
         totalDeaths: 0,
-        totalMoneyEarnedThisRun: 0, // Для расчета "потраченных" денег
+        totalMoneyEarnedThisRun: 0,
         highestCrystalLevel: 1,
         highestAgeReached: 30
     },
@@ -58,15 +57,55 @@ export const defaultGameState = {
 export let gameState = { ...defaultGameState };
 
 export function setGameState(newState) {
-    // ... (все старые проверки миграции) ...
+    // 1. Базовые миграции
+    if (newState.absoluteAgeInYears === undefined) {
+        newState.absoluteAgeInYears = newState.ageInYears || 30;
+        newState.absoluteCurrentDayInYear = newState.currentDayInYear || 0;
+    }
     
-    // 🔑 Миграция Наследия и Статистики (сохраняем их при перезагрузке!)
-    if (newState.legacy === undefined) newState.legacy = { ...defaultGameState.legacy };
-    if (newState.stats === undefined) newState.stats = { ...defaultGameState.stats };
-    
-    if (newState.needs === undefined) newState.needs = getDefaultNeeds();
-    // ... (остальная миграция needs и diseases как была) ...
-    
+    // 2. 🔑 ЖЕСТКАЯ ЗАЩИТА МАССИВОВ И ОБЪЕКТОВ (чтобы ничего не сбрасывалось)
+    if (!Array.isArray(newState.activeDiseases)) {
+        newState.activeDiseases = newState.activeDisease ? [newState.activeDisease] : [];
+    }
+    delete newState.activeDisease; // очистка старого ключа, если он есть
+
+    if (!Array.isArray(newState.crystals)) newState.crystals = [null, null, null, null, null];
+    if (!Array.isArray(newState.crystalsInventory)) newState.crystalsInventory = Array(10).fill(null);
+
+    if (typeof newState.upgrades !== 'object' || newState.upgrades === null) {
+        newState.upgrades = { ...defaultGameState.upgrades };
+    }
+
+    if (typeof newState.needs !== 'object' || newState.needs === null) {
+        newState.needs = getDefaultNeeds();
+    } else {
+        const defaults = getDefaultNeeds();
+        Object.keys(defaults).forEach(needId => {
+            if (newState.needs[needId] === undefined) {
+                newState.needs[needId] = defaults[needId];
+            }
+        });
+    }
+
+    if (typeof newState.legacy !== 'object' || newState.legacy === null) {
+        newState.legacy = { ...defaultGameState.legacy };
+    }
+
+    if (typeof newState.stats !== 'object' || newState.stats === null) {
+        newState.stats = { ...defaultGameState.stats };
+    }
+
+    // 3. Миграции примитивов
+    if (newState.doubleClickChance === undefined) newState.doubleClickChance = 0.0;
+    if (newState.diseaseResistance === undefined) newState.diseaseResistance = 0.0;
+    if (newState.extraTrainingChance === undefined) newState.extraTrainingChance = 0.0;
+    if (newState.money === undefined) newState.money = 0;
+    if (newState.purchaseMultiplier === undefined) newState.purchaseMultiplier = 1;
+    if (newState.autoExchangeAmount === undefined) newState.autoExchangeAmount = 0;
+    if (newState.autoSpendEnabled === undefined) newState.autoSpendEnabled = true;
+    if (newState.autoTreatEnabled === undefined) newState.autoTreatEnabled = false;
+
+    // 4. Финальное слияние (сохраняет все массивы и объекты из newState)
     gameState = { ...gameState, ...newState };
 }
 
@@ -74,12 +113,10 @@ export function getGameState() {
     return gameState;
 }
 
-// 🔑 ОБНОВЛЕННЫЙ СБРОС: сохраняет legacy и stats!
 export function resetGameState(keepLegacy = true) {
     const preservedLegacy = keepLegacy ? { ...gameState.legacy } : { ...defaultGameState.legacy };
     const preservedStats = keepLegacy ? { ...gameState.stats } : { ...defaultGameState.stats };
     
-    // Увеличиваем счетчики при сбросе
     if (keepLegacy) {
         preservedStats.runsCompleted += 1;
     }

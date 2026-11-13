@@ -1,102 +1,143 @@
 import { gameState, resetGameState } from './state.js';
 import { loadGame, saveGame, clearSave } from './storage.js';
-import { startGameLoop } from './gameLoop.js';
+import { startGameLoop, stopGameLoop } from './gameLoop.js';
 import { recalculateStats, buyUpgradeBulk, buyItemBulk } from './upgrades.js';
 import { renderUI, updateUI, showCritPopup, showMessage, renderCrystals, renderUpgrades, showInheritanceModal } from './ui.js';
 import { createCrystalBulk, selectCrystal, getMaxAffordableCrystals } from './crystals.js';
-import { initPanels, setOnPanelOpenCallback } from './panels.js';
+import { initPanels, setOnPanelOpenCallback, openPanel } from './panels.js';
+import { canTrain, getTrainingBlockReason, restoreNeedManual, renderNeeds, handleTreatDisease, renderDiseaseBlock } from './needs/index.js';
+import { applyInheritance } from './inheritance.js';
 
-// 🔑 Импортируем из needs-модуля
-import {
-    canTrain,
-    getTrainingBlockReason,
-    restoreNeedManual,
-    renderNeeds,
-    handleTreatDisease,
-    renderDiseaseBlock
-} from './needs/index.js';
-
-function animateHeroTraining() {
-    const hero = document.getElementById('pixelHuman');
-
-    if (!hero) return;
-
-    hero.classList.remove('is-training');
-    void hero.offsetWidth;
-    hero.classList.add('is-training');
-
-    setTimeout(() => {
-        hero.classList.remove('is-training');
-    }, 350);
-}
-
-function clickTrain(event) {
-    if (gameState.isGameOver) return;
-
-    // 🔑 Используем canTrain из needs-модуля
-    if (!canTrain()) {
-        showMessage(getTrainingBlockReason());
-        return;
-    }
-
-    animateHeroTraining();
-
-    let earned = gameState.clickPower;
-    let isDoubleClick = false;
-    let isCrit = false;
-
-    if (Math.random() < gameState.doubleClickChance) {
-        earned *= 2;
-        isDoubleClick = true;
-    }
-
-    if (Math.random() < gameState.critChance) {
-        earned *= gameState.critMultiplier;
-        isCrit = true;
-    }
-
-    if (isCrit || isDoubleClick) {
-        let popupText = '';
-
-        if (isDoubleClick && isCrit) {
-            popupText = `ДВОЙНОЙ + КРИТ! +${Math.round(earned)}`;
-        } else if (isDoubleClick) {
-            popupText = `ДВОЙНОЙ! +${Math.round(earned)}`;
-        } else {
-            popupText = `КРИТ! +${Math.round(earned)}`;
-        }
-
-        showCritPopup(event, earned, popupText);
-    }
-
-    gameState.evolutionPoints += earned;
-    gameState.totalPointsEarned += earned;
-
-    updateUI();
-}
-
-function getActualCount(baseCount, maxAffordable) {
-    if (baseCount === 'max') return maxAffordable;
-    return Math.min(parseInt(baseCount), maxAffordable);
-}
-
-function init() {
-    loadGame();
+// ==========================================
+// 1. ЛОГИКА ИГРОВОГО ДВИЖКА
+// ==========================================
+function startGameEngine() {
     recalculateStats();
     renderUI();
     startGameLoop();
+}
 
-    document.getElementById('trainBtn').addEventListener('click', clickTrain);
+function stopGameEngine() {
+    stopGameLoop();
+}
+
+// ==========================================
+// 2. ЛОГИКА ГЛАВНОГО МЕНЮ
+// ==========================================
+function showMainMenu() {
+    const menu = document.getElementById('mainMenu');
+    const app = document.getElementById('gameApp');
+    const btnContainer = document.getElementById('menuButtons');
+    
+    menu.style.display = 'flex';
+    app.style.display = 'none';
+    stopGameEngine();
+    btnContainer.innerHTML = '';
+    
+    // Загружаем сохранение, чтобы проверить состояние
+    const hasSave = loadGame();
+    const isAlive = !gameState.isGameOver;
+    const hasLegacy = gameState.legacy && (
+        gameState.legacy.exchangeRateBonus > 0 || 
+        gameState.legacy.startingCrystalsCount > 0 || 
+        (gameState.legacy.startingAbilities && gameState.legacy.startingAbilities.length > 0)
+    );
+
+    // 1. Кнопка "Продолжить" (только если есть сохранение и персонаж жив)
+    if (hasSave && isAlive) {
+        const btn = document.createElement('button');
+        btn.className = 'menu-btn';
+        btn.textContent = '▶️ Продолжить игру';
+        btn.onclick = () => {
+            menu.style.display = 'none';
+            app.style.display = 'block';
+            startGameEngine();
+        };
+        btnContainer.appendChild(btn);
+    }
+
+    // 2. Кнопка "С бонусами наследия" (если есть накопленные бонусы)
+    if (hasLegacy) {
+        const btn = document.createElement('button');
+        btn.className = 'menu-btn secondary';
+        btn.textContent = '🧬 Начать новую игру с бонусами наследия';
+        btn.onclick = () => {
+            applyInheritance(false);
+            menu.style.display = 'none';
+            app.style.display = 'block';
+            startGameEngine();
+        };
+        btnContainer.appendChild(btn);
+    }
+
+    // 3. Кнопка "Новая игра" (ВСЕГДА доступна)
+    const newGameBtn = document.createElement('button');
+    newGameBtn.className = 'menu-btn danger';
+    newGameBtn.textContent = hasSave ? '🔄 Новая игра (сбросить текущий прогресс)' : '🔄 Новая игра';
+    newGameBtn.onclick = () => {
+        const warning = hasSave 
+            ? "⚠️ ВНИМАНИЕ: Это удалит текущее сохранение, болезни, кристаллы и деньги. Весь непрогрессировавший в наследие прогресс будет потерян. Продолжить?"
+            : "Начать совершенно новую игру?";
+            
+        if (confirm(warning)) {
+            clearSave();
+            resetGameState(false);
+            menu.style.display = 'none';
+            app.style.display = 'block';
+            startGameEngine();
+        }
+    };
+    btnContainer.appendChild(newGameBtn);
+}
+
+// ==========================================
+// 3. ПРИВЯЗКА СОБЫТИЙ (выполняется 1 раз)
+// ==========================================
+function bindEvents() {
+    document.getElementById('trainBtn').addEventListener('click', (event) => {
+        if (gameState.isGameOver) return;
+        if (!canTrain()) {
+            showMessage(getTrainingBlockReason());
+            return;
+        }
+
+        const hero = document.getElementById('pixelHuman');
+        if (hero) {
+            hero.classList.remove('is-training');
+            void hero.offsetWidth;
+            hero.classList.add('is-training');
+            setTimeout(() => hero.classList.remove('is-training'), 350);
+        }
+
+        let earned = gameState.clickPower;
+        let isDoubleClick = false;
+        let isCrit = false;
+
+        if (Math.random() < gameState.doubleClickChance) {
+            earned *= 2;
+            isDoubleClick = true;
+        }
+        if (Math.random() < gameState.critChance) {
+            earned *= gameState.critMultiplier;
+            isCrit = true;
+        }
+
+        if (isCrit || isDoubleClick) {
+            let popupText = isDoubleClick && isCrit ? `ДВОЙНОЙ + КРИТ! +${Math.round(earned)}` :
+                            isDoubleClick ? `ДВОЙНОЙ! +${Math.round(earned)}` : `КРИТ! +${Math.round(earned)}`;
+            showCritPopup(event, earned, popupText);
+        }
+
+        gameState.evolutionPoints += earned;
+        gameState.totalPointsEarned += earned;
+        updateUI();
+    });
 
     document.getElementById('createCrystalBtn').addEventListener('click', () => {
         const maxAffordable = getMaxAffordableCrystals();
-        
-        let actualCount = 0;
-        if (gameState.purchaseMultiplier === 'max') {
-            actualCount = maxAffordable;
-        } else {
-            actualCount = Math.min(parseInt(gameState.purchaseMultiplier), maxAffordable);
-        }
+        const actualCount = gameState.purchaseMultiplier === 'max' 
+            ? maxAffordable 
+            : Math.min(parseInt(gameState.purchaseMultiplier), maxAffordable);
         
         if (actualCount > 0 && createCrystalBulk(actualCount)) {
             renderCrystals();
@@ -104,32 +145,10 @@ function init() {
         }
     });
 
-    document.getElementById('autoTreatToggle').addEventListener('click', () => {
-        gameState.autoTreatEnabled = !gameState.autoTreatEnabled;
-
-        const status = gameState.autoTreatEnabled ? 'включено' : 'выключено';
-        showMessage(`Авто-лечение болезней: ${status}`);
-        updateUI();
-    });
-
-    document.getElementById('diseaseContainer').addEventListener('click', (e) => {
-        const btn = e.target.closest('.disease-treat-btn');
-        if (!btn || btn.classList.contains('disabled')) return;
-
-        const diseaseId = btn.dataset.treat;
-        const result = handleTreatDisease(diseaseId);
-
-        showMessage(result.message);
-        renderDiseaseBlock();
-        updateUI();
-    });
-
     document.getElementById('activeCrystalsGrid').addEventListener('click', (e) => {
         const slot = e.target.closest('.crystal-slot');
         if (!slot) return;
-
-        const index = parseInt(slot.dataset.index);
-        selectCrystal('active', index);
+        selectCrystal('active', parseInt(slot.dataset.index));
         renderCrystals();
         updateUI();
     });
@@ -137,32 +156,23 @@ function init() {
     document.getElementById('inventoryCrystalsGrid').addEventListener('click', (e) => {
         const slot = e.target.closest('.crystal-slot');
         if (!slot) return;
-
-        const index = parseInt(slot.dataset.index);
-        selectCrystal('inventory', index);
+        selectCrystal('inventory', parseInt(slot.dataset.index));
         renderCrystals();
         updateUI();
     });
 
-    document.getElementById('inheritBtn').addEventListener('click', () => {
-        showInheritanceModal(false);
-    });
-
     document.getElementById('upgradesContainer').addEventListener('click', (e) => {
-        const multiplierBtn = e.target.closest('.multiplier-btn');
-        if (multiplierBtn) {
-            const multiplierValue = multiplierBtn.dataset.multiplier;
-            gameState.purchaseMultiplier = multiplierValue === 'max' ? 'max' : parseInt(multiplierValue);
+        const multBtn = e.target.closest('.multiplier-btn');
+        if (multBtn) {
+            gameState.purchaseMultiplier = multBtn.dataset.multiplier === 'max' ? 'max' : parseInt(multBtn.dataset.multiplier);
             renderUpgrades();
             updateUI();
             return;
         }
 
-        const upgradeBtn = e.target.closest('.upgrade-btn[data-upgrade]');
-        if (upgradeBtn && !upgradeBtn.disabled) {
-            const upgradeId = upgradeBtn.dataset.upgrade;
-            const count = parseInt(upgradeBtn.dataset.count) || 1;
-            if (buyUpgradeBulk(upgradeId, count)) {
+        const upgBtn = e.target.closest('.upgrade-btn[data-upgrade]');
+        if (upgBtn && !upgBtn.disabled) {
+            if (buyUpgradeBulk(upgBtn.dataset.upgrade, parseInt(upgBtn.dataset.count) || 1)) {
                 renderUpgrades();
                 updateUI();
             }
@@ -171,9 +181,7 @@ function init() {
 
         const itemBtn = e.target.closest('.item-btn[data-item]');
         if (itemBtn && !itemBtn.disabled) {
-            const itemId = itemBtn.dataset.item;
-            const count = parseInt(itemBtn.dataset.count) || 1;
-            if (buyItemBulk(itemId, count)) {
+            if (buyItemBulk(itemBtn.dataset.item, parseInt(itemBtn.dataset.count) || 1)) {
                 renderUpgrades();
                 updateUI();
             }
@@ -181,14 +189,10 @@ function init() {
         }
     });
 
-    // 🔑 Обработчик кнопок восстановления потребностей
     document.getElementById('needsContainer').addEventListener('click', (e) => {
         const btn = e.target.closest('.need-restore-btn-compact');
         if (!btn || btn.disabled) return;
-
-        const needId = btn.dataset.need;
-        const result = restoreNeedManual(needId);
-
+        const result = restoreNeedManual(btn.dataset.need);
         if (result.success) {
             showMessage(result.message);
             renderNeeds();
@@ -198,23 +202,32 @@ function init() {
         }
     });
 
+    document.getElementById('diseaseContainer').addEventListener('click', (e) => {
+        const btn = e.target.closest('.disease-treat-btn');
+        if (!btn || btn.classList.contains('disabled')) return;
+        const result = handleTreatDisease(btn.dataset.treat);
+        showMessage(result.message);
+        renderDiseaseBlock();
+        updateUI();
+    });
+
     document.getElementById('autoSpendToggle').addEventListener('click', () => {
         gameState.autoSpendEnabled = !gameState.autoSpendEnabled;
+        showMessage(`Авто-трата денег: ${gameState.autoSpendEnabled ? 'включена' : 'выключена'}`);
+        updateUI();
+    });
 
-        const status = gameState.autoSpendEnabled ? 'включена' : 'выключена';
-        showMessage(`Авто-трата денег: ${status}`);
+    document.getElementById('autoTreatToggle').addEventListener('click', () => {
+        gameState.autoTreatEnabled = !gameState.autoTreatEnabled;
+        showMessage(`Авто-лечение болезней: ${gameState.autoTreatEnabled ? 'включено' : 'выключено'}`);
         updateUI();
     });
 
     document.getElementById('autoExchangeButtons').addEventListener('click', (e) => {
         const btn = e.target.closest('.exchange-btn');
         if (!btn) return;
-
-        const amount = parseInt(btn.dataset.amount);
-        gameState.autoExchangeAmount = amount;
-
-        const label = amount === 0 ? "выключен" : `${amount} ОЭ/тик`;
-        showMessage(`Автообмен: ${label}`);
+        gameState.autoExchangeAmount = parseInt(btn.dataset.amount);
+        showMessage(`Автообмен: ${gameState.autoExchangeAmount === 0 ? "выключен" : `${gameState.autoExchangeAmount} ОЭ/тик`}`);
         updateUI();
     });
 
@@ -225,35 +238,31 @@ function init() {
 
     document.getElementById('resetBtn').addEventListener('click', () => {
         if (confirm("Вы уверены? Весь прогресс будет потерян, а дата сброшена к 2026-01-01!")) {
-            console.log("🔄 Начинаем процесс ПОЛНОГО сброса...");
-
-            localStorage.removeItem('evolutionGame');
-            console.log("🗑️ localStorage очищен!");
-
-            resetGameState();
-
+            clearSave();
+            resetGameState(false);
             window.location.replace(window.location.href);
         }
     });
 
-    document.getElementById('helpButton').addEventListener('click', () => {
-        import('./panels.js').then(module => {
-            module.openPanel('helpPanel');
-        });
+    document.getElementById('inheritBtn').addEventListener('click', () => {
+        showInheritanceModal(false);
     });
 
-    setInterval(saveGame, 30000);
+    document.getElementById('helpButton').addEventListener('click', () => {
+        openPanel('helpPanel');
+    });
 
     setOnPanelOpenCallback((panelId) => {
-        if (panelId === 'shopPanel') {
-            renderUpgrades();
-        } else if (panelId === 'crystalsPanel') {
-            renderCrystals();
-            updateUI();
-        }
+        if (panelId === 'shopPanel') renderUpgrades();
+        else if (panelId === 'crystalsPanel') { renderCrystals(); updateUI(); }
     });
-
     initPanels();
+
+    setInterval(saveGame, 30000);
 }
 
-init();
+// ==========================================
+// 4. ЗАПУСК
+// ==========================================
+bindEvents();
+showMainMenu();
