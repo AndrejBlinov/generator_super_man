@@ -396,68 +396,68 @@ export function showCritPopup(event, amount, customText = null) {
     setTimeout(() => popup.remove(), 1000);
 }
 
-export function showGameOver(reason = "Ваш персонаж умер!") {
-    const overlay = document.createElement('div');
-    overlay.className = 'game-over';
+// export function showGameOver(reason = "Ваш персонаж умер!") {
+//     const overlay = document.createElement('div');
+//     overlay.className = 'game-over';
     
-    let inheritancePreview = '';
-    try {
-        inheritancePreview = getInheritancePreviewText();
-    } catch (e) {
-        inheritancePreview = '<p>Бонусы наследия недоступны.</p>';
-    }
+//     let inheritancePreview = '';
+//     try {
+//         inheritancePreview = getInheritancePreviewText();
+//     } catch (e) {
+//         inheritancePreview = '<p>Бонусы наследия недоступны.</p>';
+//     }
     
-    overlay.innerHTML = `
-        <div class="game-over-content" style="max-width: 600px; text-align: left; max-height: 85vh; overflow-y: auto;">
-            <h2 style="text-align: center; color: #dc3545; margin-bottom: 15px;">💀 Игра окончена</h2>
-            <p style="text-align: center; font-size: 18px; margin-bottom: 15px;"><strong>${reason}</strong></p>
+//     overlay.innerHTML = `
+//         <div class="game-over-content" style="max-width: 600px; text-align: left; max-height: 85vh; overflow-y: auto;">
+//             <h2 style="text-align: center; color: #dc3545; margin-bottom: 15px;">💀 Игра окончена</h2>
+//             <p style="text-align: center; font-size: 18px; margin-bottom: 15px;"><strong>${reason}</strong></p>
             
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                <p style="margin: 0 0 5px 0;"><strong>📊 Статистика этого поколения:</strong></p>
-                <p style="margin: 0;">Прожито лет: <strong>${gameState.ageInYears}</strong></p>
-                <p style="margin: 0;">Всего заработано ОЭ: <strong>${Math.round(gameState.totalPointsEarned)}</strong></p>
-                <p style="margin: 0;">Всего заработано 💰: <strong>${Math.round(gameState.stats.totalMoneyEarnedThisRun)}</strong></p>
-            </div>
+//             <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+//                 <p style="margin: 0 0 5px 0;"><strong>📊 Статистика этого поколения:</strong></p>
+//                 <p style="margin: 0;">Прожито лет: <strong>${gameState.ageInYears}</strong></p>
+//                 <p style="margin: 0;">Всего заработано ОЭ: <strong>${Math.round(gameState.totalPointsEarned)}</strong></p>
+//                 <p style="margin: 0;">Всего заработано 💰: <strong>${Math.round(gameState.stats.totalMoneyEarnedThisRun)}</strong></p>
+//             </div>
             
-            <div style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); padding: 15px; border-radius: 10px; border-left: 4px solid #9c27b0; margin-bottom: 15px;">
-                <h3 style="color: #6a1b9a; margin: 0 0 10px 0;">🧬 Бонусы наследия</h3>
-                ${inheritancePreview}
-            </div>
+//             <div style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); padding: 15px; border-radius: 10px; border-left: 4px solid #9c27b0; margin-bottom: 15px;">
+//                 <h3 style="color: #6a1b9a; margin: 0 0 10px 0;">🧬 Бонусы наследия</h3>
+//                 ${inheritancePreview}
+//             </div>
             
-            <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
-                <button id="inheritAfterDeathBtn" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
-                    🧬 Наследовать<br>
-                    <span style="font-size: 12px; font-weight: normal;">Получить бонусы</span>
-                </button>
-                <button id="fullResetBtn" style="flex: 1; padding: 15px; background: #dc3545; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
-                    🔄 С нуля<br>
-                    <span style="font-size: 12px; font-weight: normal;">Без бонусов</span>
-                </button>
-            </div>
-        </div>
-    `;
+//             <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+//                 <button id="inheritAfterDeathBtn" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
+//                     🧬 Наследовать<br>
+//                     <span style="font-size: 12px; font-weight: normal;">Получить бонусы</span>
+//                 </button>
+//                 <button id="fullResetBtn" style="flex: 1; padding: 15px; background: #dc3545; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
+//                     🔄 С нуля<br>
+//                     <span style="font-size: 12px; font-weight: normal;">Без бонусов</span>
+//                 </button>
+//             </div>
+//         </div>
+//     `;
     
-    document.body.appendChild(overlay);
+//     document.body.appendChild(overlay);
     
-    // 🔑 Обработчик "Наследовать"
-    document.getElementById('inheritAfterDeathBtn').addEventListener('click', () => {
-        overlay.remove();
-        import('./inheritance.js').then(module => {
-            module.applyInheritance();
-            // Полная перезагрузка для применения всех бонусов
-            window.location.reload();
-        });
-    });
+//     // 🔑 Обработчик "Наследовать"
+//     document.getElementById('inheritAfterDeathBtn').addEventListener('click', () => {
+//         overlay.remove();
+//         import('./inheritance.js').then(module => {
+//             module.applyInheritance();
+//             // Полная перезагрузка для применения всех бонусов
+//             window.location.reload();
+//         });
+//     });
     
-    // 🔑 Обработчик "С нуля"
-    document.getElementById('fullResetBtn').addEventListener('click', () => {
-        if (confirm("Вы уверены? ВСЕ бонусы и статистика будут потеряны!")) {
-            overlay.remove();
-            localStorage.removeItem('evolutionGame');
-            window.location.reload();
-        }
-    });
-}
+//     // 🔑 Обработчик "С нуля"
+//     document.getElementById('fullResetBtn').addEventListener('click', () => {
+//         if (confirm("Вы уверены? ВСЕ бонусы и статистика будут потеряны!")) {
+//             overlay.remove();
+//             localStorage.removeItem('evolutionGame');
+//             window.location.reload();
+//         }
+//     });
+// }
 
 export function showInheritanceModal(isAfterDeath = false) {
     const previewText = getInheritancePreviewText();
@@ -492,4 +492,85 @@ export function showInheritanceModal(isAfterDeath = false) {
             window.location.reload();
         });
     });
+}
+
+// 🔑 НОВАЯ ФУНКЦИЯ: Экран смерти с кнопкой "Вернуться в меню"
+export function showDeathScreen(reason) {
+    const overlay = document.createElement('div');
+    overlay.className = 'game-over';
+    overlay.style.zIndex = '3000';
+    
+    let inheritancePreview = '';
+    try {
+        inheritancePreview = getInheritancePreviewText();
+    } catch (e) {
+        inheritancePreview = '<p>Бонусы недоступны.</p>';
+    }
+    
+    overlay.innerHTML = `
+        <div class="game-over-content" style="max-width: 600px; text-align: left; max-height: 85vh; overflow-y: auto;">
+            <h2 style="text-align: center; color: #dc3545; margin-bottom: 15px;">💀 Игра окончена</h2>
+            <p style="text-align: center; font-size: 18px; margin-bottom: 15px;"><strong>${reason}</strong></p>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0;"><strong>📊 Статистика этого поколения:</strong></p>
+                <p style="margin: 0;">Прожито лет: <strong>${gameState.ageInYears}</strong></p>
+                <p style="margin: 0;">Сложность: <strong>${gameState.difficulty}</strong></p>
+                <p style="margin: 0;">Всего заработано ОЭ: <strong>${Math.round(gameState.totalPointsEarned)}</strong></p>
+                <p style="margin: 0;">Всего заработано 💰: <strong>${Math.round(gameState.stats?.totalMoneyEarnedThisRun || 0)}</strong></p>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); padding: 15px; border-radius: 10px; border-left: 4px solid #9c27b0; margin-bottom: 15px;">
+                <h3 style="color: #6a1b9a; margin: 0 0 10px 0;">🧬 Бонусы наследия</h3>
+                ${inheritancePreview}
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                <button id="inheritAfterDeathBtn" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
+                    🧬 Наследовать<br>
+                    <span style="font-size: 12px; font-weight: normal;">Получить бонусы</span>
+                </button>
+                <button id="restartFromDeathBtn" style="flex: 1; padding: 15px; background: #ed8936; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
+                    🔄 Начать заново<br>
+                    <span style="font-size: 12px; font-weight: normal;">Выбрать сложность</span>
+                </button>
+                <button id="backToMenuBtn" style="flex: 1; padding: 15px; background: #6c757d; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
+                    🏠 В меню<br>
+                    <span style="font-size: 12px; font-weight: normal;">Без бонусов</span>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // 🔑 Наследовать
+    document.getElementById('inheritAfterDeathBtn').addEventListener('click', () => {
+        overlay.remove();
+        import('./inheritance.js').then(module => {
+            module.applyInheritance(); // Внутри уже есть saveGame()
+            
+            // 🔑 Перезагружаем страницу, чтобы гарантированно загрузить новое состояние
+            window.location.reload();
+        });
+    });
+    
+    // 🔑 Начать заново (с выбором сложности)
+    document.getElementById('restartFromDeathBtn').addEventListener('click', () => {
+        overlay.remove();
+        // 🔑 handleDeath уже вызван в gameLoop, активная игра удалена
+        // Просто возвращаемся в меню
+        window.location.reload();
+    });
+    
+    // 🔑 В меню (без бонусов)
+    document.getElementById('backToMenuBtn').addEventListener('click', () => {
+        overlay.remove();
+        window.location.reload();
+    });
+}
+
+// 🔑 ОБНОВЛЁННАЯ showGameOver — теперь вызывает showDeathScreen
+export function showGameOver(reason = "Ваш персонаж умер!") {
+    showDeathScreen(reason);
 }

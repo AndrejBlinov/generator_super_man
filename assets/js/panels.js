@@ -35,7 +35,7 @@ export function openPanel(panelId) {
     const backdrop = document.getElementById('panelBackdrop');
 
     if (!panel || !backdrop) {
-        console.warn(`Панель или backdrop не найдены: ${panelId}`);
+        console.error(`Панель или backdrop не найдены: ${panelId}`);
         return;
     }
 
@@ -45,11 +45,16 @@ export function openPanel(panelId) {
 
     panel.classList.add('is-open');
     panel.setAttribute('aria-hidden', 'false');
-
     backdrop.classList.add('is-open');
     document.body.classList.add('panel-open');
+    
+    // 🔑 СКРЫВАЕМ ГЛАВНОЕ МЕНЮ, если оно открыто
+    const mainMenu = document.getElementById('mainMenu');
+    if (mainMenu && mainMenu.style.display !== 'none') {
+        mainMenu.dataset.wasVisible = 'true'; // Запоминаем, что его надо вернуть
+        mainMenu.style.display = 'none';
+    }
 
-    // 🔑 Вызываем callback при открытии панели
     if (onPanelOpenCallback) {
         onPanelOpenCallback(panelId);
     }
@@ -68,6 +73,14 @@ export function closePanel() {
     }
 
     document.body.classList.remove('panel-open');
+    
+    // 🔑 ВОЗВРАЩАЕМ ГЛАВНОЕ МЕНЮ, если оно было скрыто
+    const mainMenu = document.getElementById('mainMenu');
+    if (mainMenu && mainMenu.dataset.wasVisible === 'true') {
+        mainMenu.style.display = 'flex';
+        delete mainMenu.dataset.wasVisible;
+    }
+    
     activePanelId = null;
 }
 

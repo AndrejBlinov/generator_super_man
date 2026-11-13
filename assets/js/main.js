@@ -1,8 +1,8 @@
-import { gameState, resetGameState } from './state.js';
-import { loadGame, saveGame, clearSave } from './storage.js';
+import { gameState, legacy, stats, loadFullGame, resetActiveGame, resetAll, handleDeath, saveGame } from './state.js';
+import { hasActiveGame, hasLegacy, clearActiveGame, clearAll } from './storage.js'; // 🔑 Обновлено!
 import { startGameLoop, stopGameLoop } from './gameLoop.js';
 import { recalculateStats, buyUpgradeBulk, buyItemBulk } from './upgrades.js';
-import { renderUI, updateUI, showCritPopup, showMessage, renderCrystals, renderUpgrades, showInheritanceModal, renderDifficultyPanel } from './ui.js';
+import { renderUI, updateUI, showCritPopup, showMessage, renderCrystals, renderUpgrades, showInheritanceModal, renderDifficultyPanel, showDeathScreen } from './ui.js';
 import { createCrystalBulk, selectCrystal, getMaxAffordableCrystals } from './crystals.js';
 import { initPanels, setOnPanelOpenCallback, openPanel, closePanel } from './panels.js';
 import { canTrain, getTrainingBlockReason, restoreNeedManual, renderNeeds, handleTreatDisease, renderDiseaseBlock } from './needs/index.js';
@@ -12,11 +12,11 @@ import { applyInheritance } from './inheritance.js';
 // 1. ЛОГИКА ИГРОВОГО ДВИЖКА
 // ==========================================
 function startGameEngine() {
+    stopGameEngine(); // 🔑 Сначала гарантированно останавливаем старый цикл
     recalculateStats();
     renderUI();
     startGameLoop();
 }
-
 function stopGameEngine() {
     stopGameLoop();
 }
@@ -34,18 +34,20 @@ function showMainMenu() {
     stopGameEngine();
     btnContainer.innerHTML = '';
     
-    const hasSave = loadGame();
+    // 🔑 Загружаем все данные из разделённых хранилищ
+    const hasActive = loadFullGame();
+    const hasLeg = hasLegacy();
     const isAlive = !gameState.isGameOver;
-    const hasLegacy = gameState.legacy && (
-        gameState.legacy.exchangeRateBonus > 0 || 
-        gameState.legacy.startingCrystalsCount > 0 || 
-        (gameState.legacy.startingAbilities && gameState.legacy.startingAbilities.length > 0)
-    );
 
-    if (hasSave && isAlive) {
+    console.log('📊 Состояние меню:', { hasActive, hasLeg, isAlive, difficulty: gameState.difficulty });
+
+    // 1. Кнопка "Продолжить игру" (только если есть активное сохранение и персонаж жив)
+    if (hasActive && isAlive) {
         const btn = document.createElement('button');
         btn.className = 'menu-btn';
-        btn.textContent = '▶️ Продолжить игру';
+        const diffIcons = { easy: '🌱', medium: '⚖️', hard: '💀' };
+        const diffIcon = diffIcons[gameState.difficulty] || '⚖️';
+        btn.textContent = `▶️ Продолжить игру ${diffIcon}`;
         btn.onclick = () => {
             menu.style.display = 'none';
             app.style.display = 'block';
@@ -54,12 +56,14 @@ function showMainMenu() {
         btnContainer.appendChild(btn);
     }
 
-    if (hasLegacy) {
+    // 2. Кнопка "С бонусами наследия" (если есть бонусы)
+    if (hasLeg) {
         const btn = document.createElement('button');
         btn.className = 'menu-btn secondary';
-        btn.textContent = '🧬 Начать новую игру с бонусами наследия';
+        btn.textContent = `🧬 Начать новое поколение (+${legacy.exchangeRateBonus}% курс)`;
         btn.onclick = () => {
-            applyInheritance(false);
+            // Сбрасываем активную игру, применяя наследие
+            applyInheritance();
             menu.style.display = 'none';
             app.style.display = 'block';
             startGameEngine();
@@ -67,21 +71,49 @@ function showMainMenu() {
         btnContainer.appendChild(btn);
     }
 
-    // 🔑 Кнопка "Новая игра" открывает панель сложности
+    // 3. Кнопка "Новая игра" (ВСЕГДА доступна)
     const newGameBtn = document.createElement('button');
     newGameBtn.className = 'menu-btn danger';
-    newGameBtn.textContent = hasSave ? '🔄 Новая игра (выбрать сложность)' : '🔄 Новая игра';
+    newGameBtn.textContent = hasActiveGame() ? '🔄 Новая игра (выбрать сложность)' : '🔄 Новая игра';
+    
     newGameBtn.onclick = () => {
-        if (hasSave) {
-            if (!confirm("⚠️ ВНИМАНИЕ: Это удалит текущее сохранение. Весь непрогрессировавший в наследие прогресс будет потерян. Продолжить?")) {
+        if (hasActiveGame()) {
+            if (!confirm("⚠️ ВНИМАНИЕ: Это удалит текущее сохранение. Наследие и статистика сохранятся. Продолжить?")) {
                 return;
             }
-            clearSave();
+            clearActiveGame(); // 🔑 Было clearSave(), стало clearActiveGame()
         }
         renderDifficultyPanel();
         openPanel('difficultyPanel');
     };
     btnContainer.appendChild(newGameBtn);
+
+    // 4. Кнопка "Полный сброс" (если есть наследие или статистика)
+    if (hasLeg || stats.runsCompleted > 0) {
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'menu-btn';
+        resetBtn.style.background = '#6c757d';
+        resetBtn.style.fontSize = '13px';
+        resetBtn.style.padding = '10px';
+        resetBtn.style.marginTop = '10px';
+        resetBtn.textContent = '🗑️ Полный сброс (удалить ВСЁ, включая наследие)';
+        resetBtn.onclick = () => {
+            if (confirm("⚠️ ВНИМАНИЕ: Это удалит ВСЁ — наследие, статистику, активную игру. Действие необратимо! Продолжить?")) {
+                resetAll();
+                window.location.reload();
+            }
+        };
+        btnContainer.appendChild(resetBtn);
+    }
+
+    // 🔑 Отображаем общую статистику в подвале меню
+    const footer = menu.querySelector('.menu-footer');
+    if (footer && stats.runsCompleted > 0) {
+        footer.innerHTML = `
+            <p>📊 Поколений: ${stats.runsCompleted} • 💀 Смертей: ${stats.totalDeaths} • 🏆 Рекорд возраста: ${stats.highestAgeReached} лет</p>
+            <p>Автосохранение каждые 30 секунд</p>
+        `;
+    }
 }
 
 // ==========================================
@@ -232,8 +264,7 @@ function bindEvents() {
 
     document.getElementById('resetBtn').addEventListener('click', () => {
         if (confirm("Вы уверены? Весь прогресс будет потерян, а дата сброшена к 2026-01-01!")) {
-            clearSave();
-            resetGameState(false);
+            resetAll();
             window.location.replace(window.location.href);
         }
     });
@@ -247,29 +278,29 @@ function bindEvents() {
     });
 
     // 🔑 НОВЫЙ ОБРАБОТЧИК: Выбор сложности
-    document.getElementById('difficultyOptions').addEventListener('click', (e) => {
-        const btn = e.target.closest('.difficulty-select-btn');
-        if (!btn) return;
-        
-        const difficulty = btn.dataset.difficulty;
-        
-        // 1. Сбрасываем игру с выбранной сложностью
-        resetGameState(false, difficulty);
-        
-        // 2. Сохраняем новое состояние
-        saveGame();
-        
-        // 3. Закрываем панель
-        closePanel();
-        
-        // 4. Переключаем экраны и запускаем игру
-        const menu = document.getElementById('mainMenu');
-        const app = document.getElementById('gameApp');
-        menu.style.display = 'none';
-        app.style.display = 'block';
-        
-        startGameEngine();
-    });
+    const diffContainer = document.getElementById('difficultyOptions');
+    if (diffContainer) {
+        diffContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.difficulty-select-btn');
+            if (!btn) return;
+            
+            const difficulty = btn.dataset.difficulty;
+            console.log(`✅ Выбрана сложность: ${difficulty}`);
+            
+            // Сбрасываем активную игру с выбранной сложностью
+            resetActiveGame(difficulty);
+            saveGame();
+            
+            closePanel();
+            
+            const menu = document.getElementById('mainMenu');
+            const app = document.getElementById('gameApp');
+            menu.style.display = 'none';
+            app.style.display = 'block';
+            
+            startGameEngine();
+        });
+    }
 
     setOnPanelOpenCallback((panelId) => {
         if (panelId === 'shopPanel') renderUpgrades();
@@ -285,3 +316,5 @@ function bindEvents() {
 // ==========================================
 bindEvents();
 showMainMenu();
+
+window.startGameEngine = startGameEngine;

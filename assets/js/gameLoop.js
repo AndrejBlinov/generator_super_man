@@ -1,4 +1,4 @@
-import { gameState } from './state.js';
+import { gameState, legacy, handleDeath } from './state.js';
 import { AUTO_EXCHANGE_CONFIG } from './config.js';
 import { calculatePassiveIncome } from './crystals.js';
 import { updateUI, showGameOver, showMessage } from './ui.js';
@@ -6,7 +6,17 @@ import { processNeedsTick, processDiseasesTick } from './needs/index.js';
 
 let gameLoopInterval = null;
 
+// 🔑 Безопасный запуск: если интервал уже есть — останавливаем его
 export function startGameLoop() {
+    // 🔑 КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: предотвращаем дублирование
+    if (gameLoopInterval !== null) {
+        console.log('⚠️ GameLoop уже запущен, останавливаем старый');
+        clearInterval(gameLoopInterval);
+        gameLoopInterval = null;
+    }
+    
+    console.log('🚀 Запуск GameLoop');
+    
     gameLoopInterval = setInterval(() => {
         if (gameState.isGameOver) return;
 
@@ -30,11 +40,13 @@ export function startGameLoop() {
         }
 
         // 3. Автоматический обмен ОЭ на деньги
-        const currentExchangeRate = 10 + (gameState.legacy.exchangeRateBonus || 0);
+        const currentExchangeRate = 10 + (legacy.exchangeRateBonus || 0);
         if (gameState.autoExchangeAmount > 0 && gameState.evolutionPoints >= gameState.autoExchangeAmount) {
             gameState.evolutionPoints -= gameState.autoExchangeAmount;
             const moneyGained = gameState.autoExchangeAmount * currentExchangeRate;
             gameState.money += moneyGained;
+            
+            if (!gameState.stats) gameState.stats = { totalMoneyEarnedThisRun: 0 };
             gameState.stats.totalMoneyEarnedThisRun += moneyGained;
         }
 
@@ -42,7 +54,8 @@ export function startGameLoop() {
         const needsResults = processNeedsTick();
         if (needsResults.deaths.length > 0) {
             gameState.isGameOver = true;
-            gameState.stats.totalDeaths += 1;
+            stopGameLoop(); // 🔑 Останавливаем gameLoop при смерти!
+            handleDeath();
             showGameOver(`Ваш персонаж умер от ${needsResults.deaths[0]}!`);
             return;
         }
@@ -57,7 +70,8 @@ export function startGameLoop() {
         }
         if (diseaseResult.died) {
             gameState.isGameOver = true;
-            gameState.stats.totalDeaths += 1;
+            stopGameLoop(); // 🔑 Останавливаем gameLoop при смерти!
+            handleDeath();
             showGameOver(`Персонаж умер от неизлеченной болезни: ${diseaseResult.died}!`);
             return;
         }
@@ -77,7 +91,8 @@ export function startGameLoop() {
             
             if (gameState.ageInYears >= gameState.maxAgeInYears) {
                 gameState.isGameOver = true;
-                gameState.stats.totalDeaths += 1;
+                stopGameLoop(); // 🔑 Останавливаем gameLoop при смерти!
+                handleDeath();
                 showGameOver("Персонаж умер от старости!");
             }
         }
@@ -87,7 +102,8 @@ export function startGameLoop() {
 }
 
 export function stopGameLoop() {
-    if (gameLoopInterval) {
+    if (gameLoopInterval !== null) {
+        console.log('🛑 Остановка GameLoop');
         clearInterval(gameLoopInterval);
         gameLoopInterval = null;
     }
