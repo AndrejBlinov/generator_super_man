@@ -61,10 +61,17 @@ export const AUTO_EXCHANGE_CONFIG = {
     rate: 10
 };
 
+export const INHERITANCE_CONFIG = {
+    moneySpentPerBonus: 10000,      // 10 000 💰 потраченных = +5% к курсу
+    exchangeRateBonusPerStep: 5,    // +5% к курсу (базовый курс 10, станет 15, 20 и т.д.)
+    crystalLevelForBonus: 5,        // Уровень кристалла для бонуса
+    abilityLevelForBonus: 5         // Уровень способности для бонуса
+};
+
 export const CRYSTAL_COST = 100;
 export const MAX_ACTIVE_CRYSTALS = 5;
 export const MAX_INVENTORY_CRYSTALS = 10;
-export const GAME_VERSION = "0.9.0";
+export const GAME_VERSION = "1.0.0"; // Обновляем версию
 
 export const GAME_START_DATE = {
     year: 2026,

@@ -1,7 +1,8 @@
 import { gameState } from './state.js';
-import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE } from './config.js';
+import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST } from './config.js';
 import { calculatePassiveIncome, getSelection, getMaxAffordableCrystals } from './crystals.js';
 import { calculateBulkCost, getMaxAffordableCount, getMaxAffordableItemCount } from './upgrades.js';
+import { getInheritancePreviewText, applyInheritance } from './inheritance.js';
 
 // 🔑 Импортируем из needs-модуля
 import { 
@@ -229,19 +230,37 @@ export function updateCrystalCreateButton() {
     if (!createBtn) return;
 
     const maxAffordable = getMaxAffordableCrystals();
-    const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
-    const totalCost = 100 * (actualCount > 0 ? actualCount : 1);
     
-    createBtn.disabled = actualCount <= 0 || gameState.evolutionPoints < totalCost;
-    
+    // Определяем, сколько кристаллов мы реально можем создать с учётом множителя
+    let actualCount = 0;
     if (gameState.purchaseMultiplier === 'max') {
-        createBtn.textContent = maxAffordable > 0 
-            ? `Создать ${maxAffordable} кристалл(ов) за ${totalCost} ОЭ`
-            : 'Нет свободных слотов';
-    } else if (parseInt(gameState.purchaseMultiplier) > 1) {
-        createBtn.textContent = `Создать ${parseInt(gameState.purchaseMultiplier)} кристалл(ов) за ${totalCost} ОЭ`;
+        actualCount = maxAffordable;
     } else {
-        createBtn.textContent = 'Создать кристалл (100 ОЭ)';
+        actualCount = Math.min(parseInt(gameState.purchaseMultiplier), maxAffordable);
+    }
+
+    const totalCost = actualCount * CRYSTAL_COST;
+
+    // Если создать нельзя вообще
+    if (actualCount <= 0) {
+        createBtn.disabled = true;
+        if (maxAffordable === 0) {
+            createBtn.textContent = '❌ Нет свободных слотов (15/15)';
+        } else {
+            createBtn.textContent = `❌ Недостаточно ОЭ (нужно ${CRYSTAL_COST})`;
+        }
+        return;
+    }
+
+    createBtn.disabled = false;
+
+    // Формируем понятный текст кнопки
+    if (gameState.purchaseMultiplier === 'max') {
+        createBtn.textContent = `⚡ Создать МАКС (${actualCount} шт.) за ${totalCost} ОЭ`;
+    } else if (actualCount > 1) {
+        createBtn.textContent = `✨ Создать ${actualCount} шт. за ${totalCost} ОЭ`;
+    } else {
+        createBtn.textContent = `Создать 1 кристалл за ${CRYSTAL_COST} ОЭ`;
     }
 }
 
@@ -279,6 +298,15 @@ export function updateAutoExchangeButtons() {
         autoSpendStatus.textContent = gameState.autoSpendEnabled ? 'ВКЛ' : 'ВЫКЛ';
         autoSpendBtn.classList.toggle('active', gameState.autoSpendEnabled);
     }
+    
+    // 🔑 Обновляем кнопку автомлечения
+    const autoTreatBtn = document.getElementById('autoTreatToggle');
+    const autoTreatStatus = document.getElementById('autoTreatStatus');
+    
+    if (autoTreatBtn && autoTreatStatus) {
+        autoTreatStatus.textContent = gameState.autoTreatEnabled ? 'ВКЛ' : 'ВЫКЛ';
+        autoTreatBtn.classList.toggle('active', gameState.autoTreatEnabled);
+    }
 }
 
 export function showMessage(text) {
@@ -301,23 +329,97 @@ export function showCritPopup(event, amount, customText = null) {
 export function showGameOver(reason = "Ваш персонаж умер!") {
     const overlay = document.createElement('div');
     overlay.className = 'game-over';
+    
+    let inheritancePreview = '';
+    try {
+        inheritancePreview = getInheritancePreviewText();
+    } catch (e) {
+        inheritancePreview = '<p>Бонусы наследия недоступны.</p>';
+    }
+    
     overlay.innerHTML = `
-        <div class="game-over-content">
-            <h2>💀 Игра окончена</h2>
-            <p>${reason}</p>
-            <p>Ваш персонаж прожил ${gameState.ageInYears} лет</p>
-            <p>Всего заработано: ${Math.round(gameState.totalPointsEarned)} ОЭ</p>
-            <button id="restartBtn" style="margin-top: 20px; padding: 15px 30px; font-size: 18px; background: #667eea; color: white; border: none; border-radius: 10px; cursor: pointer;">
-                Начать заново
-            </button>
+        <div class="game-over-content" style="max-width: 600px; text-align: left; max-height: 85vh; overflow-y: auto;">
+            <h2 style="text-align: center; color: #dc3545; margin-bottom: 15px;">💀 Игра окончена</h2>
+            <p style="text-align: center; font-size: 18px; margin-bottom: 15px;"><strong>${reason}</strong></p>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0;"><strong>📊 Статистика этого поколения:</strong></p>
+                <p style="margin: 0;">Прожито лет: <strong>${gameState.ageInYears}</strong></p>
+                <p style="margin: 0;">Всего заработано ОЭ: <strong>${Math.round(gameState.totalPointsEarned)}</strong></p>
+                <p style="margin: 0;">Всего заработано 💰: <strong>${Math.round(gameState.stats.totalMoneyEarnedThisRun)}</strong></p>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); padding: 15px; border-radius: 10px; border-left: 4px solid #9c27b0; margin-bottom: 15px;">
+                <h3 style="color: #6a1b9a; margin: 0 0 10px 0;">🧬 Бонусы наследия</h3>
+                ${inheritancePreview}
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                <button id="inheritAfterDeathBtn" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
+                    🧬 Наследовать<br>
+                    <span style="font-size: 12px; font-weight: normal;">Получить бонусы</span>
+                </button>
+                <button id="fullResetBtn" style="flex: 1; padding: 15px; background: #dc3545; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
+                    🔄 С нуля<br>
+                    <span style="font-size: 12px; font-weight: normal;">Без бонусов</span>
+                </button>
+            </div>
         </div>
     `;
+    
     document.body.appendChild(overlay);
     
-    document.getElementById('restartBtn').addEventListener('click', () => {
-        import('./storage.js').then(storage => {
-            storage.clearSave();
-            location.reload();
+    // 🔑 Обработчик "Наследовать"
+    document.getElementById('inheritAfterDeathBtn').addEventListener('click', () => {
+        overlay.remove();
+        import('./inheritance.js').then(module => {
+            module.applyInheritance();
+            // Полная перезагрузка для применения всех бонусов
+            window.location.reload();
+        });
+    });
+    
+    // 🔑 Обработчик "С нуля"
+    document.getElementById('fullResetBtn').addEventListener('click', () => {
+        if (confirm("Вы уверены? ВСЕ бонусы и статистика будут потеряны!")) {
+            overlay.remove();
+            localStorage.removeItem('evolutionGame');
+            window.location.reload();
+        }
+    });
+}
+
+export function showInheritanceModal(isAfterDeath = false) {
+    const previewText = getInheritancePreviewText();
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'game-over'; // Используем те же стили, что и для Game Over
+    overlay.innerHTML = `
+        <div class="game-over-content" style="max-width: 500px; text-align: left;">
+            <h2 style="text-align: center; color: #667eea;">🧬 Наследие</h2>
+            ${previewText}
+            <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
+                <button id="cancelInheritBtn" style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                    Отмена
+                </button>
+                <button id="confirmInheritBtn" style="padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold;">
+                    Начать новое поколение
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    document.getElementById('cancelInheritBtn').addEventListener('click', () => {
+        overlay.remove();
+    });
+    
+    document.getElementById('confirmInheritBtn').addEventListener('click', () => {
+        overlay.remove();
+        import('./inheritance.js').then(module => {
+            module.applyInheritance(isAfterDeath);
+            window.location.reload();
         });
     });
 }

@@ -1,14 +1,22 @@
 // Точка входа модуля болезней
 
-export { DISEASES_CONFIG, DISEASE_CATEGORIES, DISEASE_CHANCE_PER_TICK } from './config.js';
 export { 
-    trySpawnDisease, 
-    processDiseaseTick, 
+    DISEASES_CONFIG, 
+    DISEASE_CATEGORIES, 
+    DISEASES_BY_CATEGORY, 
+    AGE_BRACKETS, 
+    MAX_ACTIVE_DISEASES 
+} from './config.js';
+
+export { 
+    trySpawnDiseases, 
+    processDiseasesTick, 
     treatDisease,
     getDiseaseHealthDecayBonus,
     isDiseaseBlockingTraining,
-    getActiveDiseaseInfo
+    getActiveDiseasesInfo
 } from './logic.js';
+
 export { 
     renderDiseaseBlock, 
     updateDiseaseUI, 

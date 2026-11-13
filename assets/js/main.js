@@ -2,7 +2,7 @@ import { gameState, resetGameState } from './state.js';
 import { loadGame, saveGame, clearSave } from './storage.js';
 import { startGameLoop } from './gameLoop.js';
 import { recalculateStats, buyUpgradeBulk, buyItemBulk } from './upgrades.js';
-import { renderUI, updateUI, showCritPopup, showMessage, renderCrystals, renderUpgrades } from './ui.js';
+import { renderUI, updateUI, showCritPopup, showMessage, renderCrystals, renderUpgrades, showInheritanceModal } from './ui.js';
 import { createCrystalBulk, selectCrystal, getMaxAffordableCrystals } from './crystals.js';
 import { initPanels, setOnPanelOpenCallback } from './panels.js';
 
@@ -90,19 +90,35 @@ function init() {
 
     document.getElementById('createCrystalBtn').addEventListener('click', () => {
         const maxAffordable = getMaxAffordableCrystals();
-        const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
-
+        
+        let actualCount = 0;
+        if (gameState.purchaseMultiplier === 'max') {
+            actualCount = maxAffordable;
+        } else {
+            actualCount = Math.min(parseInt(gameState.purchaseMultiplier), maxAffordable);
+        }
+        
         if (actualCount > 0 && createCrystalBulk(actualCount)) {
             renderCrystals();
             updateUI();
         }
     });
 
+    document.getElementById('autoTreatToggle').addEventListener('click', () => {
+        gameState.autoTreatEnabled = !gameState.autoTreatEnabled;
+
+        const status = gameState.autoTreatEnabled ? 'включено' : 'выключено';
+        showMessage(`Авто-лечение болезней: ${status}`);
+        updateUI();
+    });
+
     document.getElementById('diseaseContainer').addEventListener('click', (e) => {
-        const btn = e.target.closest('#treatDiseaseBtn');
+        const btn = e.target.closest('.disease-treat-btn');
         if (!btn || btn.classList.contains('disabled')) return;
 
-        const result = handleTreatDisease();
+        const diseaseId = btn.dataset.treat;
+        const result = handleTreatDisease(diseaseId);
+
         showMessage(result.message);
         renderDiseaseBlock();
         updateUI();
@@ -126,6 +142,10 @@ function init() {
         selectCrystal('inventory', index);
         renderCrystals();
         updateUI();
+    });
+
+    document.getElementById('inheritBtn').addEventListener('click', () => {
+        showInheritanceModal(false);
     });
 
     document.getElementById('upgradesContainer').addEventListener('click', (e) => {

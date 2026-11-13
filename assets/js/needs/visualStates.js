@@ -1,6 +1,6 @@
 import { gameState } from '../state.js';
 import { NEEDS_CONFIG } from './config.js';
-import { getActiveDiseaseInfo } from './diseases/index.js';
+import { getActiveDiseasesInfo } from './diseases/index.js';
 
 export function getNeedState(needId) {
     const config = NEEDS_CONFIG[needId];
@@ -33,11 +33,20 @@ export function applyCharacterStates() {
     
     let statusMessages = [];
     
-    // 🔑 Приоритет: болезнь имеет высший приоритет в визуале
-    const diseaseInfo = getActiveDiseaseInfo();
-    if (diseaseInfo) {
-        human.classList.add(`disease-${diseaseInfo.id}`);
-        statusMessages.push(`${diseaseInfo.icon} ${diseaseInfo.name}`);
+    // 🔑 Приоритет: болезни имеют высший приоритет
+    const diseases = getActiveDiseasesInfo();
+    if (diseases.length > 0) {
+        // Применяем визуал самой тяжёлой болезни
+        const sortedDiseases = [...diseases].sort((a, b) => {
+            const order = { light: 1, medium: 2, heavy: 3 };
+            return order[b.category] - order[a.category];
+        });
+        
+        const primaryDisease = sortedDiseases[0];
+        human.classList.add(`disease-${primaryDisease.id}`);
+        
+        // 🔑 Показываем все болезни в статусе
+        statusMessages.push(diseases.map(d => `${d.icon} ${d.name}`).join(' + '));
     }
     
     // Комфорт
@@ -56,8 +65,8 @@ export function applyCharacterStates() {
         statusMessages.push("🏰 В замке");
     }
     
-    // Голод (только если нет болезни — иначе перекрывается)
-    if (!diseaseInfo) {
+    // Голод и здоровье — только если нет болезней
+    if (diseases.length === 0) {
         const hungerState = getNeedState('hunger');
         if (hungerState.key === 'hungry') {
             human.classList.add('hungry');
@@ -67,10 +76,7 @@ export function applyCharacterStates() {
             human.classList.add('starving', 'lying-down');
             statusMessages.push("💀 Голодает!");
         }
-    }
-    
-    // Здоровье (только если нет болезни)
-    if (!diseaseInfo) {
+        
         const healthState = getNeedState('health');
         if (healthState.key === 'sick') {
             human.classList.add('sick');

@@ -1,76 +1,137 @@
-// Логика болезней: появление, прогрессирование, лечение
-
 import { gameState } from '../../state.js';
-import { DISEASES_CONFIG, DISEASE_CHANCE_PER_TICK, INITIAL_DISEASE } from './config.js';
+import { DISEASES_CONFIG, DISEASES_BY_CATEGORY, AGE_BRACKETS, MAX_ACTIVE_DISEASES } from './config.js';
 
-// Проверка появления новой болезни (если нет активной)
-export function trySpawnDisease() {
-    if (gameState.activeDisease) return null;
-    
-    if (Math.random() < DISEASE_CHANCE_PER_TICK) {
-        gameState.activeDisease = {
-            id: INITIAL_DISEASE,
-            ticksRemaining: DISEASES_CONFIG[INITIAL_DISEASE].duration,
-            progressed: false
-        };
-        return gameState.activeDisease;
-    }
-    
-    return null;
+function getAgeBracket() {
+    const age = gameState.ageInYears;
+    return AGE_BRACKETS.find(b => age >= b.min && age <= b.max) || AGE_BRACKETS[AGE_BRACKETS.length - 1];
 }
 
-// Обработка одного тика болезни
-export function processDiseaseTick() {
-    if (!gameState.activeDisease) {
-        return { spawned: trySpawnDisease(), progressed: null, died: false };
-    }
+export function trySpawnDiseases() {
+    if (!gameState.activeDiseases) gameState.activeDiseases = [];
+    if (gameState.activeDiseases.length >= MAX_ACTIVE_DISEASES) return [];
     
-    const disease = gameState.activeDisease;
-    const config = DISEASES_CONFIG[disease.id];
+    const chances = getAgeBracket().chances;
+    const spawned = [];
     
-    // Уменьшаем таймер
-    disease.ticksRemaining--;
-    
-    // Проверка прогрессирования
-    if (disease.ticksRemaining <= 0) {
-        return progressDisease(disease, config);
-    }
-    
-    return { spawned: null, progressed: null, died: false };
-}
-
-// Прогрессирование болезни
-function progressDisease(disease, config) {
-    // Тяжёлая болезнь → смерть
-    if (config.deathOnExpire) {
-        gameState.isGameOver = true;
-        return { spawned: null, progressed: null, died: true, reason: config.name };
-    }
-    
-    // Лёгкая/средняя → следующая стадия
-    const nextId = config.nextStage;
-    if (nextId && DISEASES_CONFIG[nextId]) {
-        disease.id = nextId;
-        disease.ticksRemaining = DISEASES_CONFIG[nextId].duration;
-        disease.progressed = true;
+    for (const category of ['light', 'medium', 'heavy']) {
+        if (gameState.activeDiseases.length >= MAX_ACTIVE_DISEASES) break;
         
-        return { 
-            spawned: null, 
-            progressed: DISEASES_CONFIG[nextId], 
-            died: false 
-        };
+        if (Math.random() < chances[category]) {
+            const available = DISEASES_BY_CATEGORY[category].filter(
+                id => !gameState.activeDiseases.some(d => d.id === id)
+            );
+            
+            if (available.length === 0) continue;
+            
+            const diseaseId = available[Math.floor(Math.random() * available.length)];
+            const config = DISEASES_CONFIG[diseaseId];
+            
+            const newDisease = {
+                id: diseaseId,
+                ticksRemaining: config.duration,
+                progressed: false
+            };
+            
+            gameState.activeDiseases.push(newDisease);
+            spawned.push(config);
+        }
     }
     
-    return { spawned: null, progressed: null, died: false };
+    return spawned;
 }
 
-// Лечение болезни (мгновенно убирает активную болезнь)
-export function treatDisease() {
-    if (!gameState.activeDisease) {
+export function processDiseasesTick() {
+    if (!gameState.activeDiseases) gameState.activeDiseases = [];
+    
+    const result = {
+        spawned: trySpawnDiseases(),
+        progressed: [],
+        died: null,
+        autoTreated: []
+    };
+    
+    // 🔑 Автоматическое лечение (если включено)
+    if (gameState.autoTreatEnabled) {
+        result.autoTreated = autoTreatDiseases();
+    }
+    
+    const toRemove = [];
+    
+    gameState.activeDiseases.forEach((disease, index) => {
+        disease.ticksRemaining--;
+        
+        if (disease.ticksRemaining <= 0) {
+            const config = DISEASES_CONFIG[disease.id];
+            
+            if (config.deathOnExpire) {
+                result.died = config.name;
+                return;
+            }
+            
+            if (config.nextStage) {
+                const nextConfig = DISEASES_CONFIG[config.nextStage];
+                
+                const alreadyHas = gameState.activeDiseases.some(
+                    (d, i) => i !== index && d.id === config.nextStage
+                );
+                
+                if (alreadyHas) {
+                    toRemove.push(index);
+                } else {
+                    disease.id = config.nextStage;
+                    disease.ticksRemaining = nextConfig.duration;
+                    result.progressed.push(nextConfig);
+                }
+            }
+        }
+    });
+    
+    toRemove.reverse().forEach(i => gameState.activeDiseases.splice(i, 1));
+    
+    return result;
+}
+
+// 🔑 Автоматическое лечение: лечит самую дешёвую болезнь, если есть деньги
+function autoTreatDiseases() {
+    if (!gameState.activeDiseases || gameState.activeDiseases.length === 0) return [];
+    
+    const treated = [];
+    
+    // Сортируем по стоимости лечения (от дешёвой к дорогой)
+    const sortedDiseases = [...gameState.activeDiseases].sort((a, b) => {
+        const costA = DISEASES_CONFIG[a.id].treatmentCost;
+        const costB = DISEASES_CONFIG[b.id].treatmentCost;
+        return costA - costB;
+    });
+    
+    // Пытаемся лечить, пока есть деньги
+    for (const disease of sortedDiseases) {
+        const config = DISEASES_CONFIG[disease.id];
+        
+        if (gameState.money >= config.treatmentCost) {
+            const index = gameState.activeDiseases.findIndex(d => d.id === disease.id);
+            if (index !== -1) {
+                gameState.money -= config.treatmentCost;
+                gameState.activeDiseases.splice(index, 1);
+                treated.push(config);
+            }
+        }
+    }
+    
+    return treated;
+}
+
+export function treatDisease(diseaseId) {
+    if (!gameState.activeDiseases) {
         return { success: false, message: "Нет активной болезни" };
     }
     
-    const config = DISEASES_CONFIG[gameState.activeDisease.id];
+    const index = gameState.activeDiseases.findIndex(d => d.id === diseaseId);
+    if (index === -1) {
+        return { success: false, message: "Болезнь не найдена" };
+    }
+    
+    const config = DISEASES_CONFIG[diseaseId];
     
     if (gameState.money < config.treatmentCost) {
         return { 
@@ -80,40 +141,43 @@ export function treatDisease() {
     }
     
     gameState.money -= config.treatmentCost;
-    const treatedDisease = { ...gameState.activeDisease };
-    gameState.activeDisease = null;
+    gameState.activeDiseases.splice(index, 1);
     
     return { 
         success: true, 
-        message: `${config.name} вылечена!`,
-        treatedDisease
+        message: `${config.name} вылечена!`
     };
 }
 
-// Получить доп. падение здоровья от активной болезни
 export function getDiseaseHealthDecayBonus() {
-    if (!gameState.activeDisease) return 0;
-    
-    const config = DISEASES_CONFIG[gameState.activeDisease.id];
-    return config.effects.healthDecayBonus;
+    if (!gameState.activeDiseases) return 0;
+    return gameState.activeDiseases.reduce((sum, disease) => {
+        const config = DISEASES_CONFIG[disease.id];
+        return sum + config.effects.healthDecayBonus;
+    }, 0);
 }
 
-// Проверить, блокирует ли болезнь тренировку
 export function isDiseaseBlockingTraining() {
-    if (!gameState.activeDisease) return false;
-    
-    const config = DISEASES_CONFIG[gameState.activeDisease.id];
-    return config.effects.blockTraining;
+    if (!gameState.activeDiseases) return false;
+    return gameState.activeDiseases.some(disease => {
+        const config = DISEASES_CONFIG[disease.id];
+        return config.effects.blockTraining;
+    });
 }
 
-// Получить информацию о болезни для UI
-export function getActiveDiseaseInfo() {
-    if (!gameState.activeDisease) return null;
+export function getActiveDiseasesInfo() {
+    if (!gameState.activeDiseases || !Array.isArray(gameState.activeDiseases)) {
+        return [];
+    }
     
-    const config = DISEASES_CONFIG[gameState.activeDisease.id];
-    return {
-        ...config,
-        ticksRemaining: gameState.activeDisease.ticksRemaining,
-        canAfford: gameState.money >= config.treatmentCost
-    };
+    return gameState.activeDiseases
+        .filter(disease => disease && disease.id && DISEASES_CONFIG[disease.id]) // <-- Фильтр "битых" записей
+        .map(disease => {
+            const config = DISEASES_CONFIG[disease.id];
+            return {
+                ...config,
+                ticksRemaining: disease.ticksRemaining,
+                canAfford: gameState.money >= config.treatmentCost
+            };
+        });
 }

@@ -2,7 +2,7 @@ import { gameState } from './state.js';
 import { AUTO_EXCHANGE_CONFIG } from './config.js';
 import { calculatePassiveIncome } from './crystals.js';
 import { updateUI, showGameOver, showMessage } from './ui.js';
-import { processNeedsTick, processDiseaseTick } from './needs/index.js';
+import { processNeedsTick, processDiseasesTick } from './needs/index.js';
 
 let gameLoopInterval = null;
 
@@ -10,49 +10,47 @@ export function startGameLoop() {
     gameLoopInterval = setInterval(() => {
         if (gameState.isGameOver) return;
 
-        // 1. Пассивный доход от кристаллов
+        // 1. Пассивный доход
         const passiveIncome = calculatePassiveIncome();
         gameState.evolutionPoints += passiveIncome;
         gameState.totalPointsEarned += passiveIncome;
 
-        // 2. Телекинез: шанс доп. тренировки
+        // 2. Телекинез
         if (Math.random() < gameState.extraTrainingChance) {
             gameState.evolutionPoints += 1;
             gameState.totalPointsEarned += 1;
         }
 
-        // 3. Автоматический обмен ОЭ на деньги
+        // 3. Автоматический обмен ОЭ на деньги (с учетом бонуса наследия!)
+        const currentExchangeRate = 10 + (gameState.legacy.exchangeRateBonus || 0);
         if (gameState.autoExchangeAmount > 0 && gameState.evolutionPoints >= gameState.autoExchangeAmount) {
             gameState.evolutionPoints -= gameState.autoExchangeAmount;
-            gameState.money += gameState.autoExchangeAmount * AUTO_EXCHANGE_CONFIG.rate;
+            const moneyGained = gameState.autoExchangeAmount * currentExchangeRate;
+            gameState.money += moneyGained;
+            gameState.stats.totalMoneyEarnedThisRun += moneyGained; // 🔑 Трекинг
         }
 
-        // 4. Обработка потребностей
+        // 4. Потребности
         const needsResults = processNeedsTick();
-        
         if (needsResults.deaths.length > 0) {
             gameState.isGameOver = true;
+            gameState.stats.totalDeaths += 1; // 🔑 Трекинг смертей
             showGameOver(`Ваш персонаж умер от ${needsResults.deaths[0]}!`);
             return;
         }
 
-        // 🔑 5. Обработка болезней
-        const diseaseResult = processDiseaseTick();
-        
-        // Новая болезнь появилась
-        if (diseaseResult.spawned) {
-            showMessage(`⚠️ Ваш персонаж заболел: ${diseaseResult.spawned.name}!`);
+        // 5. Болезни
+        const diseaseResult = processDiseasesTick();
+        if (diseaseResult.spawned.length > 0) {
+            showMessage(`⚠️ Персонаж заболел: ${diseaseResult.spawned.map(d => d.name).join(', ')}!`);
         }
-        
-        // Болезнь прогрессировала
-        if (diseaseResult.progressed) {
-            showMessage(`🚨 Болезнь ухудшилась: ${diseaseResult.progressed.name}!`);
+        if (diseaseResult.progressed.length > 0) {
+            showMessage(`🚨 Болезнь ухудшилась: ${diseaseResult.progressed.map(d => d.name).join(', ')}!`);
         }
-        
-        // Смерть от болезни
         if (diseaseResult.died) {
             gameState.isGameOver = true;
-            showGameOver(`Ваш персонаж умер от неизлеченной болезни: ${diseaseResult.reason}!`);
+            gameState.stats.totalDeaths += 1;
+            showGameOver(`Персонаж умер от неизлеченной болезни: ${diseaseResult.died}!`);
             return;
         }
 
@@ -71,7 +69,8 @@ export function startGameLoop() {
             
             if (gameState.ageInYears >= gameState.maxAgeInYears) {
                 gameState.isGameOver = true;
-                showGameOver("Ваш персонаж умер от старости!");
+                gameState.stats.totalDeaths += 1;
+                showGameOver("Персонаж умер от старости!");
             }
         }
 
