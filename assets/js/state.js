@@ -1,23 +1,20 @@
-import { GAME_VERSION, NEEDS_CONFIG, AUTO_EXCHANGE_CONFIG } from './config.js';
+import { GAME_VERSION } from './config.js';
+import { NEEDS_CONFIG, getDefaultNeeds } from './needs/index.js';
 
 export const defaultGameState = {
     evolutionPoints: 0,
     totalPointsEarned: 0,
     money: 0,
     
-    // 🔑 Автообмен ОЭ на деньги (фиксированное количество)
-    autoExchangeAmount: AUTO_EXCHANGE_CONFIG.default,
-    
-    // 🔑 Авто-трата денег на потребности (вкл/выкл)
+    autoExchangeAmount: 0,
     autoSpendEnabled: true,
     
     purchaseMultiplier: 1,
     
-    needs: {
-        hunger: NEEDS_CONFIG.hunger.max,
-        comfort: NEEDS_CONFIG.comfort.max,
-        health: NEEDS_CONFIG.health.max
-    },
+    needs: getDefaultNeeds(),
+    
+    // 🔑 Активная болезнь (null или объект { id, ticksRemaining, progressed })
+    activeDisease: null,
     
     ageInYears: 30,
     currentDayInYear: 0,
@@ -70,28 +67,21 @@ export function setGameState(newState) {
     if (newState.extraTrainingChance === undefined) newState.extraTrainingChance = 0.0;
     if (newState.money === undefined) newState.money = 0;
     if (newState.purchaseMultiplier === undefined) newState.purchaseMultiplier = 1;
-    
-    // 🔑 Миграция для новых полей
-    if (newState.autoExchangeAmount === undefined) {
-        // Если есть старое поле autoExchangePercent, конвертируем
-        if (newState.autoExchangePercent !== undefined) {
-            newState.autoExchangeAmount = 0; // По умолчанию 0
-        } else {
-            newState.autoExchangeAmount = AUTO_EXCHANGE_CONFIG.default;
-        }
-    }
+    if (newState.autoExchangeAmount === undefined) newState.autoExchangeAmount = 0;
     if (newState.autoSpendEnabled === undefined) newState.autoSpendEnabled = true;
     
+    // 🔑 Миграция болезней
+    if (newState.activeDisease === undefined) newState.activeDisease = null;
+    
     if (newState.needs === undefined) {
-        newState.needs = {
-            hunger: NEEDS_CONFIG.hunger.max,
-            comfort: NEEDS_CONFIG.comfort.max,
-            health: NEEDS_CONFIG.health.max
-        };
+        newState.needs = getDefaultNeeds();
     } else {
-        if (newState.needs.hunger === undefined) newState.needs.hunger = NEEDS_CONFIG.hunger.max;
-        if (newState.needs.comfort === undefined) newState.needs.comfort = NEEDS_CONFIG.comfort.max;
-        if (newState.needs.health === undefined) newState.needs.health = NEEDS_CONFIG.health.max;
+        const defaults = getDefaultNeeds();
+        Object.keys(defaults).forEach(needId => {
+            if (newState.needs[needId] === undefined) {
+                newState.needs[needId] = defaults[needId];
+            }
+        });
     }
     
     gameState = { ...gameState, ...newState };

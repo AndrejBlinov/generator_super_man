@@ -1,7 +1,17 @@
 import { gameState } from './state.js';
-import { UPGRADES_CONFIG, ITEMS_CONFIG, NEEDS_CONFIG, GAME_START_DATE } from './config.js';
+import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE } from './config.js';
 import { calculatePassiveIncome, getSelection, getMaxAffordableCrystals } from './crystals.js';
 import { calculateBulkCost, getMaxAffordableCount, getMaxAffordableItemCount } from './upgrades.js';
+
+// 🔑 Импортируем из needs-модуля
+import { 
+    renderNeeds, 
+    updateNeedsBars, 
+    updateNeedRestoreButtons,
+    applyCharacterStates,
+    renderDiseaseBlock,
+    updateDiseaseUI
+} from './needs/index.js';
 
 function formatCalendarDate(years, days) {
     const startDate = new Date(
@@ -20,7 +30,6 @@ function formatCalendarDate(years, days) {
     return `${year}-${month}-${day}`;
 }
 
-// 🔑 Получает реальное количество покупки с учётом множителя
 function getActualCount(baseCount, maxAffordable) {
     if (baseCount === 'max') return maxAffordable;
     return Math.min(parseInt(baseCount), maxAffordable);
@@ -28,6 +37,7 @@ function getActualCount(baseCount, maxAffordable) {
 
 export function renderUI() {
     renderNeeds();
+    renderDiseaseBlock();
     renderCrystals();
     renderUpgrades();
     updateUI();
@@ -53,80 +63,17 @@ export function updateUI() {
     document.getElementById('clickPower').textContent = 
         `${Math.round(gameState.clickPower)} ОЭ`;
 
+    // 🔑 Вызываем функции из needs-модуля
     updateNeedsBars();
+    updateNeedRestoreButtons();
+    updateDiseaseUI();
+    
     updateShopButtons();
     updateCrystalCreateButton();
     updateItemButtons();
-    updateNeedRestoreButtons();
     updateAutoExchangeButtons();
+    
     applyCharacterStates();
-}
-
-export function renderNeeds() {
-    const container = document.getElementById('needsContainer');
-    if (!container) return;
-
-    container.innerHTML = '';
-
-    Object.keys(NEEDS_CONFIG).forEach(needId => {
-        const config = NEEDS_CONFIG[needId];
-        const currentValue = Math.round(gameState.needs[needId]);
-        const percentage = (currentValue / config.max) * 100;
-
-        const needElement = document.createElement('div');
-        needElement.className = 'need-compact-item';
-        
-        let statusClass = '';
-        if (percentage <= 20) statusClass = 'critical';
-        else if (percentage <= 50) statusClass = 'warning';
-
-        needElement.innerHTML = `
-            <div class="need-icon-wrapper ${statusClass}">
-                <span class="need-icon">${config.icon}</span>
-                <span class="need-value-compact">${currentValue}</span>
-            </div>
-            <button class="need-restore-btn-compact" data-need="${needId}" ${gameState.money < config.restoreCost ? 'disabled' : ''}>
-                +${config.restoreAmount} (${config.restoreCost}💰)
-            </button>
-        `;
-        
-        container.appendChild(needElement);
-    });
-}
-
-export function updateNeedsBars() {
-    Object.keys(NEEDS_CONFIG).forEach(needId => {
-        const config = NEEDS_CONFIG[needId];
-        const currentValue = Math.round(gameState.needs[needId]);
-        const percentage = (currentValue / config.max) * 100;
-
-        const needItem = document.querySelector(`[data-need="${needId}"]`)?.closest('.need-compact-item');
-        
-        if (needItem) {
-            const valueDisplay = needItem.querySelector('.need-value-compact');
-            const iconWrapper = needItem.querySelector('.need-icon-wrapper');
-            
-            if (valueDisplay) {
-                valueDisplay.textContent = currentValue;
-            }
-            
-            if (iconWrapper) {
-                iconWrapper.classList.remove('critical', 'warning');
-                if (percentage <= 20) iconWrapper.classList.add('critical');
-                else if (percentage <= 50) iconWrapper.classList.add('warning');
-            }
-        }
-    });
-}
-
-export function updateNeedRestoreButtons() {
-    document.querySelectorAll('.need-restore-btn-compact').forEach((btn) => {
-        const needId = btn.dataset.need;
-        if (!needId) return;
-
-        const config = NEEDS_CONFIG[needId];
-        btn.disabled = gameState.money < config.restoreCost;
-    });
 }
 
 export function renderCrystals() {
@@ -173,7 +120,6 @@ export function renderUpgrades() {
     const container = document.getElementById('upgradesContainer');
     container.innerHTML = '';
 
-    // 🔑 Переключатель множителей
     const multiplierSwitcher = document.createElement('div');
     multiplierSwitcher.className = 'multiplier-switcher';
     multiplierSwitcher.innerHTML = `
@@ -185,19 +131,16 @@ export function renderUpgrades() {
     `;
     container.appendChild(multiplierSwitcher);
 
-    // Заголовок блока способностей
     const abilitiesHeader = document.createElement('div');
     abilitiesHeader.className = 'shop-section-header';
     abilitiesHeader.innerHTML = `<h3>🧬 Способности</h3><p>Постоянные улучшения с уровнями</p>`;
     container.appendChild(abilitiesHeader);
 
-    // Рендер способностей
     Object.keys(UPGRADES_CONFIG).forEach(upgradeId => {
         const config = UPGRADES_CONFIG[upgradeId];
         const currentLevel = gameState.upgrades[upgradeId];
         const remainingToMax = config.maxLevel - currentLevel;
         
-        // 🔑 Реальное количество с учётом множителя и максимума
         const maxAffordable = getMaxAffordableCount(upgradeId);
         const actualCount = getActualCount(gameState.purchaseMultiplier, Math.min(remainingToMax, maxAffordable > 0 ? maxAffordable : 0));
         const cost = actualCount > 0 ? calculateBulkCost(upgradeId, actualCount) : calculateBulkCost(upgradeId, 1);
@@ -215,7 +158,6 @@ export function renderUpgrades() {
         
         const finalBuffText = config.finalBuff ? config.finalBuff(config.maxLevel) : '';
 
-        // 🔑 Формируем текст кнопки с учётом количества
         let btnText = 'МАКС';
         if (!isMaxed) {
             if (gameState.purchaseMultiplier === 'max') {
@@ -239,13 +181,11 @@ export function renderUpgrades() {
         container.appendChild(item);
     });
 
-    // Заголовок блока вещей
     const itemsHeader = document.createElement('div');
     itemsHeader.className = 'shop-section-header';
     itemsHeader.innerHTML = `<h3>🛍️ Вещи</h3><p>Одноразовые покупки и ресурсы</p>`;
     container.appendChild(itemsHeader);
 
-    // Рендер вещей
     Object.keys(ITEMS_CONFIG).forEach(itemId => {
         const config = ITEMS_CONFIG[itemId];
         const maxAffordable = getMaxAffordableItemCount(itemId);
@@ -258,14 +198,13 @@ export function renderUpgrades() {
         const item = document.createElement('div');
         item.className = 'upgrade-item item-item';
         
-        // 🔑 Исправленный лейбл: показываем количество ПОЛУЧЕННОГО ресурса, а не операций
         let btnText = `Купить за ${config.cost} ОЭ`;
         if (gameState.purchaseMultiplier === 'max') {
             btnText = maxAffordable > 0 
-                ? `+${totalReward} за ${totalCost} ОЭ` 
+                ? `+${totalReward} 💰 за ${totalCost} ОЭ` 
                 : 'Недоступно';
         } else if (parseInt(gameState.purchaseMultiplier) > 1) {
-            btnText = `+${totalReward} за ${totalCost} ОЭ`;
+            btnText = `+${totalReward} 💰 за ${totalCost} ОЭ`;
         }
         
         item.innerHTML = `
@@ -282,7 +221,6 @@ export function renderUpgrades() {
 }
 
 export function updateShopButtons() {
-    // Перерисовываем магазин целиком, чтобы обновить цены с учётом множителя
     renderUpgrades();
 }
 
@@ -296,7 +234,6 @@ export function updateCrystalCreateButton() {
     
     createBtn.disabled = actualCount <= 0 || gameState.evolutionPoints < totalCost;
     
-    // 🔑 Обновляем текст кнопки
     if (gameState.purchaseMultiplier === 'max') {
         createBtn.textContent = maxAffordable > 0 
             ? `Создать ${maxAffordable} кристалл(ов) за ${totalCost} ОЭ`
@@ -320,6 +257,28 @@ export function updateItemButtons() {
         
         btn.disabled = gameState.evolutionPoints < totalCost || actualCount <= 0;
     });
+}
+
+export function updateAutoExchangeButtons() {
+    document.querySelectorAll('.exchange-btn').forEach((btn) => {
+        const amount = parseInt(btn.dataset.amount);
+        btn.classList.toggle('active', amount === gameState.autoExchangeAmount);
+    });
+    
+    const valueDisplay = document.getElementById('autoExchangeValue');
+    if (valueDisplay) {
+        valueDisplay.textContent = gameState.autoExchangeAmount === 0 
+            ? 'Выкл' 
+            : `${gameState.autoExchangeAmount} ОЭ`;
+    }
+    
+    const autoSpendBtn = document.getElementById('autoSpendToggle');
+    const autoSpendStatus = document.getElementById('autoSpendStatus');
+    
+    if (autoSpendBtn && autoSpendStatus) {
+        autoSpendStatus.textContent = gameState.autoSpendEnabled ? 'ВКЛ' : 'ВЫКЛ';
+        autoSpendBtn.classList.toggle('active', gameState.autoSpendEnabled);
+    }
 }
 
 export function showMessage(text) {
@@ -361,125 +320,4 @@ export function showGameOver(reason = "Ваш персонаж умер!") {
             location.reload();
         });
     });
-}
-
-// Состояния персонажа
-export function getNeedState(needId) {
-    const config = NEEDS_CONFIG[needId];
-    const value = gameState.needs[needId];
-    const percentage = (value / config.max) * 100;
-
-    for (const [stateKey, stateConfig] of Object.entries(config.states)) {
-        if (percentage >= stateConfig.min && percentage <= stateConfig.max) {
-            return { key: stateKey, ...stateConfig, percentage };
-        }
-    }
-
-    return { key: 'unknown', percentage };
-}
-
-export function applyCharacterStates() {
-    const human = document.getElementById('pixelHuman');
-    const stage = document.getElementById('characterStage'); // 🔑 Теперь меняем фон блока
-    const caption = document.getElementById('characterCaption');
-    const healthEffects = document.getElementById('healthEffects');
-    const hungerEffects = document.getElementById('hungerEffects');
-
-    if (!human || !stage || !caption) return;
-
-    human.className = 'pixel-human';
-    // 🔑 Очищаем классы фона
-    stage.classList.remove('env-luxury', 'env-normal', 'env-poor', 'env-homeless');
-    
-    if (healthEffects) healthEffects.innerHTML = '';
-    if (hungerEffects) hungerEffects.innerHTML = '';
-
-    let statusMessages = [];
-
-    // 🔑 Обработка комфорта — меняем ФОН блока
-    const comfortState = getNeedState('comfort');
-    if (comfortState.environment) {
-        stage.classList.add(`env-${comfortState.environment}`);
-    }
-    
-    if (comfortState.key === 'homeless') {
-        statusMessages.push("🌧️ На улице");
-    } else if (comfortState.key === 'poor') {
-        statusMessages.push("🏚️ В старом доме");
-    } else if (comfortState.key === 'normal') {
-        statusMessages.push("🏠 В обычном доме");
-    } else if (comfortState.key === 'luxury') {
-        statusMessages.push("🏰 В замке");
-    }
-
-    // Обработка голода
-    const hungerState = getNeedState('hunger');
-    if (hungerState.key === 'hungry') {
-        human.classList.add('hungry');
-        statusMessages.push("🍔 Голоден");
-        if (hungerEffects) hungerEffects.innerHTML = '<div class="hunger-rumble"></div>';
-    } else if (hungerState.key === 'starving') {
-        human.classList.add('starving', 'lying-down');
-        statusMessages.push("💀 Голодает!");
-    } else if (hungerState.key === 'happy') {
-        // Не добавляем в статус — и так видно по фону
-    }
-
-    // Обработка здоровья
-    const healthState = getNeedState('health');
-    if (healthState.key === 'sick') {
-        human.classList.add('sick');
-        statusMessages.push("🤒 Болеет");
-        const randomEffect = healthState.effects[Math.floor(Math.random() * healthState.effects.length)];
-        human.classList.add(`effect-${randomEffect}`);
-        if (healthEffects) healthEffects.innerHTML = `<div class="health-effect-${randomEffect}"></div>`;
-    } else if (healthState.key === 'critical') {
-        human.classList.add('in-hospital', 'lying-down');
-        statusMessages.push("🏥 В больнице");
-    } else if (healthState.key === 'coma') {
-        human.classList.add('in-coma', 'lying-down');
-        statusMessages.push("💤 В КОМЕ!");
-    }
-
-    if (statusMessages.length > 0) {
-        caption.textContent = statusMessages.join(' • ');
-    } else {
-        caption.textContent = "✨ Герой готов к тренировкам";
-    }
-}
-
-export function canTrain() {
-    const comfortState = getNeedState('comfort');
-    const hungerState = getNeedState('hunger');
-    const healthState = getNeedState('health');
-
-    if (comfortState.key === 'homeless') return false;
-    if (hungerState.key === 'starving') return false;
-    if (healthState.key === 'critical' || healthState.key === 'coma') return false;
-
-    return true;
-}
-
-// 🔑 Обновляет подсветку кнопок автообмена и статус авто-траты
-export function updateAutoExchangeButtons() {
-    document.querySelectorAll('.exchange-btn').forEach((btn) => {
-        const amount = parseInt(btn.dataset.amount);
-        btn.classList.toggle('active', amount === gameState.autoExchangeAmount);
-    });
-    
-    const valueDisplay = document.getElementById('autoExchangeValue');
-    if (valueDisplay) {
-        valueDisplay.textContent = gameState.autoExchangeAmount === 0 
-            ? 'Выкл' 
-            : `${gameState.autoExchangeAmount} ОЭ`;
-    }
-    
-    // 🔑 Обновляем кнопку авто-траты
-    const autoSpendBtn = document.getElementById('autoSpendToggle');
-    const autoSpendStatus = document.getElementById('autoSpendStatus');
-    
-    if (autoSpendBtn && autoSpendStatus) {
-        autoSpendStatus.textContent = gameState.autoSpendEnabled ? 'ВКЛ' : 'ВЫКЛ';
-        autoSpendBtn.classList.toggle('active', gameState.autoSpendEnabled);
-    }
 }

@@ -1550,3 +1550,187 @@ body.panel-open {
 .help-tips li {
     color: #666;
 }
+
+
+/* ========================= */
+/* Блок болезни */
+/* ========================= */
+
+.disease-container {
+    width: 100%;
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    border: 2px solid #ef5350;
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 12px;
+    transition: all 0.3s ease;
+}
+
+.disease-container.hidden {
+    display: none;
+}
+
+.disease-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.disease-icon {
+    font-size: 32px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.disease-info {
+    flex: 1;
+}
+
+.disease-name {
+    font-weight: 700;
+    color: #c62828;
+    font-size: 16px;
+}
+
+.disease-desc {
+    font-size: 12px;
+    color: #666;
+}
+
+.disease-timer {
+    margin-bottom: 10px;
+}
+
+.disease-timer-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.disease-timer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ef5350 0%, #ff7043 100%);
+    transition: width 0.3s ease;
+}
+
+.disease-timer-fill.warning {
+    background: linear-gradient(90deg, #ff9800 0%, #ffc107 100%);
+}
+
+.disease-timer-fill.critical {
+    background: linear-gradient(90deg, #d32f2f 0%, #f44336 100%);
+    animation: diseasePulse 0.5s infinite;
+}
+
+@keyframes diseasePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.disease-timer-text {
+    font-size: 12px;
+    color: #c62828;
+    font-weight: 600;
+}
+
+.disease-treat-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+    background: #4caf50;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.disease-treat-btn:hover:not(.disabled) {
+    background: #388e3c;
+    transform: translateY(-1px);
+}
+
+.disease-treat-btn.disabled {
+    background: #bdbdbd;
+    cursor: not-allowed;
+}
+
+/* ========================= */
+/* Визуальные эффекты болезней */
+/* ========================= */
+
+/* Травма — пластырь */
+.pixel-human.disease-trauma::after {
+    content: "🩹";
+    position: absolute;
+    top: 25px;
+    right: 5px;
+    font-size: 20px;
+    animation: plasterShake 2s infinite;
+}
+
+@keyframes plasterShake {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(5deg); }
+}
+
+/* Грипп — зелёная кожа + пар от тела */
+.pixel-human.disease-flu .pixel-head,
+.pixel-human.disease-flu .pixel-body {
+    background: #a5d6a7 !important;
+}
+
+.pixel-human.disease-flu::before {
+    content: "💨";
+    position: absolute;
+    top: 10px;
+    left: -10px;
+    font-size: 18px;
+    animation: cough 2s infinite;
+}
+
+@keyframes cough {
+    0%, 100% { opacity: 0; transform: translateX(0); }
+    50% { opacity: 1; transform: translateX(-10px); }
+}
+
+.pixel-human.disease-flu {
+    animation: fluShiver 0.3s infinite;
+}
+
+@keyframes fluShiver {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-1px); }
+    75% { transform: translateX(1px); }
+}
+
+/* Инсульт — лежит, парализован */
+.pixel-human.disease-stroke {
+    filter: grayscale(50%) brightness(0.8);
+    transform: rotate(90deg) translateY(30px);
+    animation: strokeBreath 3s infinite;
+}
+
+.pixel-human.disease-stroke::before {
+    content: "💫";
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 24px;
+    animation: starsRotate 2s linear infinite;
+}
+
+@keyframes starsRotate {
+    0% { transform: translateX(-50%) rotate(0deg); }
+    100% { transform: translateX(-50%) rotate(360deg); }
+}
+
+@keyframes strokeBreath {
+    0%, 100% { transform: rotate(90deg) translateY(30px) scale(1); }
+    50% { transform: rotate(90deg) translateY(30px) scale(0.98); }
+}
