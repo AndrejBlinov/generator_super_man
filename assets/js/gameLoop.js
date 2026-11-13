@@ -10,6 +10,14 @@ export function startGameLoop() {
     gameLoopInterval = setInterval(() => {
         if (gameState.isGameOver) return;
 
+        // 🔑 Уменьшаем счетчик иммунитета
+        if (gameState.diseaseImmunityTicks > 0) {
+            gameState.diseaseImmunityTicks--;
+            if (gameState.diseaseImmunityTicks === 0) {
+                showMessage("⚠️ Иммунитет от болезней закончился!");
+            }
+        }
+
         // 1. Пассивный доход
         const passiveIncome = calculatePassiveIncome();
         gameState.evolutionPoints += passiveIncome;
@@ -21,20 +29,20 @@ export function startGameLoop() {
             gameState.totalPointsEarned += 1;
         }
 
-        // 3. Автоматический обмен ОЭ на деньги (с учетом бонуса наследия!)
+        // 3. Автоматический обмен ОЭ на деньги
         const currentExchangeRate = 10 + (gameState.legacy.exchangeRateBonus || 0);
         if (gameState.autoExchangeAmount > 0 && gameState.evolutionPoints >= gameState.autoExchangeAmount) {
             gameState.evolutionPoints -= gameState.autoExchangeAmount;
             const moneyGained = gameState.autoExchangeAmount * currentExchangeRate;
             gameState.money += moneyGained;
-            gameState.stats.totalMoneyEarnedThisRun += moneyGained; // 🔑 Трекинг
+            gameState.stats.totalMoneyEarnedThisRun += moneyGained;
         }
 
         // 4. Потребности
         const needsResults = processNeedsTick();
         if (needsResults.deaths.length > 0) {
             gameState.isGameOver = true;
-            gameState.stats.totalDeaths += 1; // 🔑 Трекинг смертей
+            gameState.stats.totalDeaths += 1;
             showGameOver(`Ваш персонаж умер от ${needsResults.deaths[0]}!`);
             return;
         }

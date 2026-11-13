@@ -78,3 +78,33 @@ export const GAME_START_DATE = {
     month: 1,
     day: 1
 };
+
+export const DIFFICULTY_CONFIG = {
+    easy: {
+        id: 'easy',
+        name: "Просто",
+        icon: "🌱",
+        startAge: 20,
+        diseaseImmunityDays: 180, // 6 месяцев = 180 дней
+        description: "Начинаете с 20 лет. Первые полгода защищены от болезней.",
+        color: "#48bb78"
+    },
+    medium: {
+        id: 'medium',
+        name: "Средне",
+        icon: "⚖️",
+        startAge: 30,
+        diseaseImmunityDays: 30, // 1 месяц = 30 дней
+        description: "Начинаете с 30 лет. Первый месяц защищены от болезней.",
+        color: "#ed8936"
+    },
+    hard: {
+        id: 'hard',
+        name: "Сложно",
+        icon: "💀",
+        startAge: 40,
+        diseaseImmunityDays: 0, // Нет защиты
+        description: "Начинаете с 40 лет. Болезни атакуют с самого начала.",
+        color: "#e53e3e"
+    }
+};

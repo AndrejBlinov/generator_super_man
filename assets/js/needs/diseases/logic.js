@@ -10,6 +10,9 @@ export function trySpawnDiseases() {
     if (!gameState.activeDiseases) gameState.activeDiseases = [];
     if (gameState.activeDiseases.length >= MAX_ACTIVE_DISEASES) return [];
     
+    // 🔑 Проверка иммунитета
+    if (gameState.diseaseImmunityTicks > 0) return [];
+    
     const chances = getAgeBracket().chances;
     const spawned = [];
     
@@ -39,6 +42,7 @@ export function trySpawnDiseases() {
     
     return spawned;
 }
+
 
 export function processDiseasesTick() {
     if (!gameState.activeDiseases) gameState.activeDiseases = [];

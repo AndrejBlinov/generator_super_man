@@ -2,9 +2,9 @@ import { gameState, resetGameState } from './state.js';
 import { loadGame, saveGame, clearSave } from './storage.js';
 import { startGameLoop, stopGameLoop } from './gameLoop.js';
 import { recalculateStats, buyUpgradeBulk, buyItemBulk } from './upgrades.js';
-import { renderUI, updateUI, showCritPopup, showMessage, renderCrystals, renderUpgrades, showInheritanceModal } from './ui.js';
+import { renderUI, updateUI, showCritPopup, showMessage, renderCrystals, renderUpgrades, showInheritanceModal, renderDifficultyPanel } from './ui.js';
 import { createCrystalBulk, selectCrystal, getMaxAffordableCrystals } from './crystals.js';
-import { initPanels, setOnPanelOpenCallback, openPanel } from './panels.js';
+import { initPanels, setOnPanelOpenCallback, openPanel, closePanel } from './panels.js';
 import { canTrain, getTrainingBlockReason, restoreNeedManual, renderNeeds, handleTreatDisease, renderDiseaseBlock } from './needs/index.js';
 import { applyInheritance } from './inheritance.js';
 
@@ -34,7 +34,6 @@ function showMainMenu() {
     stopGameEngine();
     btnContainer.innerHTML = '';
     
-    // Загружаем сохранение, чтобы проверить состояние
     const hasSave = loadGame();
     const isAlive = !gameState.isGameOver;
     const hasLegacy = gameState.legacy && (
@@ -43,7 +42,6 @@ function showMainMenu() {
         (gameState.legacy.startingAbilities && gameState.legacy.startingAbilities.length > 0)
     );
 
-    // 1. Кнопка "Продолжить" (только если есть сохранение и персонаж жив)
     if (hasSave && isAlive) {
         const btn = document.createElement('button');
         btn.className = 'menu-btn';
@@ -56,7 +54,6 @@ function showMainMenu() {
         btnContainer.appendChild(btn);
     }
 
-    // 2. Кнопка "С бонусами наследия" (если есть накопленные бонусы)
     if (hasLegacy) {
         const btn = document.createElement('button');
         btn.className = 'menu-btn secondary';
@@ -70,22 +67,19 @@ function showMainMenu() {
         btnContainer.appendChild(btn);
     }
 
-    // 3. Кнопка "Новая игра" (ВСЕГДА доступна)
+    // 🔑 Кнопка "Новая игра" открывает панель сложности
     const newGameBtn = document.createElement('button');
     newGameBtn.className = 'menu-btn danger';
-    newGameBtn.textContent = hasSave ? '🔄 Новая игра (сбросить текущий прогресс)' : '🔄 Новая игра';
+    newGameBtn.textContent = hasSave ? '🔄 Новая игра (выбрать сложность)' : '🔄 Новая игра';
     newGameBtn.onclick = () => {
-        const warning = hasSave 
-            ? "⚠️ ВНИМАНИЕ: Это удалит текущее сохранение, болезни, кристаллы и деньги. Весь непрогрессировавший в наследие прогресс будет потерян. Продолжить?"
-            : "Начать совершенно новую игру?";
-            
-        if (confirm(warning)) {
+        if (hasSave) {
+            if (!confirm("⚠️ ВНИМАНИЕ: Это удалит текущее сохранение. Весь непрогрессировавший в наследие прогресс будет потерян. Продолжить?")) {
+                return;
+            }
             clearSave();
-            resetGameState(false);
-            menu.style.display = 'none';
-            app.style.display = 'block';
-            startGameEngine();
         }
+        renderDifficultyPanel();
+        openPanel('difficultyPanel');
     };
     btnContainer.appendChild(newGameBtn);
 }
@@ -250,6 +244,31 @@ function bindEvents() {
 
     document.getElementById('helpButton').addEventListener('click', () => {
         openPanel('helpPanel');
+    });
+
+    // 🔑 НОВЫЙ ОБРАБОТЧИК: Выбор сложности
+    document.getElementById('difficultyOptions').addEventListener('click', (e) => {
+        const btn = e.target.closest('.difficulty-select-btn');
+        if (!btn) return;
+        
+        const difficulty = btn.dataset.difficulty;
+        
+        // 1. Сбрасываем игру с выбранной сложностью
+        resetGameState(false, difficulty);
+        
+        // 2. Сохраняем новое состояние
+        saveGame();
+        
+        // 3. Закрываем панель
+        closePanel();
+        
+        // 4. Переключаем экраны и запускаем игру
+        const menu = document.getElementById('mainMenu');
+        const app = document.getElementById('gameApp');
+        menu.style.display = 'none';
+        app.style.display = 'block';
+        
+        startGameEngine();
     });
 
     setOnPanelOpenCallback((panelId) => {

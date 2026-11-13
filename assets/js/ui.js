@@ -1,5 +1,5 @@
 import { gameState } from './state.js';
-import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST } from './config.js';
+import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST, DIFFICULTY_CONFIG } from './config.js';
 import { calculatePassiveIncome, getSelection, getMaxAffordableCrystals } from './crystals.js';
 import { calculateBulkCost, getMaxAffordableCount, getMaxAffordableItemCount } from './upgrades.js';
 import { getInheritancePreviewText, applyInheritance } from './inheritance.js';
@@ -13,6 +13,76 @@ import {
     renderDiseaseBlock,
     updateDiseaseUI
 } from './needs/index.js';
+
+
+// 🔑 Рендер панели выбора сложности
+export function renderDifficultyPanel() {
+    const container = document.getElementById('difficultyOptions');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    Object.values(DIFFICULTY_CONFIG).forEach(diff => {
+        const diffCard = document.createElement('div');
+        diffCard.className = 'difficulty-card';
+        diffCard.style.borderLeftColor = diff.color;
+        
+        diffCard.innerHTML = `
+            <div class="difficulty-header">
+                <span class="difficulty-icon">${diff.icon}</span>
+                <div class="difficulty-info">
+                    <div class="difficulty-name" style="color: ${diff.color};">${diff.name}</div>
+                    <div class="difficulty-desc">${diff.description}</div>
+                </div>
+                <button class="difficulty-help-btn" data-tooltip="${diff.description}" title="${diff.description}">❓</button>
+            </div>
+            <button class="difficulty-select-btn" data-difficulty="${diff.id}" style="background: ${diff.color};">
+                Выбрать
+            </button>
+        `;
+        container.appendChild(diffCard);
+    });
+}
+
+// 🔑 Запуск новой игры с выбранной сложностью
+function startNewGameWithDifficulty(difficulty) {
+    import('./state.js').then(stateModule => {
+        stateModule.resetGameState(false, difficulty);
+        
+        import('./storage.js').then(storageModule => {
+            storageModule.saveGame();
+        });
+        
+        // Закрываем панель и запускаем игру
+        import('./panels.js').then(panelsModule => {
+            panelsModule.closePanel();
+        });
+        
+        const menu = document.getElementById('mainMenu');
+        const app = document.getElementById('gameApp');
+        menu.style.display = 'none';
+        app.style.display = 'block';
+        
+        // Запускаем движок
+        import('./main.js').then(() => {
+            // Вызываем startGameEngine через глобальную функцию
+            if (window.startGameEngine) {
+                window.startGameEngine();
+            }
+        });
+    });
+}
+
+// Делаем функцию доступной глобально
+window.startGameEngine = function() {
+    import('./upgrades.js').then(upgradesModule => {
+        upgradesModule.recalculateStats();
+    });
+    renderUI();
+    import('./gameLoop.js').then(gameLoopModule => {
+        gameLoopModule.startGameLoop();
+    });
+};
 
 function formatCalendarDate(years, days) {
     const startDate = new Date(

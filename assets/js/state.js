@@ -1,4 +1,4 @@
-import { GAME_VERSION } from './config.js';
+import { GAME_VERSION, DIFFICULTY_CONFIG } from './config.js';
 import { NEEDS_CONFIG, getDefaultNeeds } from './needs/index.js';
 
 export const defaultGameState = {
@@ -13,6 +13,10 @@ export const defaultGameState = {
     
     needs: getDefaultNeeds(),
     activeDiseases: [],
+    
+    // 🔑 Иммунитет от болезней (в тиках/днях)
+    diseaseImmunityTicks: 0,
+    difficulty: 'medium', // 🔑 Текущая сложность
     
     ageInYears: 30,
     currentDayInYear: 0,
@@ -57,45 +61,40 @@ export const defaultGameState = {
 export let gameState = { ...defaultGameState };
 
 export function setGameState(newState) {
-    // 1. Базовые миграции
+    // Миграции массивов и объектов (как было)
     if (newState.absoluteAgeInYears === undefined) {
         newState.absoluteAgeInYears = newState.ageInYears || 30;
         newState.absoluteCurrentDayInYear = newState.currentDayInYear || 0;
     }
-    
-    // 2. 🔑 ЖЕСТКАЯ ЗАЩИТА МАССИВОВ И ОБЪЕКТОВ (чтобы ничего не сбрасывалось)
     if (!Array.isArray(newState.activeDiseases)) {
         newState.activeDiseases = newState.activeDisease ? [newState.activeDisease] : [];
     }
-    delete newState.activeDisease; // очистка старого ключа, если он есть
-
+    delete newState.activeDisease;
     if (!Array.isArray(newState.crystals)) newState.crystals = [null, null, null, null, null];
     if (!Array.isArray(newState.crystalsInventory)) newState.crystalsInventory = Array(10).fill(null);
-
     if (typeof newState.upgrades !== 'object' || newState.upgrades === null) {
         newState.upgrades = { ...defaultGameState.upgrades };
     }
-
     if (typeof newState.needs !== 'object' || newState.needs === null) {
         newState.needs = getDefaultNeeds();
     } else {
         const defaults = getDefaultNeeds();
         Object.keys(defaults).forEach(needId => {
-            if (newState.needs[needId] === undefined) {
-                newState.needs[needId] = defaults[needId];
-            }
+            if (newState.needs[needId] === undefined) newState.needs[needId] = defaults[needId];
         });
     }
-
     if (typeof newState.legacy !== 'object' || newState.legacy === null) {
         newState.legacy = { ...defaultGameState.legacy };
     }
-
     if (typeof newState.stats !== 'object' || newState.stats === null) {
         newState.stats = { ...defaultGameState.stats };
     }
 
-    // 3. Миграции примитивов
+    // 🔑 Миграции новых полей
+    if (newState.diseaseImmunityTicks === undefined) newState.diseaseImmunityTicks = 0;
+    if (newState.difficulty === undefined) newState.difficulty = 'medium';
+
+    // Миграции примитивов
     if (newState.doubleClickChance === undefined) newState.doubleClickChance = 0.0;
     if (newState.diseaseResistance === undefined) newState.diseaseResistance = 0.0;
     if (newState.extraTrainingChance === undefined) newState.extraTrainingChance = 0.0;
@@ -105,7 +104,6 @@ export function setGameState(newState) {
     if (newState.autoSpendEnabled === undefined) newState.autoSpendEnabled = true;
     if (newState.autoTreatEnabled === undefined) newState.autoTreatEnabled = false;
 
-    // 4. Финальное слияние (сохраняет все массивы и объекты из newState)
     gameState = { ...gameState, ...newState };
 }
 
@@ -113,7 +111,7 @@ export function getGameState() {
     return gameState;
 }
 
-export function resetGameState(keepLegacy = true) {
+export function resetGameState(keepLegacy = true, difficulty = 'medium') {
     const preservedLegacy = keepLegacy ? { ...gameState.legacy } : { ...defaultGameState.legacy };
     const preservedStats = keepLegacy ? { ...gameState.stats } : { ...defaultGameState.stats };
     
@@ -121,10 +119,17 @@ export function resetGameState(keepLegacy = true) {
         preservedStats.runsCompleted += 1;
     }
 
+    // 🔑 Применяем настройки сложности
+    const diffConfig = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.medium;
+
     gameState = { 
         ...defaultGameState, 
         legacy: preservedLegacy,
         stats: preservedStats,
+        difficulty: difficulty,
+        ageInYears: diffConfig.startAge,
+        absoluteAgeInYears: diffConfig.startAge,
+        diseaseImmunityTicks: diffConfig.diseaseImmunityDays,
         lastSaveTimestamp: Date.now() 
     };
 }
