@@ -62,10 +62,10 @@ export const AUTO_EXCHANGE_CONFIG = {
 };
 
 export const INHERITANCE_CONFIG = {
-    moneySpentPerBonus: 10000,      // 10 000 💰 потраченных = +5% к курсу
-    exchangeRateBonusPerStep: 5,    // +5% к курсу (базовый курс 10, станет 15, 20 и т.д.)
-    crystalLevelForBonus: 5,        // Уровень кристалла для бонуса
-    abilityLevelForBonus: 5         // Уровень способности для бонуса
+    moneySpentPerBonus: 5000,      // 10 000 💰 = +5% к курсу
+    exchangeRateBonusPerStep: 5,    // +5% за каждый шаг
+    crystalLevelForBonus: 5,        // Минимальный уровень кристалла для наследия
+    abilityLevelForBonus: 5         // Минимальный уровень способности для наследия
 };
 
 export const CRYSTAL_COST = 100;

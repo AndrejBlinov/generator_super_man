@@ -65,9 +65,18 @@ function showMainMenu() {
     if (hasLeg) {
         const btn = document.createElement('button');
         btn.className = 'menu-btn secondary';
-        btn.textContent = `🧬 Начать новое поколение (+${legacy.exchangeRateBonus}% курс)`;
+        
+        // 🔑 Подсчитываем кристаллы для отображения
+        const crystalsCount = (legacy.startingCrystals || []).length;
+        const crystalLevels = (legacy.startingCrystals || [])
+            .map(c => c.level)
+            .sort((a, b) => b - a)
+            .slice(0, 3) // Показываем топ-3
+            .join(', ');
+        const moreText = crystalsCount > 3 ? ` +${crystalsCount - 3} ещё` : '';
+        
+        btn.textContent = `🧬 Начать новое поколение (+${legacy.exchangeRateBonus}% курс, ${crystalsCount} крист.${crystalLevels ? ` [${crystalLevels}${moreText}]` : ''})`;
         btn.onclick = () => {
-            // Сбрасываем активную игру, применяя наследие
             applyInheritance();
             menu.style.display = 'none';
             app.style.display = 'block';
