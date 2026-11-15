@@ -1,9 +1,8 @@
-import { gameState } from './state.js';
+import { gameState, getCurrentExchangeRate } from './state.js';
 import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST, DIFFICULTY_CONFIG } from './config.js';
 import { calculatePassiveIncome, getSelection, getMaxAffordableCrystals } from './crystals.js';
 import { calculateBulkCost, getMaxAffordableCount, getMaxAffordableItemCount } from './upgrades.js';
 import { getInheritancePreviewText, applyInheritance } from './inheritance.js';
-import { getCurrentExchangeRate } from './state.js';
 
 // 🔑 Импортируем из needs-модуля
 import { 
@@ -192,6 +191,7 @@ export function renderUpgrades() {
     const container = document.getElementById('upgradesContainer');
     container.innerHTML = '';
 
+    // 1. Переключатель множителя
     const multiplierSwitcher = document.createElement('div');
     multiplierSwitcher.className = 'multiplier-switcher';
     multiplierSwitcher.innerHTML = `
@@ -203,11 +203,13 @@ export function renderUpgrades() {
     `;
     container.appendChild(multiplierSwitcher);
 
+    // 2. Заголовок Способностей
     const abilitiesHeader = document.createElement('div');
     abilitiesHeader.className = 'shop-section-header';
     abilitiesHeader.innerHTML = `<h3>🧬 Способности</h3><p>Постоянные улучшения с уровнями</p>`;
     container.appendChild(abilitiesHeader);
 
+    // 3. Отрисовка Способностей (UPGRADES_CONFIG)
     Object.keys(UPGRADES_CONFIG).forEach(upgradeId => {
         const config = UPGRADES_CONFIG[upgradeId];
         const currentLevel = gameState.upgrades[upgradeId];
@@ -229,8 +231,8 @@ export function renderUpgrades() {
         }
         
         const finalBuffText = config.finalBuff ? config.finalBuff(config.maxLevel) : '';
-
         let btnText = 'МАКС';
+        
         if (!isMaxed) {
             if (gameState.purchaseMultiplier === 'max') {
                 btnText = maxAffordable > 0 ? `${maxAffordable} ур. за ${cost} ОЭ` : 'Недоступно';
@@ -253,17 +255,24 @@ export function renderUpgrades() {
         container.appendChild(item);
     });
 
+    // 4. Заголовок Вещей
     const itemsHeader = document.createElement('div');
     itemsHeader.className = 'shop-section-header';
     itemsHeader.innerHTML = `<h3>🛍️ Вещи</h3><p>Одноразовые покупки и ресурсы</p>`;
     container.appendChild(itemsHeader);
 
+    // 5. 🔑 ЕДИНСТВЕННЫЙ цикл для Вещей (ITEMS_CONFIG) с правильным курсом
     Object.keys(ITEMS_CONFIG).forEach(itemId => {
         const config = ITEMS_CONFIG[itemId];
         const maxAffordable = getMaxAffordableItemCount(itemId);
         const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
-        const totalCost = config.cost * (actualCount > 0 ? actualCount : 1);
-        const totalReward = config.reward * (actualCount > 0 ? actualCount : 1);
+        
+        // Магия наследия: берем актуальный курс вместо хардкода
+        const currentRate = getCurrentExchangeRate();
+        const amountToExchange = actualCount > 0 ? actualCount : 1;
+        
+        const totalCost = config.cost * amountToExchange;
+        const totalReward = Math.floor(currentRate * amountToExchange); 
         
         const canAfford = gameState.evolutionPoints >= totalCost && actualCount > 0;
 
@@ -357,9 +366,13 @@ export function updateAutoExchangeButtons() {
     
     const valueDisplay = document.getElementById('autoExchangeValue');
     if (valueDisplay) {
+        // 🔑 Показываем игроку, сколько денег он получит с учетом бонуса наследия
+        const currentRate = getCurrentExchangeRate();
+        const moneyGain = gameState.autoExchangeAmount * currentRate;
+        
         valueDisplay.textContent = gameState.autoExchangeAmount === 0 
             ? 'Выкл' 
-            : `${gameState.autoExchangeAmount} ОЭ`;
+            : `${gameState.autoExchangeAmount} ОЭ = ${moneyGain} 💰`;
     }
     
     const autoSpendBtn = document.getElementById('autoSpendToggle');
@@ -370,7 +383,6 @@ export function updateAutoExchangeButtons() {
         autoSpendBtn.classList.toggle('active', gameState.autoSpendEnabled);
     }
     
-    // 🔑 Обновляем кнопку автомлечения
     const autoTreatBtn = document.getElementById('autoTreatToggle');
     const autoTreatStatus = document.getElementById('autoTreatStatus');
     

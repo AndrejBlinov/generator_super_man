@@ -44,34 +44,59 @@
     width: 100%;
     height: 100%;
     max-height: 100%;
-    object-fit: contain; /* Сохраняет пропорции пиксель-арта */
+    object-fit: contain; /* Сохраняет пропорции, не растягивая пиксели */
     border-radius: 16px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-    image-rendering: pixelated;
+    image-rendering: pixelated; /* 🔑 Ключевое: запрещает браузеру "мылить" пиксели при масштабировании */
     image-rendering: crisp-edges;
 }
 
 /* ========================= */
-/* ПРАВАЯ КОЛОНКА: Интерфейс */
+/* ПРАВАЯ КОЛОНКА: Интерфейс (исправленный скролл) */
 /* ========================= */
 
 .game-interface {
     width: 100%;
-    max-width: 520px; /* Чуть уже для лучшей читаемости */
+    max-width: 520px;
     flex-shrink: 0;
     background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(12px); /* Эффект матового стекла */
+    backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: 24px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
     padding: 28px;
     position: relative;
     
-    /* 🔑 Внутренний скролл, чтобы блок не вылезал за экран */
+    /* 🔑 Ключ к правильному скроллу во flex-контейнере */
     display: flex;
     flex-direction: column;
     overflow-y: auto;
     max-height: calc(100vh - 40px);
+    min-height: 0; /* Критически важно! Позволяет контейнеру включать скролл, а не сжимать детей */
+}
+
+/* 🔑 Запрещаем сжатие внутренним блокам, чтобы они честно растягивали контейнер */
+.game-interface .stats,
+.game-interface .character-stage,
+.game-interface .needs-compact,
+.game-interface .disease-container,
+.game-interface .controls,
+.game-interface .game-version {
+    flex-shrink: 0;
+    width: 100%;
+}
+
+/* Гарантируем, что блок болезней корректно добавляет высоту */
+.disease-container {
+    width: 100%;
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.disease-container.hidden {
+    display: none;
 }
 
 /* Красивый кастомный скроллбар для правой панели */
@@ -87,18 +112,6 @@
 }
 .game-interface::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
-}
-
-/* Фиксируем заголовок и статистику при скролле (опционально, для удобства) */
-.game-interface h1 {
-    position: sticky;
-    top: 0;
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(12px);
-    z-index: 10;
-    padding-bottom: 16px;
-    margin-bottom: 16px;
-    border-bottom: 2px solid #f1f5f9;
 }
 
 /* ========================= */

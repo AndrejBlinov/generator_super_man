@@ -4,6 +4,7 @@ import { calculatePassiveIncome } from './crystals.js';
 import { updateUI, showGameOver, showMessage } from './ui.js';
 import { processNeedsTick, processDiseasesTick } from './needs/index.js';
 import { getCurrentExchangeRate } from './state.js';
+import { updateCharacterStateFromGame } from './character/index.js';
 
 let gameLoopInterval = null;
 
@@ -104,6 +105,7 @@ export function startGameLoop() {
             }
         }
 
+        updateCharacterStateFromGame();
         updateUI();
     }, 1000);
 }

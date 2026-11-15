@@ -162,6 +162,14 @@ export function saveGame() {
     saveActiveGame(gameState);
 }
 
+
+// 🔑 Расчёт актуального курса обмена с учётом наследия
+export function getCurrentExchangeRate() {
+    const baseRate = 10; // Базовый курс
+    const bonus = legacy.exchangeRateBonus || 0; // Бонус от наследия (в процентах)
+    return baseRate + (baseRate * bonus / 100);
+}
+
 // ==========================================
 // СБРОС
 // ==========================================
