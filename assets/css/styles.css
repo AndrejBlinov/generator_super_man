@@ -1909,7 +1909,7 @@ body.panel-open {
 .floating-actions {
     position: absolute;
     right: -55px; /* 🔑 Выступаем за правый край game-container */
-    top: 200px;
+    top: 300px;
     display: flex;
     flex-direction: column;
     gap: 15px;

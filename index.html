@@ -104,20 +104,14 @@
             <div class="disease-container hidden" id="diseaseContainer"></div>
         </div>
 
-        <!-- <div class="panel-actions">
-            <button class="panel-open-btn" data-panel-target="crystalsPanel">💎 Кристаллы</button>
-            <button class="panel-open-btn" data-panel-target="shopPanel">🛒 Магазин</button>
-        </div> -->
-
         <div class="controls">
             <button class="control-btn save-btn" id="saveBtn">💾 Сохранить</button>
             <button class="control-btn menu-btn" id="menuBtn">🏠 В меню</button>
-            <button class="control-btn inherit-btn" id="inheritBtn">🧬 Наследовать</button>
             <button class="control-btn reset-btn" id="resetBtn">🔄 Сбросить</button>
         </div>
 
         <button class="help-button" id="helpButton" title="Помощь">❓</button>
-        
+
         <!-- 🔑 ПЛАВАЮЩИЕ КНОПКИ ДЕЙСТВИЙ (FAB) -->
         <div class="floating-actions">
             <button class="fab-btn" data-panel-target="crystalsPanel" title="Кристаллы и инвентарь">
@@ -182,56 +176,7 @@
         </div>
     </aside>
 
-    <aside class="side-panel" id="helpPanel" aria-hidden="true">
-        <div class="side-panel-header">
-            <div>
-                <h2>📖 Как играть</h2>
-                <p>Основные механики и цели игры</p>
-            </div>
-            <button class="side-panel-close" data-panel-close>✕</button>
-        </div>
-        <div class="side-panel-content">
-            <div class="help-section">
-                <h3>🎯 Цель игры</h3>
-                <p>Стать сверхчеловеком, разблокировав все способности до максимального уровня, и прожить как можно
-                    дольше.</p>
-            </div>
-            <div class="help-section">
-                <h3>💪 Тренировки</h3>
-                <p>Кликайте для получения ОЭ. Левитация дает шанс двойного клика, Рентген — крита, Телекинез — доп.
-                    тренировки.</p>
-            </div>
-            <div class="help-section">
-                <h3>💎 Кристаллы</h3>
-                <p>Создавайте за 100 ОЭ. 3 кристалла одного уровня → 1 кристалл следующего уровня (доход x2). 5 активных
-                    слотов, 10 инвентаря.</p>
-            </div>
-            <div class="help-section">
-                <h3>🍔 Потребности и Болезни</h3>
-                <p>Голод, Комфорт и Здоровье падают со временем. При 0 — смерть или блокировка действий. С возрастом
-                    растет шанс болезней.</p>
-            </div>
-            <div class="help-section">
-                <h3>💱 Экономика</h3>
-                <p>Настройте автообмен ОЭ на 💰 и авто-трату на потребности. Используйте множитель x10/x100/MAX в
-                    магазине для быстрой прокачки.</p>
-            </div>
-            <div class="help-section help-tips">
-                <h3>💡 Совет</h3>
-                <p>Не бойтесь умирать! Используйте кнопку "Наследовать", чтобы перенести часть прогресса (бонус к курсу,
-                    стартовые кристаллы и способности) в следующее поколение.</p>
-            </div>
-
-            <div class="help-section">
-                <h3>⚙️ Уровни сложности</h3>
-                <ul>
-                    <li><strong>🌱 Просто:</strong> Начинаете с 20 лет. Первые полгода защищены от болезней.</li>
-                    <li><strong>⚖️ Средне:</strong> Начинаете с 30 лет. Первый месяц защищены от болезней.</li>
-                    <li><strong>💀 Сложно:</strong> Начинаете с 40 лет. Болезни атакуют с самого начала.</li>
-                </ul>
-            </div>
-        </div>
-    </aside>
+    <div id="helpPanelContainer"></div>
 
     <div class="message" id="message"></div>
 

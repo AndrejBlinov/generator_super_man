@@ -8,6 +8,12 @@ import { initPanels, setOnPanelOpenCallback, openPanel, closePanel } from './pan
 import { canTrain, getTrainingBlockReason, restoreNeedManual, renderNeeds, handleTreatDisease, renderDiseaseBlock } from './needs/index.js';
 import { applyInheritance } from './inheritance.js';
 
+// 🔑 ЗАГРУЗКА ИНСТРУКЦИИ (выполняется 1 раз при старте модуля)
+const helpResponse = await fetch('./include/instruction.html');
+const helpHtml = await helpResponse.text();
+document.getElementById('helpPanelContainer').innerHTML = helpHtml;
+console.log('✅ Инструкция загружена');
+
 // ==========================================
 // 1. ЛОГИКА ИГРОВОГО ДВИЖКА
 // ==========================================
