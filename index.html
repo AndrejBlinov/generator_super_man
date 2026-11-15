@@ -7,6 +7,7 @@
     <title>Эволюция: Путь Сверхчеловека</title>
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/menu.css">
+    <link rel="stylesheet" href="assets/css/z-index.css">
 </head>
 
 <body>
@@ -103,18 +104,29 @@
             <div class="disease-container hidden" id="diseaseContainer"></div>
         </div>
 
-        <div class="panel-actions">
+        <!-- <div class="panel-actions">
             <button class="panel-open-btn" data-panel-target="crystalsPanel">💎 Кристаллы</button>
             <button class="panel-open-btn" data-panel-target="shopPanel">🛒 Магазин</button>
-        </div>
+        </div> -->
 
         <div class="controls">
             <button class="control-btn save-btn" id="saveBtn">💾 Сохранить</button>
+            <button class="control-btn menu-btn" id="menuBtn">🏠 В меню</button>
             <button class="control-btn inherit-btn" id="inheritBtn">🧬 Наследовать</button>
             <button class="control-btn reset-btn" id="resetBtn">🔄 Сбросить</button>
         </div>
 
         <button class="help-button" id="helpButton" title="Помощь">❓</button>
+        
+        <!-- 🔑 ПЛАВАЮЩИЕ КНОПКИ ДЕЙСТВИЙ (FAB) -->
+        <div class="floating-actions">
+            <button class="fab-btn" data-panel-target="crystalsPanel" title="Кристаллы и инвентарь">
+                💎
+            </button>
+            <button class="fab-btn" data-panel-target="shopPanel" title="Магазин способностей">
+                🛒
+            </button>
+        </div>
     </div>
 
     <!-- ПАНЕЛИ И МОДАЛЬНЫЕ ОКНА -->

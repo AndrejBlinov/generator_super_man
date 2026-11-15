@@ -498,7 +498,6 @@ export function showInheritanceModal(isAfterDeath = false) {
 export function showDeathScreen(reason) {
     const overlay = document.createElement('div');
     overlay.className = 'game-over';
-    overlay.style.zIndex = '3000';
     
     let inheritancePreview = '';
     try {

@@ -10,14 +10,18 @@ let gameLoopInterval = null;
 export function startGameLoop() {
     // 🔑 КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: предотвращаем дублирование
     if (gameLoopInterval !== null) {
-        console.log('⚠️ GameLoop уже запущен, останавливаем старый');
         clearInterval(gameLoopInterval);
         gameLoopInterval = null;
     }
     
-    console.log('🚀 Запуск GameLoop');
     
     gameLoopInterval = setInterval(() => {
+
+        const helpPanel = document.getElementById('helpPanel');
+        if (helpPanel && helpPanel.classList.contains('is-open')) {
+            return; 
+        }
+
         if (gameState.isGameOver) return;
 
         // 🔑 Уменьшаем счетчик иммунитета
@@ -103,7 +107,6 @@ export function startGameLoop() {
 
 export function stopGameLoop() {
     if (gameLoopInterval !== null) {
-        console.log('🛑 Остановка GameLoop');
         clearInterval(gameLoopInterval);
         gameLoopInterval = null;
     }

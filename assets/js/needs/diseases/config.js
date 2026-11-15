@@ -363,9 +363,9 @@ export const DISEASES_BY_CATEGORY = {
 
 // Шансы появления болезней в зависимости от возраста
 export const AGE_BRACKETS = [
-    { min: 0, max: 30, chances: { light: 0.05, medium: 0.03, heavy: 0.02 } },
-    { min: 31, max: 50, chances: { light: 0.05, medium: 0.05, heavy: 0.03 } },
-    { min: 51, max: 70, chances: { light: 0.05, medium: 0.08, heavy: 0.10 } },
+    { min: 0, max: 30, chances: { light: 0.04, medium: 0.02, heavy: 0.01 } },
+    { min: 31, max: 50, chances: { light: 0.05, medium: 0.03, heavy: 0.02 } },
+    { min: 51, max: 70, chances: { light: 0.05, medium: 0.06, heavy: 0.08 } },
     { min: 71, max: 200, chances: { light: 0.10, medium: 0.12, heavy: 0.15 } }
 ];
 

@@ -28,12 +28,12 @@ function showMainMenu() {
     const menu = document.getElementById('mainMenu');
     const app = document.getElementById('gameApp');
     const btnContainer = document.getElementById('menuButtons');
-    
+
     menu.style.display = 'flex';
     app.style.display = 'none';
     stopGameEngine();
     btnContainer.innerHTML = '';
-    
+
     // 🔑 Загружаем все данные из разделённых хранилищ
     const hasActive = loadFullGame();
     const hasLeg = hasLegacy();
@@ -75,7 +75,7 @@ function showMainMenu() {
     const newGameBtn = document.createElement('button');
     newGameBtn.className = 'menu-btn danger';
     newGameBtn.textContent = hasActiveGame() ? '🔄 Новая игра (выбрать сложность)' : '🔄 Новая игра';
-    
+
     newGameBtn.onclick = () => {
         if (hasActiveGame()) {
             if (!confirm("⚠️ ВНИМАНИЕ: Это удалит текущее сохранение. Наследие и статистика сохранятся. Продолжить?")) {
@@ -150,7 +150,7 @@ function bindEvents() {
 
         if (isCrit || isDoubleClick) {
             let popupText = isDoubleClick && isCrit ? `ДВОЙНОЙ + КРИТ! +${Math.round(earned)}` :
-                            isDoubleClick ? `ДВОЙНОЙ! +${Math.round(earned)}` : `КРИТ! +${Math.round(earned)}`;
+                isDoubleClick ? `ДВОЙНОЙ! +${Math.round(earned)}` : `КРИТ! +${Math.round(earned)}`;
             showCritPopup(event, earned, popupText);
         }
 
@@ -161,10 +161,10 @@ function bindEvents() {
 
     document.getElementById('createCrystalBtn').addEventListener('click', () => {
         const maxAffordable = getMaxAffordableCrystals();
-        const actualCount = gameState.purchaseMultiplier === 'max' 
-            ? maxAffordable 
+        const actualCount = gameState.purchaseMultiplier === 'max'
+            ? maxAffordable
             : Math.min(parseInt(gameState.purchaseMultiplier), maxAffordable);
-        
+
         if (actualCount > 0 && createCrystalBulk(actualCount)) {
             renderCrystals();
             updateUI();
@@ -262,6 +262,12 @@ function bindEvents() {
         showMessage("Игра сохранена!");
     });
 
+    document.getElementById('menuBtn').addEventListener('click', () => {
+        saveGame();          // 1. Сохраняем текущий прогресс
+        stopGameLoop();      // 2. Останавливаем игровой цикл (пауза)
+        showMainMenu();      // 3. Возвращаемся на главный экран
+    });
+
     document.getElementById('resetBtn').addEventListener('click', () => {
         if (confirm("Вы уверены? Весь прогресс будет потерян, а дата сброшена к 2026-01-01!")) {
             resetAll();
@@ -283,21 +289,20 @@ function bindEvents() {
         diffContainer.addEventListener('click', (e) => {
             const btn = e.target.closest('.difficulty-select-btn');
             if (!btn) return;
-            
+
             const difficulty = btn.dataset.difficulty;
-            console.log(`✅ Выбрана сложность: ${difficulty}`);
-            
+
             // Сбрасываем активную игру с выбранной сложностью
             resetActiveGame(difficulty);
             saveGame();
-            
+
             closePanel();
-            
+
             const menu = document.getElementById('mainMenu');
             const app = document.getElementById('gameApp');
             menu.style.display = 'none';
             app.style.display = 'block';
-            
+
             startGameEngine();
         });
     }
