@@ -57,7 +57,7 @@ function showMainMenu() {
         btn.textContent = `▶️ Продолжить игру ${diffIcon}`;
         btn.onclick = () => {
             menu.style.display = 'none';
-            app.style.display = 'block';
+            app.style.display = '';
             startGameEngine();
         };
         btnContainer.appendChild(btn);
@@ -81,7 +81,7 @@ function showMainMenu() {
         btn.onclick = () => {
             applyInheritance();
             menu.style.display = 'none';
-            app.style.display = 'block';
+            app.style.display = '';
             startGameEngine();
         };
         btnContainer.appendChild(btn);
@@ -428,7 +428,7 @@ function bindEvents() {
             const menu = document.getElementById('mainMenu');
             const app = document.getElementById('gameApp');
             menu.style.display = 'none';
-            app.style.display = 'block';
+            app.style.display = '';
 
             startGameEngine();
         });
