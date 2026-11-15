@@ -1,0 +1,66 @@
+/* ========================= */
+/* ДВУХКОЛОНОЧНАЯ РАСКЛАДКА */
+/* ========================= */
+
+.game-layout {
+    display: flex;
+    gap: 30px;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    align-items: flex-start;
+}
+
+/* ЛЕВАЯ КОЛОНКА: интерфейс (макс. 600px) */
+.game-left {
+    width: 100%;
+    max-width: 600px;
+    flex-shrink: 0;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 30px;
+    position: relative;
+}
+
+/* ПРАВАЯ КОЛОНКА: анимация (занимает оставшееся место) */
+.game-right {
+    flex: 1;
+    min-width: 0;
+}
+
+.animation-stage {
+    background: linear-gradient(180deg, #fff9e6 0%, #ffeaa7 100%);
+    border: 3px solid #ffd700;
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+    min-height: 800px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.animation-stage .pixel-human {
+    transform: scale(3);
+    transform-origin: center center;
+}
+
+/* ========================= */
+/* МОБИЛЬНАЯ ВЕРСИЯ (<1024px) */
+/* ========================= */
+
+@media (max-width: 1023px) {
+    .game-layout {
+        flex-direction: column;
+    }
+    
+    .game-right {
+        display: none; /* Скрываем анимацию на мобильных */
+    }
+    
+    .game-left {
+        max-width: 100%;
+    }
+}
