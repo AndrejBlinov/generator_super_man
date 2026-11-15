@@ -6,25 +6,12 @@
     display: flex;
     gap: 30px;
     width: 100%;
-    max-width: 1600px;
     margin: 0 auto;
     align-items: flex-start;
 }
 
-/* ЛЕВАЯ КОЛОНКА: интерфейс (макс. 600px) */
-.game-left {
-    width: 100%;
-    max-width: 600px;
-    flex-shrink: 0;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    padding: 30px;
-    position: relative;
-}
-
-/* ПРАВАЯ КОЛОНКА: анимация (занимает оставшееся место) */
-.game-right {
+/* ЛЕВАЯ КОЛОНКА: анимация (занимает оставшееся место) */
+.game-animation {
     flex: 1;
     min-width: 0;
 }
@@ -47,6 +34,18 @@
     transform-origin: center center;
 }
 
+/* ПРАВАЯ КОЛОНКА: интерфейс (макс. 600px) */
+.game-interface {
+    width: 100%;
+    max-width: 600px;
+    flex-shrink: 0;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 30px;
+    position: relative;
+}
+
 /* ========================= */
 /* МОБИЛЬНАЯ ВЕРСИЯ (<1024px) */
 /* ========================= */
@@ -56,19 +55,26 @@
         flex-direction: column;
     }
     
-    .game-right {
+    .game-animation {
         display: none; /* Скрываем анимацию на мобильных */
     }
     
-    .game-left {
+    .game-interface {
         max-width: 100%;
+    }
+    
+    /* На мобилке показываем маленького человечка в интерфейсе */
+    .game-interface .character-stage .pixel-human {
+        display: block;
     }
 }
 
-/* На десктопе скрываем маленького человечка в ЛЕВОЙ колонке
-   (он нужен только на мобильных, где правая колонка скрыта) */
+/* ========================= */
+/* ДЕСКТОП: скрываем маленького человечка в интерфейсе */
+/* ========================= */
+
 @media (min-width: 1024px) {
-    .game-left .character-stage .pixel-human {
+    .game-interface .character-stage .pixel-human {
         display: none;
     }
 }

@@ -34,8 +34,27 @@
     <!-- ИГРОВОЙ ИНТЕРФЕЙС -->
     <div id="gameApp" class="game-layout">
 
-        <!-- 🔑 ЛЕВАЯ КОЛОНКА: весь интерфейс игры (макс. 600px) -->
-        <div class="game-left">
+        <!-- 🔑 ЛЕВАЯ КОЛОНКА: только анимация персонажа (теперь game-animation) -->
+        <div class="game-animation">
+            <div class="animation-stage" id="animationStage">
+                <div class="pixel-human" id="pixelHumanRight">
+                    <div class="pixel-shadow"></div>
+                    <div class="pixel-head">
+                        <div class="pixel-hair"></div>
+                        <div class="pixel-eye pixel-eye-left"></div>
+                        <div class="pixel-eye pixel-eye-right"></div>
+                    </div>
+                    <div class="pixel-neck"></div>
+                    <div class="pixel-body"></div>
+                    <div class="pixel-arm pixel-arm-left"></div>
+                    <div class="pixel-arm pixel-arm-right"></div>
+                    <div class="pixel-leg pixel-leg-left"></div>
+                    <div class="pixel-leg pixel-leg-right"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-interface">
             <h1>🧬 Эволюция: Путь Сверхчеловека</h1>
 
             <div class="stats">
@@ -135,7 +154,6 @@
             <div class="controls">
                 <button class="control-btn save-btn" id="saveBtn">💾 Сохранить</button>
                 <button class="control-btn menu-btn" id="menuBtn">🏠 В меню</button>
-                <button class="control-btn inherit-btn" id="inheritBtn">🧬 Наследовать</button>
                 <button class="control-btn reset-btn" id="resetBtn">🔄 Сбросить</button>
             </div>
 
@@ -144,26 +162,6 @@
             </div>
 
             <button class="help-button" id="helpButton" title="Помощь">❓</button>
-        </div>
-
-        <!-- 🔑 ПРАВАЯ КОЛОНКА: только анимация персонажа -->
-        <div class="game-right">
-            <div class="animation-stage" id="animationStage">
-                <div class="pixel-human" id="pixelHumanRight">
-                    <div class="pixel-shadow"></div>
-                    <div class="pixel-head">
-                        <div class="pixel-hair"></div>
-                        <div class="pixel-eye pixel-eye-left"></div>
-                        <div class="pixel-eye pixel-eye-right"></div>
-                    </div>
-                    <div class="pixel-neck"></div>
-                    <div class="pixel-body"></div>
-                    <div class="pixel-arm pixel-arm-left"></div>
-                    <div class="pixel-arm pixel-arm-right"></div>
-                    <div class="pixel-leg pixel-leg-left"></div>
-                    <div class="pixel-leg pixel-leg-right"></div>
-                </div>
-            </div>
         </div>
 
     </div>
