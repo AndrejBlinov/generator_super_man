@@ -44,7 +44,6 @@ export function trySpawnDiseases() {
 }
 
 
-// 🔑 Обработка одного тика всех активных болезней
 export function processDiseasesTick() {
     if (!gameState.activeDiseases) gameState.activeDiseases = [];
     
@@ -55,7 +54,6 @@ export function processDiseasesTick() {
         autoTreated: []
     };
     
-    // Автоматическое лечение (если включено)
     if (gameState.autoTreatEnabled) {
         result.autoTreated = autoTreatDiseases();
     }
@@ -68,26 +66,27 @@ export function processDiseasesTick() {
         if (disease.ticksRemaining <= 0) {
             const config = DISEASES_CONFIG[disease.id];
             
-            // Тяжёлая болезнь → смерть
+            // 1. Смертельная болезнь
             if (config.deathOnExpire) {
                 result.died = config.name;
                 return;
             }
             
-            // Прогрессирование в следующую стадию
+            // 2. Попытка эволюции (прогрессирования)
             if (config.nextStage) {
                 const nextConfig = DISEASES_CONFIG[config.nextStage];
                 
-                // Проверка: нет ли уже такой (более тяжелой) болезни среди активных
+                // Проверяем, нет ли уже этой (более тяжелой) болезни в активных
                 const alreadyHas = gameState.activeDiseases.some(
                     (d, i) => i !== index && d.id === config.nextStage
                 );
                 
                 if (alreadyHas) {
-                    // Если уже есть, удаляем текущую (более слабую), чтобы не дублировать
+                    // 🔑 FIX ДЛЯ БАГА 3: Если следующая стадия уже есть, удаляем текущую (слабую), 
+                    // чтобы освободить слот и не дублировать болезни.
                     toRemove.push(index);
                 } else {
-                    // Прогрессируем
+                    // Эволюционируем болезнь прямо в этом слоте
                     disease.id = config.nextStage;
                     disease.ticksRemaining = nextConfig.duration;
                     disease.progressed = true;
@@ -97,7 +96,7 @@ export function processDiseasesTick() {
         }
     });
     
-    // Удаляем болезни (в обратном порядке, чтобы не сбить индексы)
+    // Удаляем болезни в обратном порядке, чтобы не сбить индексы массива
     toRemove.reverse().forEach(i => gameState.activeDiseases.splice(i, 1));
     
     return result;

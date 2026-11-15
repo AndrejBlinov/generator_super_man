@@ -46,8 +46,6 @@ function showMainMenu() {
     const hasLeg = hasLegacy();
     const isAlive = !gameState.isGameOver;
 
-    console.log('📊 Состояние меню:', { hasActive, hasLeg, isAlive, difficulty: gameState.difficulty });
-
     // 1. Кнопка "Продолжить игру" (только если есть активное сохранение и персонаж жив)
     if (hasActive && isAlive) {
         const btn = document.createElement('button');

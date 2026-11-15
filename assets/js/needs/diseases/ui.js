@@ -1,6 +1,7 @@
 // UI блока болезней (поддержка нескольких одновременных болезней)
 
 import { getActiveDiseasesInfo, treatDisease } from './logic.js';
+import { gameState } from '../../state.js';
 
 // 🔑 Рендер всех активных болезней
 export function renderDiseaseBlock() {
@@ -51,7 +52,7 @@ export function updateDiseaseUI() {
     
     const diseases = getActiveDiseasesInfo();
     
-    // 1. Если болезней нет, но блок виден — скрываем его
+    // Если болезней нет, скрываем блок
     if (diseases.length === 0) {
         if (!container.classList.contains('hidden')) {
             container.classList.add('hidden');
@@ -60,20 +61,24 @@ export function updateDiseaseUI() {
         return;
     }
     
-    // 2. Если блок был скрыт или количество болезней изменилось — полная перерисовка
-    const currentCount = container.querySelectorAll('.disease-item').length;
-    if (container.classList.contains('hidden') || currentCount !== diseases.length) {
-        container.classList.remove('hidden');
-        renderDiseaseBlock(); // Полная перерисовка безопаснее при изменении структуры
+    container.classList.remove('hidden');
+    
+    // 🔑 FIX: Проверяем, совпадают ли ID болезней в DOM с реальными ID в состоянии
+    const domIds = Array.from(container.querySelectorAll('.disease-item')).map(el => el.dataset.diseaseId);
+    const stateIds = diseases.map(d => d.id);
+    
+    // Если количество или состав болезней изменился (например, эволюция или лечение) - делаем полную перерисовку
+    if (domIds.length !== stateIds.length || !domIds.every((val, index) => val === stateIds[index])) {
+        renderDiseaseBlock();
         return;
     }
     
-    // 3. Точечное обновление (только если список болезней не менялся, просто тикает время)
+    // Точечное обновление таймеров (только если состав болезней НЕ менялся)
     diseases.forEach(disease => {
         const item = container.querySelector(`[data-disease-id="${disease.id}"]`);
         if (!item) return;
         
-        const percentage = (disease.ticksRemaining / disease.duration) * 100;
+        const percentage = Math.max(0, (disease.ticksRemaining / disease.duration) * 100);
         const urgencyClass = percentage <= 25 ? 'critical' : percentage <= 50 ? 'warning' : '';
         
         const timerFill = item.querySelector('.disease-timer-fill');
@@ -86,11 +91,10 @@ export function updateDiseaseUI() {
         }
         
         if (timerText) {
-            timerText.textContent = `Осталось: ${disease.ticksRemaining} сек`;
+            timerText.textContent = `Осталось: ${Math.max(0, disease.ticksRemaining)} сек`;
         }
         
         if (treatBtn) {
-            // 🔑 Жесткая привязка состояния кнопки к текущим деньгам
             const canAffordNow = gameState.money >= disease.treatmentCost;
             treatBtn.disabled = !canAffordNow;
             treatBtn.classList.toggle('disabled', !canAffordNow);

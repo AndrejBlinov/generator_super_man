@@ -79,7 +79,7 @@ export let stats = { ...defaultStats };
 // ЗАГРУЗКА ИГРЫ (вызывается при старте)
 // ==========================================
 export function loadFullGame() {
-    // 1. Миграция со старого формата (если есть старый ключ evolutionGame)
+    // 1. Миграция со старого формата
     migrateFromOldFormat();
     
     // 2. Загружаем наследие
@@ -96,12 +96,14 @@ export function loadFullGame() {
     
     // 4. Загружаем активную игру
     const savedActive = loadActiveGame();
-    if (savedActive) {
+    
+    // 🔑 ЗАЩИТА ОТ ЗОМБИ: Не загружаем сохранение, если в нём персонаж уже мёртв
+    if (savedActive && !savedActive.isGameOver) {
         gameState = applyMigrations({ ...defaultGameState, ...savedActive });
         return true; // Есть активное сохранение
     }
     
-    // 5. Если нет активной игры — начинаем с дефолтного состояния
+    // 5. Если нет активной игры (или персонаж мёртв) — начинаем с дефолтного состояния
     gameState = { ...defaultGameState };
     return false;
 }
@@ -152,6 +154,11 @@ function applyMigrations(state) {
 // СОХРАНЕНИЕ
 // ==========================================
 export function saveGame() {
+    if (gameState.isGameOver) {
+        clearActiveGame();
+        return;
+    }
+    
     saveActiveGame(gameState);
 }
 

@@ -41,7 +41,7 @@ h1 {
 .stat-item {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 1px;
     font-size: 16px;
 }
 
@@ -1826,6 +1826,7 @@ body.panel-open {
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     margin: 20px 0;
+    margin-top: 0px;
     width: 100%;
 }
 
