@@ -51,21 +51,24 @@ export function updateDiseaseUI() {
     
     const diseases = getActiveDiseasesInfo();
     
+    // 1. Если болезней нет, но блок виден — скрываем его
     if (diseases.length === 0) {
         if (!container.classList.contains('hidden')) {
-            renderDiseaseBlock();
+            container.classList.add('hidden');
+            container.innerHTML = '';
         }
         return;
     }
     
-    // Если количество изменилось или блок скрыт — полная перерисовка
+    // 2. Если блок был скрыт или количество болезней изменилось — полная перерисовка
     const currentCount = container.querySelectorAll('.disease-item').length;
-    if (currentCount !== diseases.length || container.classList.contains('hidden')) {
-        renderDiseaseBlock();
+    if (container.classList.contains('hidden') || currentCount !== diseases.length) {
+        container.classList.remove('hidden');
+        renderDiseaseBlock(); // Полная перерисовка безопаснее при изменении структуры
         return;
     }
     
-    // Обновляем каждую болезнь
+    // 3. Точечное обновление (только если список болезней не менялся, просто тикает время)
     diseases.forEach(disease => {
         const item = container.querySelector(`[data-disease-id="${disease.id}"]`);
         if (!item) return;
@@ -87,7 +90,10 @@ export function updateDiseaseUI() {
         }
         
         if (treatBtn) {
-            treatBtn.classList.toggle('disabled', !disease.canAfford);
+            // 🔑 Жесткая привязка состояния кнопки к текущим деньгам
+            const canAffordNow = gameState.money >= disease.treatmentCost;
+            treatBtn.disabled = !canAffordNow;
+            treatBtn.classList.toggle('disabled', !canAffordNow);
         }
     });
 }

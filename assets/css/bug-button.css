@@ -1,16 +1,3 @@
-/* ========================= */
-/* Левая плавающая кнопка (Баг) */
-/* ========================= */
-
-.floating-actions-left {
-    position: absolute;
-    left: -75px; /* Зеркально правой стороне */
-    top: 300px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    z-index: 3500;
-}
 
 .fab-bug {
     background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%) !important;
@@ -22,14 +9,12 @@
 
 /* Адаптив для мобильных: переносим вниз вместе с правыми кнопками */
 @media (max-width: 768px) {
-    .floating-actions-left {
-        left: auto;
-        right: 85px; /* Рядом с правыми кнопками */
-        top: auto;
-        bottom: 110px;
-        flex-direction: row;
+    .fab-btn {
+        width: 56px;
+        height: 56px;
+        font-size: 26px;
     }
-    .fab-bug:hover {
+        .fab-bug:hover {
         transform: scale(1.1) translateY(-5px) !important;
     }
 }

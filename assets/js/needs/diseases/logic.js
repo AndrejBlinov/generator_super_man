@@ -44,6 +44,7 @@ export function trySpawnDiseases() {
 }
 
 
+// 🔑 Обработка одного тика всех активных болезней
 export function processDiseasesTick() {
     if (!gameState.activeDiseases) gameState.activeDiseases = [];
     
@@ -54,7 +55,7 @@ export function processDiseasesTick() {
         autoTreated: []
     };
     
-    // 🔑 Автоматическое лечение (если включено)
+    // Автоматическое лечение (если включено)
     if (gameState.autoTreatEnabled) {
         result.autoTreated = autoTreatDiseases();
     }
@@ -67,29 +68,36 @@ export function processDiseasesTick() {
         if (disease.ticksRemaining <= 0) {
             const config = DISEASES_CONFIG[disease.id];
             
+            // Тяжёлая болезнь → смерть
             if (config.deathOnExpire) {
                 result.died = config.name;
                 return;
             }
             
+            // Прогрессирование в следующую стадию
             if (config.nextStage) {
                 const nextConfig = DISEASES_CONFIG[config.nextStage];
                 
+                // Проверка: нет ли уже такой (более тяжелой) болезни среди активных
                 const alreadyHas = gameState.activeDiseases.some(
                     (d, i) => i !== index && d.id === config.nextStage
                 );
                 
                 if (alreadyHas) {
+                    // Если уже есть, удаляем текущую (более слабую), чтобы не дублировать
                     toRemove.push(index);
                 } else {
+                    // Прогрессируем
                     disease.id = config.nextStage;
                     disease.ticksRemaining = nextConfig.duration;
+                    disease.progressed = true;
                     result.progressed.push(nextConfig);
                 }
             }
         }
     });
     
+    // Удаляем болезни (в обратном порядке, чтобы не сбить индексы)
     toRemove.reverse().forEach(i => gameState.activeDiseases.splice(i, 1));
     
     return result;
@@ -175,12 +183,14 @@ export function getActiveDiseasesInfo() {
     }
     
     return gameState.activeDiseases
-        .filter(disease => disease && disease.id && DISEASES_CONFIG[disease.id]) // <-- Фильтр "битых" записей
+        // Фильтр "битых" записей на всякий случай
+        .filter(disease => disease && disease.id && DISEASES_CONFIG[disease.id])
         .map(disease => {
             const config = DISEASES_CONFIG[disease.id];
             return {
                 ...config,
                 ticksRemaining: disease.ticksRemaining,
+                // 🔑 Динамический пересчет на основе ТЕКУЩИХ денег в реальном времени
                 canAfford: gameState.money >= config.treatmentCost
             };
         });

@@ -63,6 +63,22 @@
 
         <button class="train-button" id="trainBtn">💪 ТРЕНИРОВАТЬСЯ</button>
 
+        <!-- 🔑 РЯД ДЕЙСТВИЙ (универсальный, на всех устройствах) -->
+        <div class="action-buttons-row">
+            <button class="action-btn" data-panel-target="crystalsPanel">
+                <span class="action-icon">💎</span>
+                <span class="action-label">Кристаллы</span>
+            </button>
+            <button class="action-btn" data-panel-target="shopPanel">
+                <span class="action-icon">🛒</span>
+                <span class="action-label">Магазин</span>
+            </button>
+            <button class="action-btn action-btn-bug" id="bugReportBtn">
+                <span class="action-icon">❗</span>
+                <span class="action-label">Баг</span>
+            </button>
+        </div>
+
         <div class="auto-exchange-control">
             <div class="auto-exchange-header">
                 <span class="auto-exchange-label">💱 Автообмен ОЭ → 💰</span>
@@ -118,21 +134,6 @@
         </div>
 
         <button class="help-button" id="helpButton" title="Помощь">❓</button>
-
-        <!-- 🔑 ПЛАВАЮЩИЕ КНОПКИ ДЕЙСТВИЙ (FAB) -->
-        <div class="floating-actions">
-            <button class="fab-btn" data-panel-target="crystalsPanel" title="Кристаллы и инвентарь">
-                💎
-            </button>
-            <button class="fab-btn" data-panel-target="shopPanel" title="Магазин способностей">
-                🛒
-            </button>
-        </div>
-
-        <!-- 🔑 КНОПКА СООБЩИТЬ О БАГЕ (СЛЕВА) -->
-        <div class="floating-actions-left">
-            <button class="fab-btn fab-bug" id="bugReportBtn" title="НАШЕЛ БАГ - НАПИШИ">❗</button>
-        </div>
 
         <!-- 🔑 ВЕРСИЯ ИГРЫ -->
         <div class="game-version">
