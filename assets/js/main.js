@@ -44,12 +44,18 @@ function showMainMenu() {
     stopGameEngine();
     btnContainer.innerHTML = '';
 
-    // 🔑 Загружаем все данные из разделённых хранилищ
     const hasActive = loadFullGame();
     const hasLeg = hasLegacy();
     const isAlive = !gameState.isGameOver;
 
-    // 1. Кнопка "Продолжить игру" (только если есть активное сохранение и персонаж жив)
+    console.log('📊 [showMainMenu] Состояние:', { 
+        hasActive, 
+        hasLeg, 
+        isAlive, 
+        isGameOver: gameState.isGameOver 
+    });
+
+    // 🔑 Кнопка "Продолжить" — ТОЛЬКО если есть сохранение И персонаж жив
     if (hasActive && isAlive) {
         const btn = document.createElement('button');
         btn.className = 'menu-btn';
@@ -64,17 +70,16 @@ function showMainMenu() {
         btnContainer.appendChild(btn);
     }
 
-    // 2. Кнопка "С бонусами наследия" (если есть бонусы)
+    // 🔑 Кнопка "Начать новое поколение" — ТОЛЬКО если есть наследие
     if (hasLeg) {
         const btn = document.createElement('button');
         btn.className = 'menu-btn secondary';
         
-        // 🔑 Подсчитываем кристаллы для отображения
         const crystalsCount = (legacy.startingCrystals || []).length;
         const crystalLevels = (legacy.startingCrystals || [])
             .map(c => c.level)
             .sort((a, b) => b - a)
-            .slice(0, 3) // Показываем топ-3
+            .slice(0, 3)
             .join(', ');
         const moreText = crystalsCount > 3 ? ` +${crystalsCount - 3} ещё` : '';
         
@@ -88,42 +93,24 @@ function showMainMenu() {
         btnContainer.appendChild(btn);
     }
 
-    // 3. Кнопка "Новая игра" (ВСЕГДА доступна)
+    // 🔑 Кнопка "Новая игра" — ВСЕГДА доступна
     const newGameBtn = document.createElement('button');
     newGameBtn.className = 'menu-btn danger';
-    newGameBtn.textContent = hasActiveGame() ? '🔄 Новая игра (выбрать сложность)' : '🔄 Новая игра';
-
+    newGameBtn.textContent = hasActive ? '🔄 Новая игра (выбрать сложность)' : '🔄 Новая игра';
+    
     newGameBtn.onclick = () => {
-        if (hasActiveGame()) {
-            if (!confirm("⚠️ ВНИМАНИЕ: Это удалит текущее сохранение. Наследие и статистика сохранятся. Продолжить?")) {
+        if (hasActive) {
+            if (!confirm("⚠️ ВНИМАНИЕ: Это удалит текущее сохранение. Продолжить?")) {
                 return;
             }
-            clearActiveGame(); // 🔑 Было clearSave(), стало clearActiveGame()
+            clearActiveGame();
         }
         renderDifficultyPanel();
         openPanel('difficultyPanel');
     };
     btnContainer.appendChild(newGameBtn);
 
-    // 4. Кнопка "Полный сброс" (если есть наследие или статистика)
-    if (hasLeg || stats.runsCompleted > 0) {
-        const resetBtn = document.createElement('button');
-        resetBtn.className = 'menu-btn';
-        resetBtn.style.background = '#6c757d';
-        resetBtn.style.fontSize = '13px';
-        resetBtn.style.padding = '10px';
-        resetBtn.style.marginTop = '10px';
-        resetBtn.textContent = '🗑️ Полный сброс (удалить ВСЁ, включая наследие)';
-        resetBtn.onclick = () => {
-            if (confirm("⚠️ ВНИМАНИЕ: Это удалит ВСЁ — наследие, статистику, активную игру. Действие необратимо! Продолжить?")) {
-                resetAll();
-                window.location.reload();
-            }
-        };
-        btnContainer.appendChild(resetBtn);
-    }
-
-    // 🔑 Отображаем общую статистику в подвале меню
+    // Отображаем статистику
     const footer = menu.querySelector('.menu-footer');
     if (footer && stats.runsCompleted > 0) {
         footer.innerHTML = `

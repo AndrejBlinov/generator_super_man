@@ -1,4 +1,4 @@
-import { gameState } from './state.js';
+import { gameState, legacy, getCurrentExchangeRate } from './state.js';
 import { UPGRADES_CONFIG, ITEMS_CONFIG, AGING_SLOWDOWN_RATES } from './config.js';
 import { showMessage } from './ui.js';
 import { renderUpgrades } from './ui.js';
@@ -87,20 +87,33 @@ export function calculateUpgradeCost(upgradeId) {
 }
 
 // 🔑 Массовая покупка вещи
+
 export function buyItemBulk(itemId, count) {
     const config = ITEMS_CONFIG[itemId];
+    if (!config) return false;
+    
+    // Проверяем, хватает ли ОЭ
     const totalCost = config.cost * count;
+    if (gameState.evolutionPoints < totalCost) return false;
     
-    if (gameState.evolutionPoints < totalCost) {
-        showMessage("Недостаточно очков!");
-        return false;
-    }
-    
+    // Списываем ОЭ
     gameState.evolutionPoints -= totalCost;
     
-    if (itemId === 'money') {
-        gameState.money += config.reward * count;
-        showMessage(`Получено ${config.reward * count} 💰!`);
+    // 🔑 Начисляем награду с учётом бонуса наследия
+    const currentRate = getCurrentExchangeRate();
+    
+    if (itemId === 'money_exchange' || config.name === 'Обмен на деньги') {
+        // Начисляем деньги по актуальному курсу
+        const moneyGained = Math.floor(currentRate * count);
+        gameState.money += moneyGained;
+        
+        if (!gameState.stats) gameState.stats = { totalMoneyEarnedThisRun: 0 };
+        gameState.stats.totalMoneyEarnedThisRun += moneyGained;
+        
+        showMessage(`💰 Получено ${moneyGained} денег за ${count} ОЭ`);
+    } else {
+        // Другие предметы (если есть)
+        // ... твоя логика
     }
     
     return true;

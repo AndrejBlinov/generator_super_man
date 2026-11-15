@@ -154,3 +154,35 @@
         display: none !important;
     }
 }
+
+/* ========================= */
+/* КОМПАКТНЫЕ КНОПКИ В ИНТЕРФЕЙСЕ */
+/* ========================= */
+
+@media (min-width: 1024px) {
+    /* Кнопка тренировки */
+    .game-interface .train-button {
+        padding: 18px 20px;
+        font-size: 18px;
+        margin-bottom: 16px;
+    }
+
+    /* Ряд кнопок Кристаллы/Магазин/Баг */
+    .game-interface .action-buttons-row {
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .game-interface .action-btn {
+        padding: 12px 8px;
+        border-radius: 10px;
+    }
+
+    .game-interface .action-icon {
+        font-size: 22px;
+    }
+
+    .game-interface .action-label {
+        font-size: 11px;
+    }
+}

@@ -51,7 +51,6 @@ export class CharacterCanvasRenderer {
         if (delta >= 100) {
             this.animationFrame++;
             this.lastTime = timestamp;
-            // 🔑 ЗАЩИТА: ошибка в одном кадре не убивает всю анимацию
             try {
                 this.render();
             } catch (e) {
@@ -64,9 +63,12 @@ export class CharacterCanvasRenderer {
     render() {
         const { width, height } = this.canvas;
         this.ctx.clearRect(0, 0, width, height);
-        this.drawBackground();
-        this.drawGround();
-        this.drawDwelling();
+        
+        this.drawSky();        // Слой 1: Небо (верхние 60%)
+        this.drawHills();      // 🔑 НОВОЕ: Холмы на заднем плане (10%)
+        this.drawGround();     // Слой 2: Земля с дорогой (нижние 30%)
+        this.drawScenery();    // Слой 3: Деревья, облака
+        this.drawDwelling();   // Слой 4: Дом
 
         if (this.state.isCritical || this.state.isSick) {
             this.drawHospitalBed();
@@ -75,53 +77,194 @@ export class CharacterCanvasRenderer {
         }
     }
 
-    drawBackground() {
+    // 🔑 НОВОЕ: Небо с более контрастными цветами
+    drawSky() {
         const { width, height } = this.canvas;
-        const grad = this.ctx.createLinearGradient(0, 0, 0, height);
+        const skyHeight = height * 0.6; // Небо теперь 60%
+        
+        const grad = this.ctx.createLinearGradient(0, 0, 0, skyHeight);
         switch (this.state.environment) {
-            case 'luxury': grad.addColorStop(0, '#ffeaa7'); grad.addColorStop(1, '#fdcb6e'); break;
-            case 'normal': grad.addColorStop(0, '#87CEEB'); grad.addColorStop(1, '#E0F6FF'); break;
-            case 'poor': grad.addColorStop(0, '#a9a9a9'); grad.addColorStop(1, '#d3d3d3'); break;
-            case 'homeless': grad.addColorStop(0, '#2c3e50'); grad.addColorStop(1, '#4a5568'); break;
-            default: grad.addColorStop(0, '#87CEEB'); grad.addColorStop(1, '#E0F6FF');
+            case 'luxury': 
+                grad.addColorStop(0, '#87CEEB'); // Голубое небо
+                grad.addColorStop(1, '#FFE4B5'); // Тёплый горизонт
+                break;
+            case 'normal': 
+                grad.addColorStop(0, '#4A90E2'); // Яркое голубое
+                grad.addColorStop(1, '#87CEEB'); // Светлое у горизонта
+                break;
+            case 'poor': 
+                grad.addColorStop(0, '#808080'); // Серое
+                grad.addColorStop(1, '#A9A9A9'); // Светло-серое
+                break;
+            case 'homeless': 
+                grad.addColorStop(0, '#1a1a2e'); // Тёмно-синий
+                grad.addColorStop(1, '#2c3e50'); // Серо-синий
+                break;
+            default: 
+                grad.addColorStop(0, '#4A90E2');
+                grad.addColorStop(1, '#87CEEB');
         }
         this.ctx.fillStyle = grad;
-        this.ctx.fillRect(0, 0, width, height);
+        this.ctx.fillRect(0, 0, width, skyHeight);
     }
 
+    // 🔑 НОВОЕ: Холмы на заднем плане
+    drawHills() {
+        const { width, height } = this.canvas;
+        const p = this.pixelSize;
+        const ctx = this.ctx;
+        const hillY = height * 0.6; // Начало холмов
+
+        // Дальние холмы (светлее, меньше)
+        ctx.fillStyle = this.state.environment === 'luxury' ? '#90EE90' : 
+                       this.state.environment === 'poor' ? '#808080' : '#7CB342';
+        
+        // Холм 1 (слева)
+        ctx.beginPath();
+        ctx.moveTo(0, hillY);
+        ctx.lineTo(width * 0.15, hillY - height * 0.08);
+        ctx.lineTo(width * 0.3, hillY);
+        ctx.closePath();
+        ctx.fill();
+
+        // Холм 2 (центр)
+        ctx.beginPath();
+        ctx.moveTo(width * 0.25, hillY);
+        ctx.lineTo(width * 0.5, hillY - height * 0.1);
+        ctx.lineTo(width * 0.75, hillY);
+        ctx.closePath();
+        ctx.fill();
+
+        // Холм 3 (справа)
+        ctx.beginPath();
+        ctx.moveTo(width * 0.65, hillY);
+        ctx.lineTo(width * 0.85, hillY - height * 0.07);
+        ctx.lineTo(width, hillY);
+        ctx.closePath();
+        ctx.fill();
+
+        // Ближние холмы (темнее, больше)
+        ctx.fillStyle = this.state.environment === 'luxury' ? '#32CD32' : 
+                       this.state.environment === 'poor' ? '#696969' : '#558B2F';
+        
+        ctx.beginPath();
+        ctx.moveTo(0, hillY + p * 5);
+        ctx.lineTo(width * 0.2, hillY - height * 0.03);
+        ctx.lineTo(width * 0.4, hillY + p * 5);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(width * 0.35, hillY + p * 5);
+        ctx.lineTo(width * 0.6, hillY - height * 0.05);
+        ctx.lineTo(width * 0.85, hillY + p * 5);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // 🔑 НОВОЕ: Земля с дорогой (нижние 30%)
     drawGround() {
         const { width, height } = this.canvas;
-        const groundY = height * 0.75;
-        this.ctx.fillStyle = '#8B7355';
-        this.ctx.fillRect(0, groundY, width, height - groundY);
-
-        // Текстура травы/земли
+        const groundY = height * 0.7; // Линия горизонта (где начинается земля)
         const p = this.pixelSize;
-        this.ctx.fillStyle = '#6B5340';
-        for (let x = 0; x < width; x += p * 8) {
-            this.ctx.fillRect(x, groundY, p * 3, p);
+        const ctx = this.ctx;
+
+        // Трава/земля
+        ctx.fillStyle = '#4a7a3a';
+        ctx.fillRect(0, groundY, width, height - groundY);
+        
+        // Текстура травы
+        ctx.fillStyle = '#3d6630';
+        for (let i = 0; i < width; i += p * 6) {
+            ctx.fillRect(i, groundY + p * 2, p * 2, p * 3);
+            ctx.fillRect(i + p * 3, groundY + p * 4, p * 2, p * 2);
         }
+
+        // Асфальтовая дорога
+        ctx.fillStyle = '#5a5a5a';
+        ctx.fillRect(0, groundY + p * 8, width, p * 12);
+
+        // Статичная разметка
+        ctx.fillStyle = '#f0e68c';
+        for (let i = 0; i < width; i += p * 20) {
+            ctx.fillRect(i, groundY + p * 13, p * 10, p * 2);
+        }
+    }
+
+    drawScenery() {
+        const { width, height } = this.canvas;
+        const p = this.pixelSize;
+        const ctx = this.ctx;
+        const groundY = height * 0.7;
+
+        // Облака (в небе)
+        if (this.state.environment !== 'homeless') {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            const cloudSpeed = this.animationFrame * 0.3;
+            const cloud1X = (width * 0.8 - cloudSpeed) % (width + 200);
+            const cloud2X = (width * 0.4 - cloudSpeed * 0.7) % (width + 200);
+            
+            this.drawCloud(cloud1X, height * 0.15, p * 2);
+            this.drawCloud(cloud2X, height * 0.1, p * 1.5);
+        }
+
+        // Деревья (стоят на земле)
+        if (this.state.environment !== 'homeless') {
+            // Дальний план
+            this.drawTree(width * 0.70, groundY, p * 12, '#2d6a24', '#1e4d1b');
+            this.drawTree(width * 0.85, groundY, p * 14, '#2d6a24', '#1e4d1b');
+            this.drawTree(width * 0.95, groundY, p * 10, '#2d6a24', '#1e4d1b');
+            
+            // Средний план
+            this.drawTree(width * 0.75, groundY, p * 18, '#3a8c32', '#266322');
+            this.drawTree(width * 0.92, groundY, p * 16, '#3a8c32', '#266322');
+        }
+    }
+
+    drawCloud(x, y, p) {
+        const ctx = this.ctx;
+        ctx.fillRect(x, y, p * 10, p * 4);
+        ctx.fillRect(x + p * 2, y - p * 2, p * 6, p * 2);
+        ctx.fillRect(x + p * 4, y - p * 4, p * 4, p * 2);
+    }
+
+    drawTree(x, groundY, size, colorLight, colorDark) {
+        const ctx = this.ctx;
+        
+        // Ствол
+        ctx.fillStyle = '#5c3a1e';
+        ctx.fillRect(x, groundY - size, size * 0.4, size);
+        ctx.fillStyle = '#3e2612';
+        ctx.fillRect(x, groundY - size, size * 0.15, size);
+        
+        // Крона (3 яруса)
+        ctx.fillStyle = colorDark;
+        ctx.fillRect(x - size * 0.6, groundY - size * 1.2, size * 1.6, size * 0.6);
+        ctx.fillStyle = colorLight;
+        ctx.fillRect(x - size * 0.5, groundY - size * 1.3, size * 1.4, size * 0.5);
+        
+        ctx.fillStyle = colorDark;
+        ctx.fillRect(x - size * 0.4, groundY - size * 1.8, size * 1.2, size * 0.6);
+        ctx.fillStyle = colorLight;
+        ctx.fillRect(x - size * 0.3, groundY - size * 1.9, size * 1.0, size * 0.5);
+        
+        ctx.fillStyle = colorDark;
+        ctx.fillRect(x - size * 0.2, groundY - size * 2.3, size * 0.8, size * 0.5);
+        ctx.fillStyle = colorLight;
+        ctx.fillRect(x - size * 0.1, groundY - size * 2.4, size * 0.6, size * 0.4);
     }
 
     drawDwelling() {
         const { width, height } = this.canvas;
-        const x = width * 0.08;
-        const y = height * 0.45;
+        const groundY = height * 0.7;
+        const x = width * 0.05; 
+        const y = groundY - 100; // Дом стоит на земле
 
         switch (this.state.environment) {
-            case 'luxury':
-                this.drawMansion(x, y);
-                break;
-            case 'normal':
-                this.drawHouse(x, y);
-                break;
-            case 'poor':
-                this.drawOldHouse(x, y);
-                break;
-            case 'homeless':
-                this.drawCardboardBox(x, y);
-                this.drawRain();
-                break;
+            case 'luxury': this.drawMansion(x, y); break;
+            case 'normal': this.drawHouse(x, y); break;
+            case 'poor': this.drawOldHouse(x, y); break;
+            case 'homeless': this.drawCardboardBox(x, groundY - 30); this.drawRain(); break;
         }
     }
 
@@ -129,267 +272,258 @@ export class CharacterCanvasRenderer {
     drawMansion(x, y) {
         const p = this.pixelSize;
         const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(2, 2);
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.fillRect(x + p * 2, y + p * 14, p * 26, p * 2);
+        ctx.fillRect(p * 2, p * 14, p * 26, p * 2);
 
         ctx.fillStyle = '#6b6b6b';
-        ctx.fillRect(x, y + p * 12, p * 30, p * 2);
+        ctx.fillRect(0, p * 12, p * 30, p * 2);
         ctx.fillStyle = '#555555';
-        ctx.fillRect(x + p * 2, y + p * 10, p * 26, p * 2);
+        ctx.fillRect(p * 2, p * 10, p * 26, p * 2);
 
         ctx.fillStyle = '#f0e6d2';
-        ctx.fillRect(x + p * 2, y, p * 26, p * 10);
+        ctx.fillRect(p * 2, 0, p * 26, p * 10);
 
         ctx.fillStyle = '#e6d9c0';
         for (let i = 0; i < 26; i += 4) {
-            ctx.fillRect(x + p * 2 + i * p, y, p, p * 10);
+            ctx.fillRect(p * 2 + i * p, 0, p, p * 10);
         }
 
         ctx.fillStyle = '#8b3a3a';
         ctx.beginPath();
-        ctx.moveTo(x - p * 2, y + p * 2);
-        ctx.lineTo(x + p * 15, y - p * 8);
-        ctx.lineTo(x + p * 32, y + p * 2);
+        ctx.moveTo(-p * 2, p * 2);
+        ctx.lineTo(p * 15, -p * 8);
+        ctx.lineTo(p * 32, p * 2);
         ctx.closePath();
         ctx.fill();
 
         ctx.fillStyle = '#a54a4a';
-        ctx.fillRect(x + p * 6, y - p * 4, p * 18, p * 6);
+        ctx.fillRect(p * 6, -p * 4, p * 18, p * 6);
         ctx.fillStyle = '#8b3a3a';
         ctx.beginPath();
-        ctx.moveTo(x + p * 4, y - p * 4);
-        ctx.lineTo(x + p * 15, y - p * 10);
-        ctx.lineTo(x + p * 26, y - p * 4);
+        ctx.moveTo(p * 4, -p * 4);
+        ctx.lineTo(p * 15, -p * 10);
+        ctx.lineTo(p * 26, -p * 4);
         ctx.closePath();
         ctx.fill();
 
         ctx.fillStyle = '#87CEEB';
-        ctx.fillRect(x + p * 5, y + p * 3, p * 5, p * 5);
-        ctx.fillRect(x + p * 20, y + p * 3, p * 5, p * 5);
+        ctx.fillRect(p * 5, p * 3, p * 5, p * 5);
+        ctx.fillRect(p * 20, p * 3, p * 5, p * 5);
 
         ctx.fillStyle = '#4a3728';
-        ctx.fillRect(x + p * 7, y + p * 3, p, p * 5);
-        ctx.fillRect(x + p * 22, y + p * 3, p, p * 5);
-        ctx.fillRect(x + p * 5, y + p * 5, p * 5, p);
-        ctx.fillRect(x + p * 20, y + p * 5, p * 5, p);
+        ctx.fillRect(p * 7, p * 3, p, p * 5);
+        ctx.fillRect(p * 22, p * 3, p, p * 5);
+        ctx.fillRect(p * 5, p * 5, p * 5, p);
+        ctx.fillRect(p * 20, p * 5, p * 5, p);
 
         ctx.fillStyle = 'rgba(255, 255, 200, 0.6)';
-        ctx.fillRect(x + p * 5, y + p * 3, p * 2, p * 2);
-        ctx.fillRect(x + p * 20, y + p * 3, p * 2, p * 2);
+        ctx.fillRect(p * 5, p * 3, p * 2, p * 2);
+        ctx.fillRect(p * 20, p * 3, p * 2, p * 2);
 
         ctx.fillStyle = '#5c3a1e';
-        ctx.fillRect(x + p * 11, y + p * 5, p * 8, p * 5);
+        ctx.fillRect(p * 11, p * 5, p * 8, p * 5);
         ctx.fillStyle = '#4a2e18';
-        ctx.fillRect(x + p * 14, y + p * 5, p, p * 5);
+        ctx.fillRect(p * 14, p * 5, p, p * 5);
         ctx.fillStyle = '#ffd700';
-        ctx.fillRect(x + p * 12, y + p * 7, p, p);
-        ctx.fillRect(x + p * 16, y + p * 7, p, p);
+        ctx.fillRect(p * 12, p * 7, p, p);
+        ctx.fillRect(p * 16, p * 7, p, p);
 
         ctx.fillStyle = '#7a5243';
-        ctx.fillRect(x + p * 22, y - p * 6, p * 4, p * 8);
+        ctx.fillRect(p * 22, -p * 6, p * 4, p * 8);
         ctx.fillStyle = '#5c3a2e';
-        ctx.fillRect(x + p * 21, y - p * 7, p * 6, p * 2);
+        ctx.fillRect(p * 21, -p * 7, p * 6, p * 2);
 
         ctx.fillStyle = '#2d6a24';
-        ctx.fillRect(x + p * 2, y + p * 6, p * 3, p * 4);
-        ctx.fillRect(x + p * 3, y + p * 5, p * 2, p * 2);
+        ctx.fillRect(p * 2, p * 6, p * 3, p * 4);
+        ctx.fillRect(p * 3, p * 5, p * 2, p * 2);
+
+        ctx.restore();
     }
 
-    // 🏠 ОБЫЧНЫЙ ДОМ (теперь существует!)
+    // 🏠 ОБЫЧНЫЙ ДОМ
     drawHouse(x, y) {
         const p = this.pixelSize;
         const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(2, 2);
 
-        // Тень
         ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-        ctx.fillRect(x + p, y + p * 12, p * 22, p * 2);
+        ctx.fillRect(p, p * 12, p * 22, p * 2);
 
-        // Фундамент
         ctx.fillStyle = '#7d7d7d';
-        ctx.fillRect(x - p, y + p * 11, p * 24, p * 2);
+        ctx.fillRect(-p, p * 11, p * 24, p * 2);
 
-        // Стены (тёплый бежевый)
         ctx.fillStyle = '#e8c89a';
-        ctx.fillRect(x, y + p * 2, p * 22, p * 9);
+        ctx.fillRect(0, p * 2, p * 22, p * 9);
 
-        // Текстура брёвен (горизонтальные линии)
         ctx.fillStyle = '#d4b078';
         for (let i = 0; i < 9; i += 2) {
-            ctx.fillRect(x, y + p * 2 + i * p, p * 22, p * 0.5);
+            ctx.fillRect(0, p * 2 + i * p, p * 22, p * 0.5);
         }
 
-        // Дымчатая крыша (двускатная)
         ctx.fillStyle = '#6b4226';
         ctx.beginPath();
-        ctx.moveTo(x - p * 2, y + p * 2);
-        ctx.lineTo(x + p * 11, y - p * 6);
-        ctx.lineTo(x + p * 24, y + p * 2);
+        ctx.moveTo(-p * 2, p * 2);
+        ctx.lineTo(p * 11, -p * 6);
+        ctx.lineTo(p * 24, p * 2);
         ctx.closePath();
         ctx.fill();
 
-        // Светлая сторона крыши
         ctx.fillStyle = '#8b5a33';
         ctx.beginPath();
-        ctx.moveTo(x - p * 2, y + p * 2);
-        ctx.lineTo(x + p * 11, y - p * 6);
-        ctx.lineTo(x + p * 11, y + p * 2);
+        ctx.moveTo(-p * 2, p * 2);
+        ctx.lineTo(p * 11, -p * 6);
+        ctx.lineTo(p * 11, p * 2);
         ctx.closePath();
         ctx.fill();
 
-        // Труба
         ctx.fillStyle = '#8b4513';
-        ctx.fillRect(x + p * 17, y - p * 5, p * 3, p * 5);
+        ctx.fillRect(p * 17, -p * 5, p * 3, p * 5);
         ctx.fillStyle = '#5c2e0e';
-        ctx.fillRect(x + p * 16, y - p * 6, p * 5, p * 2);
+        ctx.fillRect(p * 16, -p * 6, p * 5, p * 2);
 
-        // Окно слева
         ctx.fillStyle = '#87CEEB';
-        ctx.fillRect(x + p * 3, y + p * 4, p * 5, p * 4);
+        ctx.fillRect(p * 3, p * 4, p * 5, p * 4);
         ctx.fillStyle = '#4a3728';
-        ctx.fillRect(x + p * 5, y + p * 4, p, p * 4);
-        ctx.fillRect(x + p * 3, y + p * 5, p * 5, p);
-        // Свет в окне
+        ctx.fillRect(p * 5, p * 4, p, p * 4);
+        ctx.fillRect(p * 3, p * 5, p * 5, p);
         ctx.fillStyle = 'rgba(255, 240, 150, 0.7)';
-        ctx.fillRect(x + p * 3, y + p * 4, p * 2, p);
+        ctx.fillRect(p * 3, p * 4, p * 2, p);
 
-        // Окно справа
         ctx.fillStyle = '#87CEEB';
-        ctx.fillRect(x + p * 14, y + p * 4, p * 5, p * 4);
+        ctx.fillRect(p * 14, p * 4, p * 5, p * 4);
         ctx.fillStyle = '#4a3728';
-        ctx.fillRect(x + p * 16, y + p * 4, p, p * 4);
-        ctx.fillRect(x + p * 14, y + p * 5, p * 5, p);
+        ctx.fillRect(p * 16, p * 4, p, p * 4);
+        ctx.fillRect(p * 14, p * 5, p * 5, p);
 
-        // Дверь
         ctx.fillStyle = '#5c3a1e';
-        ctx.fillRect(x + p * 9, y + p * 6, p * 4, p * 5);
+        ctx.fillRect(p * 9, p * 6, p * 4, p * 5);
         ctx.fillStyle = '#ffd700';
-        ctx.fillRect(x + p * 11, y + p * 8, p, p);
+        ctx.fillRect(p * 11, p * 8, p, p);
 
-        // Заборчик перед домом
         ctx.fillStyle = '#a07850';
         for (let i = 0; i < 22; i += 3) {
-            ctx.fillRect(x + p * i, y + p * 10, p, p * 2);
+            ctx.fillRect(p * i, p * 10, p, p * 2);
         }
-        ctx.fillRect(x, y + p * 10, p * 22, p);
+        ctx.fillRect(0, p * 10, p * 22, p);
+
+        ctx.restore();
     }
 
-    // 🏚️ СТАРЫЙ ДОМ (теперь существует!)
+    // 🏚️ СТАРЫЙ ДОМ
     drawOldHouse(x, y) {
         const p = this.pixelSize;
         const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(2, 2);
 
-        // Тень
         ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.fillRect(x + p, y + p * 12, p * 18, p * 2);
+        ctx.fillRect(p, p * 12, p * 18, p * 2);
 
-        // Стены (серые, потрескавшиеся)
         ctx.fillStyle = '#9a9a9a';
-        ctx.fillRect(x, y + p * 3, p * 18, p * 8);
+        ctx.fillRect(0, p * 3, p * 18, p * 8);
 
-        // Более тёмная тень на стене
         ctx.fillStyle = '#7a7a7a';
-        ctx.fillRect(x, y + p * 3, p * 4, p * 8);
+        ctx.fillRect(0, p * 3, p * 4, p * 8);
 
-        // Провисшая кривая крыша
         ctx.fillStyle = '#4a4a4a';
         ctx.beginPath();
-        ctx.moveTo(x - p, y + p * 3);
-        ctx.lineTo(x + p * 5, y - p * 3);
-        ctx.lineTo(x + p * 13, y - p * 2); // провисание
-        ctx.lineTo(x + p * 19, y + p * 3);
+        ctx.moveTo(-p, p * 3);
+        ctx.lineTo(p * 5, -p * 3);
+        ctx.lineTo(p * 13, -p * 2);
+        ctx.lineTo(p * 19, p * 3);
         ctx.closePath();
         ctx.fill();
 
-        // Заплатка на крыше
         ctx.fillStyle = '#6b6b6b';
-        ctx.fillRect(x + p * 12, y - p * 1, p * 4, p * 2);
+        ctx.fillRect(p * 12, -p, p * 4, p * 2);
 
-        // Трещины на стене
         ctx.strokeStyle = '#333';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(x + p * 3, y + p * 4);
-        ctx.lineTo(x + p * 5, y + p * 7);
-        ctx.lineTo(x + p * 4, y + p * 9);
+        ctx.moveTo(p * 3, p * 4);
+        ctx.lineTo(p * 5, p * 7);
+        ctx.lineTo(p * 4, p * 9);
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.moveTo(x + p * 14, y + p * 5);
-        ctx.lineTo(x + p * 16, y + p * 8);
+        ctx.moveTo(p * 14, p * 5);
+        ctx.lineTo(p * 16, p * 8);
         ctx.stroke();
 
-        // Заколоченное окно
         ctx.fillStyle = '#2a2a2a';
-        ctx.fillRect(x + p * 6, y + p * 5, p * 4, p * 3);
+        ctx.fillRect(p * 6, p * 5, p * 4, p * 3);
         ctx.fillStyle = '#6b5340';
-        ctx.fillRect(x + p * 5, y + p * 5, p * 6, p);
-        ctx.fillRect(x + p * 5, y + p * 7, p * 6, p);
+        ctx.fillRect(p * 5, p * 5, p * 6, p);
+        ctx.fillRect(p * 5, p * 7, p * 6, p);
 
-        // Кривая дверь
         ctx.fillStyle = '#5c4a3a';
-        ctx.fillRect(x + p * 12, y + p * 6, p * 3, p * 5);
+        ctx.fillRect(p * 12, p * 6, p * 3, p * 5);
         ctx.fillStyle = '#3a2e22';
-        ctx.fillRect(x + p * 12, y + p * 6, p, p * 5);
+        ctx.fillRect(p * 12, p * 6, p, p * 5);
 
-        // Сорняки у фундамента
         ctx.fillStyle = '#4a7a3a';
-        ctx.fillRect(x + p * 2, y + p * 10, p, p * 2);
-        ctx.fillRect(x + p * 8, y + p * 10, p, p * 2);
-        ctx.fillRect(x + p * 15, y + p * 10, p, p * 2);
+        ctx.fillRect(p * 2, p * 10, p, p * 2);
+        ctx.fillRect(p * 8, p * 10, p, p * 2);
+        ctx.fillRect(p * 15, p * 10, p, p * 2);
+
+        ctx.restore();
     }
 
     // 📦 КАРТОННАЯ КОРОБКА
     drawCardboardBox(x, y) {
         const p = this.pixelSize;
         const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(2, 2);
 
-        // Тень
         ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillRect(x - p, y + p * 12, p * 16, p * 2);
+        ctx.fillRect(-p, p * 12, p * 16, p * 2);
 
-        // Коробка
         ctx.fillStyle = '#b8860b';
-        ctx.fillRect(x, y + p * 4, p * 14, p * 8);
+        ctx.fillRect(0, p * 4, p * 14, p * 8);
 
-        // Тёмная грань
         ctx.fillStyle = '#8b6508';
-        ctx.fillRect(x, y + p * 4, p * 3, p * 8);
+        ctx.fillRect(0, p * 4, p * 3, p * 8);
 
-        // Открытые клапаны
         ctx.fillStyle = '#a0750a';
-        ctx.fillRect(x - p, y + p * 2, p * 5, p * 2);
-        ctx.fillRect(x + p * 10, y + p * 2, p * 5, p * 2);
+        ctx.fillRect(-p, p * 2, p * 5, p * 2);
+        ctx.fillRect(p * 10, p * 2, p * 5, p * 2);
 
-        // Вход
         ctx.fillStyle = '#2a1a05';
-        ctx.fillRect(x + p * 4, y + p * 7, p * 6, p * 5);
+        ctx.fillRect(p * 4, p * 7, p * 6, p * 5);
 
-        // Надпись на коробке
         ctx.fillStyle = '#5c4008';
-        ctx.fillRect(x + p * 5, y + p * 5, p * 4, p);
-        ctx.fillRect(x + p * 6, y + p * 6, p * 2, p);
+        ctx.fillRect(p * 5, p * 5, p * 4, p);
+        ctx.fillRect(p * 6, p * 6, p * 2, p);
 
-        // Мусор рядом
         ctx.fillStyle = '#666';
-        ctx.fillRect(x + p * 16, y + p * 11, p * 3, p);
+        ctx.fillRect(p * 16, p * 11, p * 3, p);
         ctx.fillStyle = '#888';
-        ctx.fillRect(x + p * 18, y + p * 10, p * 2, p);
+        ctx.fillRect(p * 18, p * 10, p * 2, p);
 
-        // Лужа
         ctx.fillStyle = 'rgba(100, 140, 180, 0.5)';
-        ctx.fillRect(x - p * 3, y + p * 13, p * 8, p * 2);
+        ctx.fillRect(-p * 3, p * 13, p * 8, p * 2);
+
+        ctx.restore();
     }
 
-    // 🌧️ ДОЖДЬ (теперь существует!)
+    // 🌧️ ДОЖДЬ
     drawRain() {
         const { width, height } = this.canvas;
         const ctx = this.ctx;
         ctx.fillStyle = 'rgba(200, 220, 255, 0.6)';
-        for (let i = 0; i < 30; i++) {
-            const rx = (i * 17 + this.animationFrame * 3) % width;
-            const ry = (i * 23 + this.animationFrame * 5) % (height * 0.7);
-            ctx.fillRect(rx, ry, 2, 8);
+        for (let i = 0; i < 40; i++) {
+            const rx = (i * 17 + this.animationFrame * 4) % width;
+            const ry = (i * 23 + this.animationFrame * 6) % (height * 0.7);
+            ctx.fillRect(rx, ry, 2, 10);
         }
     }
 

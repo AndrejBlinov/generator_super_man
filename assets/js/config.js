@@ -45,12 +45,12 @@ export const UPGRADES_CONFIG = {
 };
 
 export const ITEMS_CONFIG = {
-    money: {
-        name: "Обмен на деньги",
-        desc: "1 ОЭ = 10 денег",
+    money_exchange: {
+        icon: '💰',
+        name: 'Обмен на деньги',
+        desc: '1 ОЭ = 10 денег', // Это перезапишется в UI
         cost: 1,
-        reward: 10,
-        icon: "💰"
+        reward: 10 // Это тоже перезапишется
     }
 };
 

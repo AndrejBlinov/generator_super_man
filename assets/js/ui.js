@@ -261,23 +261,29 @@ export function renderUpgrades() {
     itemsHeader.innerHTML = `<h3>🛍️ Вещи</h3><p>Одноразовые покупки и ресурсы</p>`;
     container.appendChild(itemsHeader);
 
-    // 5. 🔑 ЕДИНСТВЕННЫЙ цикл для Вещей (ITEMS_CONFIG) с правильным курсом
+        // 5. Отрисовка Вещей (ITEMS_CONFIG)
     Object.keys(ITEMS_CONFIG).forEach(itemId => {
         const config = ITEMS_CONFIG[itemId];
         const maxAffordable = getMaxAffordableItemCount(itemId);
         const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
         
-        // Магия наследия: берем актуальный курс вместо хардкода
+        // 🔑 Динамический курс обмена
         const currentRate = getCurrentExchangeRate();
         const amountToExchange = actualCount > 0 ? actualCount : 1;
         
         const totalCost = config.cost * amountToExchange;
-        const totalReward = Math.floor(currentRate * amountToExchange); 
+        const totalReward = Math.floor(currentRate * amountToExchange);
         
         const canAfford = gameState.evolutionPoints >= totalCost && actualCount > 0;
 
         const item = document.createElement('div');
         item.className = 'upgrade-item item-item';
+        
+        // 🔑 Динамическое описание с актуальным курсом
+        let descText = config.desc;
+        if (itemId === 'money_exchange' || config.name === 'Обмен на деньги') {
+            descText = `1 ОЭ = ${Math.floor(currentRate)} денег`;
+        }
         
         let btnText = `Купить за ${config.cost} ОЭ`;
         if (gameState.purchaseMultiplier === 'max') {
@@ -291,7 +297,7 @@ export function renderUpgrades() {
         item.innerHTML = `
             <div class="upgrade-info">
                 <div class="upgrade-name">${config.icon} ${config.name}</div>
-                <div class="upgrade-desc">${config.desc}</div>
+                <div class="upgrade-desc">${descText}</div>
             </div>
             <button class="upgrade-btn item-btn" data-item="${itemId}" data-count="${actualCount || 1}" ${!canAfford ? 'disabled' : ''}>
                 ${btnText}
