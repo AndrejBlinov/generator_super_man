@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/menu.css">
     <link rel="stylesheet" href="assets/css/z-index.css">
+    <link rel="stylesheet" href="assets/css/bug-button.css">
 </head>
 
 <body>
@@ -107,7 +108,7 @@
         <div class="controls">
             <button class="control-btn save-btn" id="saveBtn">💾 Сохранить</button>
             <button class="control-btn menu-btn" id="menuBtn">🏠 В меню</button>
-            <button class="control-btn reset-btn" id="resetBtn">🔄 Сбросить</button>
+            <button class="control-btn reset-btn" id="resetBtn">🔄 Заного</button>
         </div>
 
         <button class="help-button" id="helpButton" title="Помощь">❓</button>
@@ -120,6 +121,11 @@
             <button class="fab-btn" data-panel-target="shopPanel" title="Магазин способностей">
                 🛒
             </button>
+        </div>
+
+        <!-- 🔑 КНОПКА СООБЩИТЬ О БАГЕ (СЛЕВА) -->
+        <div class="floating-actions-left">
+            <button class="fab-btn fab-bug" id="bugReportBtn" title="НАШЕЛ БАГ - НАПИШИ">❗</button>
         </div>
     </div>
 
@@ -173,6 +179,45 @@
         </div>
         <div class="side-panel-content">
             <div id="upgradesContainer"></div>
+        </div>
+    </aside>
+
+    <!-- Панель сообщения о баге -->
+    <aside class="side-panel" id="bugReportPanel" aria-hidden="true">
+        <div class="side-panel-header">
+            <div>
+                <h2>🐞 Сообщить о баге</h2>
+                <p>Помоги сделать игру лучше!</p>
+            </div>
+            <button class="side-panel-close" data-panel-close>✕</button>
+        </div>
+        <div class="side-panel-content">
+            <form id="bugForm" class="bug-form">
+                <div class="form-group">
+                    <label for="bugName">Ваше имя (необязательно)</label>
+                    <input type="text" id="bugName" name="name" placeholder="Иван">
+                </div>
+
+                <div class="form-group">
+                    <label for="bugEmail">Email для связи (необязательно)</label>
+                    <input type="email" id="bugEmail" name="email" placeholder="example@mail.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="bugDescription">Описание бага <span style="color:red">*</span></label>
+                    <textarea id="bugDescription" name="description" rows="5" required
+                        placeholder="Что пошло не так? Например: При клике на кристалл игра зависает..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="bugSteps">Шаги для воспроизведения (необязательно)</label>
+                    <textarea id="bugSteps" name="steps" rows="3"
+                        placeholder="1. Открыть магазин&#10;2. Нажать MAX&#10;3. Ошибка..."></textarea>
+                </div>
+
+                <button type="submit" class="submit-bug-btn" id="submitBugBtn">📤 Отправить отчет</button>
+                <p class="form-hint">Данные будут анонимно сохранены и рассмотрены разработчиком.</p>
+            </form>
         </div>
     </aside>
 

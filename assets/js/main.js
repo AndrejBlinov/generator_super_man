@@ -126,6 +126,88 @@ function showMainMenu() {
 // 3. ПРИВЯЗКА СОБЫТИЙ (выполняется 1 раз)
 // ==========================================
 function bindEvents() {
+
+    // 🔑 ОБРАБОТЧИК КНОПКИ "СООБЩИТЬ О БАГЕ"
+    document.getElementById('bugReportBtn').addEventListener('click', () => {
+        openPanel('bugReportPanel');
+    });
+
+    // 🔑 ОБРАБОТЧИК ОТПРАВКИ ФОРМЫ
+    document.getElementById('bugForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const submitBtn = document.getElementById('submitBugBtn');
+        const originalText = submitBtn.textContent;
+
+        // Блокируем кнопку на время отправки
+        submitBtn.disabled = true;
+        submitBtn.textContent = '⏳ Отправка...';
+
+        // Собираем данные
+        const formData = {
+            name: document.getElementById('bugName').value.trim() || 'Аноним',
+            email: document.getElementById('bugEmail').value.trim() || 'Не указан',
+            description: document.getElementById('bugDescription').value.trim(),
+            steps: document.getElementById('bugSteps').value.trim() || 'Не указаны',
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            gameState: {
+                age: gameState.ageInYears,
+                difficulty: gameState.difficulty,
+                evolutionPoints: Math.round(gameState.evolutionPoints),
+                version: gameState.gameVersion
+            }
+        };
+
+                try {
+            // 🔑 1. РЕАЛЬНАЯ ОТПРАВКА НА PHP СКРИПТ
+            const response = await fetch('./api/submit-bug.php', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ошибка! Статус: ${response.status}`);
+            }
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message || 'Ошибка на стороне сервера');
+            }
+
+            // 🔑 2. ЛОКАЛЬНАЯ ЗАГЛУШКА (дубликат для надежности или тестов без сервера)
+            console.log('📦 Данные бага успешно отправлены на сервер:', formData);
+            const savedBugs = JSON.parse(localStorage.getItem('mock_bug_reports') || '[]');
+            savedBugs.push(formData);
+            localStorage.setItem('mock_bug_reports', JSON.stringify(savedBugs));
+
+            showMessage('✅ Спасибо! Отчет о баге успешно отправлен.');
+            document.getElementById('bugForm').reset();
+            closePanel();
+
+        } catch (error) {
+            console.error('❌ Ошибка отправки на сервер:', error);
+            
+            // 🔑 Фоллбек: если PHP-сервер недоступен (например, локальный запуск без OpenServer), 
+            // мы все равно сохраняем отчет локально, чтобы данные не потерялись.
+            const savedBugs = JSON.parse(localStorage.getItem('mock_bug_reports') || '[]');
+            savedBugs.push(formData);
+            localStorage.setItem('mock_bug_reports', JSON.stringify(savedBugs));
+            
+            showMessage('⚠️ Сервер недоступен, но отчет сохранен локально.');
+            document.getElementById('bugForm').reset();
+            closePanel();
+            
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    });
+
     document.getElementById('trainBtn').addEventListener('click', (event) => {
         if (gameState.isGameOver) return;
         if (!canTrain()) {
@@ -281,9 +363,9 @@ function bindEvents() {
         }
     });
 
-    document.getElementById('inheritBtn').addEventListener('click', () => {
-        showInheritanceModal(false);
-    });
+    // document.getElementById('inheritBtn').addEventListener('click', () => {
+    //     showInheritanceModal(false);
+    // });
 
     document.getElementById('helpButton').addEventListener('click', () => {
         openPanel('helpPanel');

@@ -1,0 +1,8 @@
+# Запретить прямой доступ ко всем файлам в этой директории
+<FilesMatch "\.(json|txt|log)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Запретить листинг директории
+Options -Indexes

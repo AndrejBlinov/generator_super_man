@@ -1,0 +1,107 @@
+/* ========================= */
+/* Левая плавающая кнопка (Баг) */
+/* ========================= */
+
+.floating-actions-left {
+    position: absolute;
+    left: -75px; /* Зеркально правой стороне */
+    top: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 3500;
+}
+
+.fab-bug {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%) !important;
+}
+
+.fab-bug:hover {
+    transform: scale(1.15) translateX(5px) !important; /* Анимация вправо, а не влево */
+}
+
+/* Адаптив для мобильных: переносим вниз вместе с правыми кнопками */
+@media (max-width: 768px) {
+    .floating-actions-left {
+        left: auto;
+        right: 85px; /* Рядом с правыми кнопками */
+        top: auto;
+        bottom: 110px;
+        flex-direction: row;
+    }
+    .fab-bug:hover {
+        transform: scale(1.1) translateY(-5px) !important;
+    }
+}
+
+/* ========================= */
+/* Форма отправки бага */
+/* ========================= */
+
+.bug-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #4b56b2;
+}
+
+.bug-form input,
+.bug-form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+    box-sizing: border-box; /* Важно для padding */
+}
+
+.bug-form input:focus,
+.bug-form textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.submit-bug-btn {
+    padding: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 10px;
+}
+
+.submit-bug-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.submit-bug-btn:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.form-hint {
+    font-size: 12px;
+    color: #64748b;
+    text-align: center;
+    margin-top: 5px;
+}

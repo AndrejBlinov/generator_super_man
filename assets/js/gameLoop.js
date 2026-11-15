@@ -13,14 +13,15 @@ export function startGameLoop() {
         clearInterval(gameLoopInterval);
         gameLoopInterval = null;
     }
-    
-    
+
     gameLoopInterval = setInterval(() => {
 
-        const helpPanel = document.getElementById('helpPanel');
-        if (helpPanel && helpPanel.classList.contains('is-open')) {
-            return; 
+        // 🔑 УНИВЕРСАЛЬНАЯ ПАУЗА: Если открыта ЛЮБАЯ боковая панель, пропускаем тик
+        const isAnyPanelOpen = document.querySelector('.side-panel.is-open') !== null;
+        if (isAnyPanelOpen) {
+            return; // Игра на паузе, время не идет
         }
+
 
         if (gameState.isGameOver) return;
 
@@ -49,7 +50,7 @@ export function startGameLoop() {
             gameState.evolutionPoints -= gameState.autoExchangeAmount;
             const moneyGained = gameState.autoExchangeAmount * currentExchangeRate;
             gameState.money += moneyGained;
-            
+
             if (!gameState.stats) gameState.stats = { totalMoneyEarnedThisRun: 0 };
             gameState.stats.totalMoneyEarnedThisRun += moneyGained;
         }
@@ -92,7 +93,7 @@ export function startGameLoop() {
         if (gameState.currentDayInYear >= gameState.daysInYear) {
             gameState.currentDayInYear -= gameState.daysInYear;
             gameState.ageInYears++;
-            
+
             if (gameState.ageInYears >= gameState.maxAgeInYears) {
                 gameState.isGameOver = true;
                 stopGameLoop(); // 🔑 Останавливаем gameLoop при смерти!
