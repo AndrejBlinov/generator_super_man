@@ -1,5 +1,5 @@
 import { gameState } from '../state.js';
-import { renderCharacter, syncAnimations } from './renderer.js';
+import { renderCharacter, updateCharacterState, initCanvasRenderer } from './renderer.js';
 import { applyDiseaseEffects, clearDiseaseEffects } from './effects.js';
 
 export function initCharacter() {
@@ -7,49 +7,26 @@ export function initCharacter() {
     if (!container) return;
     
     renderCharacter(container);
-    updateCharacterState();
+    updateCharacterStateFromGame();
 }
 
-export function updateCharacterState() {
-    const character = document.getElementById('pixelHuman');
-    if (!character) return;
+export function updateCharacterStateFromGame() {
+    const state = {
+        environment: getEnvironmentType(),
+        health: gameState.needs?.health || 100,
+        diseases: gameState.activeDiseases?.map(d => d.id) || [],
+        isSick: (gameState.activeDiseases?.length || 0) > 0,
+        isCritical: (gameState.needs?.health || 100) < 20
+    };
     
-    character.className = 'pixel-human';
-    
-    clearDiseaseEffects(character);
-    if (gameState.activeDiseases && gameState.activeDiseases.length > 0) {
-        applyDiseaseEffects(character, gameState.activeDiseases);
-    }
-    
-    if (gameState.needs) {
-        if (gameState.needs.hunger < 20) {
-            character.classList.add('starving');
-        } else if (gameState.needs.hunger < 50) {
-            character.classList.add('hungry');
-        }
-    }
-    
-    // 🔑 Синхронизируем с правым человечком
-    syncAnimations();
-    
-    updateEnvironment();
+    updateCharacterState(state);
 }
 
-function updateEnvironment() {
-    const stage = document.getElementById('animationStage');
-    if (!stage) return;
-    
-    stage.classList.remove('env-luxury', 'env-normal', 'env-poor', 'env-homeless');
-    
+function getEnvironmentType() {
     const totalIncome = gameState.crystals.reduce((sum, c) => sum + (c?.income || 0), 0);
     
-    if (totalIncome >= 50) {
-        stage.classList.add('env-luxury');
-    } else if (totalIncome >= 20) {
-        stage.classList.add('env-normal');
-    } else if (totalIncome >= 5) {
-        stage.classList.add('env-poor');
-    } else {
-        stage.classList.add('env-homeless');
-    }
+    if (totalIncome >= 50) return 'luxury';
+    if (totalIncome >= 20) return 'normal';
+    if (totalIncome >= 5) return 'poor';
+    return 'homeless';
 }

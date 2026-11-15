@@ -1,4 +1,4 @@
 // Экспортируем всё, что связано с персонажем
-export { initCharacter, updateCharacterState } from './controller.js';
-export { renderCharacter, updateCharacterAnimation } from './renderer.js';
+export { initCharacter, updateCharacterStateFromGame } from './controller.js';
+export { renderCharacter, updateCharacterState, initCanvasRenderer } from './renderer.js';
 export { applyDiseaseEffects, clearDiseaseEffects } from './effects.js';

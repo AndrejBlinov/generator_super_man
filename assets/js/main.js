@@ -6,7 +6,7 @@ import { renderUI, updateUI, showCritPopup, showMessage, renderCrystals, renderU
 import { createCrystalBulk, selectCrystal, getMaxAffordableCrystals } from './crystals.js';
 import { initPanels, setOnPanelOpenCallback, openPanel, closePanel } from './panels.js';
 import { canTrain, getTrainingBlockReason, restoreNeedManual, renderNeeds, handleTreatDisease, renderDiseaseBlock } from './needs/index.js';
-import { initCharacter, updateCharacterState } from './character/index.js';
+import { initCharacter, updateCharacterStateFromGame } from './character/index.js';
 import { applyInheritance } from './inheritance.js';
 import { GAME_VERSION } from './config.js';
 
@@ -23,6 +23,7 @@ function startGameEngine() {
     stopGameEngine();
     recalculateStats();
     initCharacter();
+    updateCharacterStateFromGame();
     renderUI();
     startGameLoop();
 }

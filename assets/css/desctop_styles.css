@@ -17,16 +17,22 @@
 }
 
 .animation-stage {
-    background: linear-gradient(180deg, #fff9e6 0%, #ffeaa7 100%);
-    border: 3px solid #ffd700;
-    border-radius: 20px;
-    box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+    background: transparent; /* Убираем старый градиент */
+    border: none;
+    box-shadow: none;
     min-height: 800px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     overflow: hidden;
+}
+
+.animation-stage canvas {
+    max-width: 100%;
+    height: auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
 
 .animation-stage .pixel-human {
