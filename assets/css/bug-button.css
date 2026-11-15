@@ -5,7 +5,7 @@
 .floating-actions-left {
     position: absolute;
     left: -75px; /* Зеркально правой стороне */
-    top: 200px;
+    top: 300px;
     display: flex;
     flex-direction: column;
     gap: 15px;
