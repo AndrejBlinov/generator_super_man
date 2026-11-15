@@ -3,6 +3,7 @@ import { AUTO_EXCHANGE_CONFIG } from './config.js';
 import { calculatePassiveIncome } from './crystals.js';
 import { updateUI, showGameOver, showMessage } from './ui.js';
 import { processNeedsTick, processDiseasesTick } from './needs/index.js';
+import { getCurrentExchangeRate } from './state.js';
 
 let gameLoopInterval = null;
 
@@ -46,7 +47,7 @@ export function startGameLoop() {
         }
 
         // 3. Автоматический обмен ОЭ на деньги
-        const currentExchangeRate = 10 + (legacy.exchangeRateBonus || 0);
+        const currentExchangeRate = getCurrentExchangeRate();
         if (gameState.autoExchangeAmount > 0 && gameState.evolutionPoints >= gameState.autoExchangeAmount) {
             gameState.evolutionPoints -= gameState.autoExchangeAmount;
             const moneyGained = gameState.autoExchangeAmount * currentExchangeRate;

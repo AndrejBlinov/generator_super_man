@@ -68,6 +68,8 @@ export const INHERITANCE_CONFIG = {
     abilityLevelForBonus: 5         // Минимальный уровень способности для наследия
 };
 
+export const BASE_EXCHANGE_RATE = 10;
+
 export const CRYSTAL_COST = 100;
 export const MAX_ACTIVE_CRYSTALS = 5;
 export const MAX_INVENTORY_CRYSTALS = 10;

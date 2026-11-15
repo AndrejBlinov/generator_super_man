@@ -3,6 +3,7 @@ import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST, DIFFICULT
 import { calculatePassiveIncome, getSelection, getMaxAffordableCrystals } from './crystals.js';
 import { calculateBulkCost, getMaxAffordableCount, getMaxAffordableItemCount } from './upgrades.js';
 import { getInheritancePreviewText, applyInheritance } from './inheritance.js';
+import { getCurrentExchangeRate } from './state.js';
 
 // 🔑 Импортируем из needs-модуля
 import { 

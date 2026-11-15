@@ -150,7 +150,7 @@ export class CharacterCanvasRenderer {
         ctx.fillRect(cx - p * 9, cy - p * 4, p * 4, p * 2);
         ctx.fillStyle = '#87CEEB';
         ctx.fillRect(cx - p * 4, cy - p * 3, p * 12, p * 3);
-        
+
         // Лежачий персонаж
         ctx.fillStyle = '#F1C27D';
         ctx.fillRect(cx - p * 8, cy - p * 5, p * 3, p * 3);
