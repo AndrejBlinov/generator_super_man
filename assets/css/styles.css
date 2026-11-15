@@ -1994,4 +1994,20 @@ body.panel-open {
         transform: translateX(50%);
     }
 }
+
+/* ========================= */
+/* Версия игры */
+/* ========================= */
+
+.game-version {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #e2e8f0;
+    color: #94a3b8;
+    font-size: 12px;
+    font-family: monospace;
+    letter-spacing: 0.5px;
+}
+
 /* © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved). */

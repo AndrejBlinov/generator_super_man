@@ -7,6 +7,7 @@ import { createCrystalBulk, selectCrystal, getMaxAffordableCrystals } from './cr
 import { initPanels, setOnPanelOpenCallback, openPanel, closePanel } from './panels.js';
 import { canTrain, getTrainingBlockReason, restoreNeedManual, renderNeeds, handleTreatDisease, renderDiseaseBlock } from './needs/index.js';
 import { applyInheritance } from './inheritance.js';
+import { GAME_VERSION } from './config.js';
 
 // 🔑 ЗАГРУЗКА ИНСТРУКЦИИ (выполняется 1 раз при старте модуля)
 const helpResponse = await fetch('./include/instruction.html');
@@ -436,6 +437,13 @@ function bindEvents() {
 // ==========================================
 // 4. ЗАПУСК
 // ==========================================
+
+// 🔑 Отображаем версию игры
+const versionDisplay = document.getElementById('versionDisplay');
+if (versionDisplay) {
+    versionDisplay.textContent = GAME_VERSION;
+}
+
 bindEvents();
 showMainMenu();
 
