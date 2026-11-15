@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="assets/css/z-index.css">
     <link rel="stylesheet" href="assets/css/bug-button.css">
     <link rel="stylesheet" href="assets/css/donations.css">
+    <link rel="stylesheet" href="assets/css/desctop_styles.css">
 </head>
 
 <body>
@@ -30,115 +31,126 @@
         </div>
     </div>
 
-    <!-- ИГРОВОЙ ИНТЕРФЕЙС (скрыт по умолчанию) -->
-    <div id="gameApp" class="game-container" style="display: none;">
-        <h1>🧬 Эволюция: Путь Сверхчеловека</h1>
+    <!-- ИГРОВОЙ ИНТЕРФЕЙС -->
+    <div id="gameApp" class="game-layout">
 
-        <div class="stats">
-            <div class="stat-item">
-                <span class="stat-label">Биологический возраст:</span>
-                <span class="stat-value" id="bioAge">30 лет 0 дн. / 100 лет</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Календарное время:</span>
-                <span class="stat-value" id="calendarAge">2026-01-01</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Очки Эволюции:</span>
-                <span class="stat-value" id="points">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Деньги:</span>
-                <span class="stat-value" id="money">0 💰</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Пассивный доход:</span>
-                <span class="stat-value" id="passive">0 ОЭ/день</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Сила клика:</span>
-                <span class="stat-value" id="clickPower">1 ОЭ</span>
+        <!-- 🔑 ЛЕВАЯ КОЛОНКА: только анимация персонажа (теперь game-animation) -->
+        <div class="game-animation">
+            <div class="animation-stage" id="animationStage">
+                <canvas id="characterCanvas" width="800" height="600"></canvas>
             </div>
         </div>
 
-        <button class="train-button" id="trainBtn">💪 ТРЕНИРОВАТЬСЯ</button>
+        <div class="game-interface">
+            <h1>🧬 Эволюция: Путь Сверхчеловека</h1>
 
-        <!-- 🔑 РЯД ДЕЙСТВИЙ (универсальный, на всех устройствах) -->
-        <div class="action-buttons-row">
-            <button class="action-btn" data-panel-target="crystalsPanel">
-                <span class="action-icon">💎</span>
-                <span class="action-label">Кристаллы</span>
-            </button>
-            <button class="action-btn" data-panel-target="shopPanel">
-                <span class="action-icon">🛒</span>
-                <span class="action-label">Магазин</span>
-            </button>
-            <button class="action-btn action-btn-bug" id="bugReportBtn">
-                <span class="action-icon">❗</span>
-                <span class="action-label">Баг</span>
-            </button>
-        </div>
-
-        <div class="character-stage" id="characterStage">
-            <div class="pixel-human" id="pixelHuman">
-                <div class="pixel-shadow"></div>
-                <div class="pixel-head">
-                    <div class="pixel-hair"></div>
-                    <div class="pixel-eye pixel-eye-left"></div>
-                    <div class="pixel-eye pixel-eye-right"></div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Биологический возраст:</span>
+                    <span class="stat-value" id="bioAge">30 лет 0 дн. / 100 лет</span>
                 </div>
-                <div class="pixel-neck"></div>
-                <div class="pixel-body"></div>
-                <div class="pixel-arm pixel-arm-left"></div>
-                <div class="pixel-arm pixel-arm-right"></div>
-                <div class="pixel-leg pixel-leg-left"></div>
-                <div class="pixel-leg pixel-leg-right"></div>
-                <div class="health-effects" id="healthEffects"></div>
-                <div class="hunger-effects" id="hungerEffects"></div>
-            </div>
-            <div class="character-caption" id="characterCaption">Герой готов к тренировкам</div>
-            <div class="needs-compact" id="needsContainer"></div>
-            <div class="disease-container hidden" id="diseaseContainer"></div>
-        </div>
-
-        <div class="auto-exchange-control">
-            <div class="auto-exchange-header">
-                <span class="auto-exchange-label">💱 Автообмен ОЭ → 💰</span>
-                <div class="auto-exchange-toggle">
-                    <button class="auto-spend-toggle-btn" id="autoSpendToggle" title="Авто-трата денег на потребности">
-                        💸 Авто-трата: <span id="autoSpendStatus">ВКЛ</span>
-                    </button>
-                    <button class="auto-spend-toggle-btn" id="autoTreatToggle" title="Автоматическое лечение болезней">
-                        💊 Авто-лечение: <span id="autoTreatStatus">ВЫКЛ</span>
-                    </button>
+                <div class="stat-item">
+                    <span class="stat-label">Календарное время:</span>
+                    <span class="stat-value" id="calendarAge">2026-01-01</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Очки Эволюции:</span>
+                    <span class="stat-value" id="points">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Деньги:</span>
+                    <span class="stat-value" id="money">0 💰</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Пассивный доход:</span>
+                    <span class="stat-value" id="passive">0 ОЭ/день</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Сила клика:</span>
+                    <span class="stat-value" id="clickPower">1 ОЭ</span>
                 </div>
             </div>
-            <div class="auto-exchange-value">
-                Обмен: <span id="autoExchangeValue">0 ОЭ</span> / тик
+
+            <button class="train-button" id="trainBtn">💪 ТРЕНИРОВАТЬСЯ</button>
+
+            <div class="action-buttons-row">
+                <button class="action-btn" data-panel-target="crystalsPanel">
+                    <span class="action-icon">💎</span>
+                    <span class="action-label">Кристаллы</span>
+                </button>
+                <button class="action-btn" data-panel-target="shopPanel">
+                    <span class="action-icon">🛒</span>
+                    <span class="action-label">Магазин</span>
+                </button>
+                <button class="action-btn action-btn-bug" id="bugReportBtn">
+                    <span class="action-icon">❗</span>
+                    <span class="action-label">Баг</span>
+                </button>
             </div>
-            <div class="auto-exchange-buttons" id="autoExchangeButtons">
-                <button class="exchange-btn" data-amount="0">Выкл</button>
-                <button class="exchange-btn" data-amount="1">1 ОЭ</button>
-                <button class="exchange-btn" data-amount="2">2 ОЭ</button>
-                <button class="exchange-btn" data-amount="5">5 ОЭ</button>
-                <button class="exchange-btn" data-amount="10">10 ОЭ</button>
-                <button class="exchange-btn" data-amount="20">20 ОЭ</button>
-                <button class="exchange-btn" data-amount="50">50 ОЭ</button>
+
+            <div class="character-stage" id="characterStage">
+                <div class="pixel-human" id="pixelHuman">
+                    <div class="pixel-shadow"></div>
+                    <div class="pixel-head">
+                        <div class="pixel-hair"></div>
+                        <div class="pixel-eye pixel-eye-left"></div>
+                        <div class="pixel-eye pixel-eye-right"></div>
+                    </div>
+                    <div class="pixel-neck"></div>
+                    <div class="pixel-body"></div>
+                    <div class="pixel-arm pixel-arm-left"></div>
+                    <div class="pixel-arm pixel-arm-right"></div>
+                    <div class="pixel-leg pixel-leg-left"></div>
+                    <div class="pixel-leg pixel-leg-right"></div>
+                    <div class="health-effects" id="healthEffects"></div>
+                    <div class="hunger-effects" id="hungerEffects"></div>
+                </div>
+                <div class="character-caption" id="characterCaption">Герой готов к тренировкам</div>
+                <div class="needs-compact" id="needsContainer"></div>
+                <div class="disease-container hidden" id="diseaseContainer"></div>
             </div>
+
+            <div class="auto-exchange-control">
+                <div class="auto-exchange-header">
+                    <span class="auto-exchange-label">💱 Автообмен ОЭ → 💰</span>
+                    <div class="auto-exchange-toggle">
+                        <button class="auto-spend-toggle-btn" id="autoSpendToggle"
+                            title="Авто-трата денег на потребности">
+                            💸 Авто-трата: <span id="autoSpendStatus">ВКЛ</span>
+                        </button>
+                        <button class="auto-spend-toggle-btn" id="autoTreatToggle"
+                            title="Автоматическое лечение болезней">
+                            💊 Авто-лечение: <span id="autoTreatStatus">ВЫКЛ</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="auto-exchange-value">
+                    Обмен: <span id="autoExchangeValue">0 ОЭ</span> / тик
+                </div>
+                <div class="auto-exchange-buttons" id="autoExchangeButtons">
+                    <button class="exchange-btn" data-amount="0">Выкл</button>
+                    <button class="exchange-btn" data-amount="1">1 ОЭ</button>
+                    <button class="exchange-btn" data-amount="2">2 ОЭ</button>
+                    <button class="exchange-btn" data-amount="5">5 ОЭ</button>
+                    <button class="exchange-btn" data-amount="10">10 ОЭ</button>
+                    <button class="exchange-btn" data-amount="20">20 ОЭ</button>
+                    <button class="exchange-btn" data-amount="50">50 ОЭ</button>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn save-btn" id="saveBtn">💾 Сохранить</button>
+                <button class="control-btn menu-btn" id="menuBtn">🏠 В меню</button>
+                <button class="control-btn reset-btn" id="resetBtn">🔄 Сбросить</button>
+            </div>
+
+            <div class="game-version">
+                Версия: <span id="versionDisplay">...</span>
+            </div>
+
+            <button class="help-button" id="helpButton" title="Помощь">❓</button>
         </div>
 
-        <div class="controls">
-            <button class="control-btn save-btn" id="saveBtn">💾 Сохранить</button>
-            <button class="control-btn menu-btn" id="menuBtn">🏠 В меню</button>
-            <button class="control-btn reset-btn" id="resetBtn">🔄 Заного</button>
-        </div>
-
-        <button class="help-button" id="helpButton" title="Помощь">❓</button>
-
-        <!-- 🔑 ВЕРСИЯ ИГРЫ -->
-        <div class="game-version">
-            Версия: <span id="versionDisplay">...</span>
-        </div>
     </div>
 
     <!-- ПАНЕЛИ И МОДАЛЬНЫЕ ОКНА -->

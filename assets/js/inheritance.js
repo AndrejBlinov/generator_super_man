@@ -59,18 +59,15 @@ export function applyInheritance() {
     // 2. Применяем бонусы к наследию
     legacy.exchangeRateBonus += bonuses.exchangeBonus;
     
-    // 🔑 Добавляем кристаллы в массив (суммируем с существующими)
     if (!Array.isArray(legacy.startingCrystals)) {
         legacy.startingCrystals = [];
     }
-    // Миграция со старого формата: если есть startingCrystalsCount, конвертируем
     if (legacy.startingCrystalsCount > 0) {
         for (let i = 0; i < legacy.startingCrystalsCount; i++) {
             legacy.startingCrystals.push({ level: 1, income: 1 });
         }
         legacy.startingCrystalsCount = 0;
     }
-    // Добавляем новые кристаллы
     legacy.startingCrystals = legacy.startingCrystals.concat(bonuses.inheritanceCrystals);
     
     const abilityIds = Object.keys(UPGRADES_CONFIG);
@@ -94,14 +91,9 @@ export function applyInheritance() {
     // 6. Применяем стартовые бонусы
     applyStartingBonuses();
     
-    // 7. Сохраняем новое состояние с бонусами
+    // 7. 🔑 КРИТИЧНО: Сохраняем новое состояние с бонусами
     saveGame();
-    console.log('🧬 [applyInheritance] Завершено. Новое состояние:', {
-        age: gameState.ageInYears,
-        crystals: gameState.crystals.filter(c => c),
-        inventory: gameState.crystalsInventory.filter(c => c),
-        exchangeBonus: legacy.exchangeRateBonus
-    });
+    console.log('🧬 [applyInheritance] Новое состояние сохранено');
 }
 
 // 🔑 Применение стартовых бонусов (кристаллы + способности)

@@ -1,4 +1,4 @@
-import { gameState } from './state.js';
+import { gameState, getCurrentExchangeRate } from './state.js';
 import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST, DIFFICULTY_CONFIG } from './config.js';
 import { calculatePassiveIncome, getSelection, getMaxAffordableCrystals } from './crystals.js';
 import { calculateBulkCost, getMaxAffordableCount, getMaxAffordableItemCount } from './upgrades.js';
@@ -191,6 +191,7 @@ export function renderUpgrades() {
     const container = document.getElementById('upgradesContainer');
     container.innerHTML = '';
 
+    // 1. Переключатель множителя
     const multiplierSwitcher = document.createElement('div');
     multiplierSwitcher.className = 'multiplier-switcher';
     multiplierSwitcher.innerHTML = `
@@ -202,11 +203,13 @@ export function renderUpgrades() {
     `;
     container.appendChild(multiplierSwitcher);
 
+    // 2. Заголовок Способностей
     const abilitiesHeader = document.createElement('div');
     abilitiesHeader.className = 'shop-section-header';
     abilitiesHeader.innerHTML = `<h3>🧬 Способности</h3><p>Постоянные улучшения с уровнями</p>`;
     container.appendChild(abilitiesHeader);
 
+    // 3. Отрисовка Способностей (UPGRADES_CONFIG)
     Object.keys(UPGRADES_CONFIG).forEach(upgradeId => {
         const config = UPGRADES_CONFIG[upgradeId];
         const currentLevel = gameState.upgrades[upgradeId];
@@ -228,8 +231,8 @@ export function renderUpgrades() {
         }
         
         const finalBuffText = config.finalBuff ? config.finalBuff(config.maxLevel) : '';
-
         let btnText = 'МАКС';
+        
         if (!isMaxed) {
             if (gameState.purchaseMultiplier === 'max') {
                 btnText = maxAffordable > 0 ? `${maxAffordable} ур. за ${cost} ОЭ` : 'Недоступно';
@@ -252,22 +255,35 @@ export function renderUpgrades() {
         container.appendChild(item);
     });
 
+    // 4. Заголовок Вещей
     const itemsHeader = document.createElement('div');
     itemsHeader.className = 'shop-section-header';
     itemsHeader.innerHTML = `<h3>🛍️ Вещи</h3><p>Одноразовые покупки и ресурсы</p>`;
     container.appendChild(itemsHeader);
 
+        // 5. Отрисовка Вещей (ITEMS_CONFIG)
     Object.keys(ITEMS_CONFIG).forEach(itemId => {
         const config = ITEMS_CONFIG[itemId];
         const maxAffordable = getMaxAffordableItemCount(itemId);
         const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
-        const totalCost = config.cost * (actualCount > 0 ? actualCount : 1);
-        const totalReward = config.reward * (actualCount > 0 ? actualCount : 1);
+        
+        // 🔑 Динамический курс обмена
+        const currentRate = getCurrentExchangeRate();
+        const amountToExchange = actualCount > 0 ? actualCount : 1;
+        
+        const totalCost = config.cost * amountToExchange;
+        const totalReward = Math.floor(currentRate * amountToExchange);
         
         const canAfford = gameState.evolutionPoints >= totalCost && actualCount > 0;
 
         const item = document.createElement('div');
         item.className = 'upgrade-item item-item';
+        
+        // 🔑 Динамическое описание с актуальным курсом
+        let descText = config.desc;
+        if (itemId === 'money_exchange' || config.name === 'Обмен на деньги') {
+            descText = `1 ОЭ = ${Math.floor(currentRate)} денег`;
+        }
         
         let btnText = `Купить за ${config.cost} ОЭ`;
         if (gameState.purchaseMultiplier === 'max') {
@@ -281,7 +297,7 @@ export function renderUpgrades() {
         item.innerHTML = `
             <div class="upgrade-info">
                 <div class="upgrade-name">${config.icon} ${config.name}</div>
-                <div class="upgrade-desc">${config.desc}</div>
+                <div class="upgrade-desc">${descText}</div>
             </div>
             <button class="upgrade-btn item-btn" data-item="${itemId}" data-count="${actualCount || 1}" ${!canAfford ? 'disabled' : ''}>
                 ${btnText}
@@ -356,9 +372,13 @@ export function updateAutoExchangeButtons() {
     
     const valueDisplay = document.getElementById('autoExchangeValue');
     if (valueDisplay) {
+        // 🔑 Показываем игроку, сколько денег он получит с учетом бонуса наследия
+        const currentRate = getCurrentExchangeRate();
+        const moneyGain = gameState.autoExchangeAmount * currentRate;
+        
         valueDisplay.textContent = gameState.autoExchangeAmount === 0 
             ? 'Выкл' 
-            : `${gameState.autoExchangeAmount} ОЭ`;
+            : `${gameState.autoExchangeAmount} ОЭ = ${moneyGain} 💰`;
     }
     
     const autoSpendBtn = document.getElementById('autoSpendToggle');
@@ -369,7 +389,6 @@ export function updateAutoExchangeButtons() {
         autoSpendBtn.classList.toggle('active', gameState.autoSpendEnabled);
     }
     
-    // 🔑 Обновляем кнопку автомлечения
     const autoTreatBtn = document.getElementById('autoTreatToggle');
     const autoTreatStatus = document.getElementById('autoTreatStatus');
     

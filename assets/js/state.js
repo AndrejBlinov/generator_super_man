@@ -162,6 +162,14 @@ export function saveGame() {
     saveActiveGame(gameState);
 }
 
+
+// 🔑 Расчёт актуального курса обмена с учётом наследия
+export function getCurrentExchangeRate() {
+    const baseRate = 10; // Базовый курс
+    const bonus = legacy.exchangeRateBonus || 0; // Бонус от наследия (в процентах)
+    return baseRate + (baseRate * bonus / 100);
+}
+
 // ==========================================
 // СБРОС
 // ==========================================
@@ -196,8 +204,9 @@ export function resetAll() {
     clearAll();
 }
 
-// Обработка смерти: сохраняем статистику, удаляем активную игру
 export function handleDeath() {
+    console.log('💀 [handleDeath] Персонаж умер. Возраст:', gameState.ageInYears);
+    
     // Обновляем статистику
     stats.totalDeaths += 1;
     stats.runsCompleted += 1;
@@ -211,8 +220,12 @@ export function handleDeath() {
     // Сохраняем статистику
     saveStats(stats);
     
+    // 🔑 Помечаем игру как мёртвую
+    gameState.isGameOver = true;
+    
     // Удаляем активную игру
     clearActiveGame();
+    console.log('💀 [handleDeath] Активное сохранение удалено');
 }
 
 // Получатели
