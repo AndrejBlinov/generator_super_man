@@ -89,3 +89,4 @@ export function restoreNeedManual(needId) {
         message: `${config.name} восстановлено!` 
     };
 }
+// © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).

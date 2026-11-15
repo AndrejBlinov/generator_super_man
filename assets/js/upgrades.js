@@ -111,3 +111,4 @@ export function getMaxAffordableItemCount(itemId) {
     const config = ITEMS_CONFIG[itemId];
     return Math.floor(gameState.evolutionPoints / config.cost);
 }
+// © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).

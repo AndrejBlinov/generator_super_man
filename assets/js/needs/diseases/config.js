@@ -370,3 +370,4 @@ export const AGE_BRACKETS = [
 ];
 
 export const MAX_ACTIVE_DISEASES = 2;
+// © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).

@@ -18,8 +18,9 @@ export function startGameLoop() {
 
         // 🔑 УНИВЕРСАЛЬНАЯ ПАУЗА: Если открыта ЛЮБАЯ боковая панель, пропускаем тик
         const isAnyPanelOpen = document.querySelector('.side-panel.is-open') !== null;
-        if (isAnyPanelOpen) {
-            return; // Игра на паузе, время не идет
+        const isDonateModalOpen = document.querySelector('.donate-modal.is-open') !== null;
+        if (isAnyPanelOpen || isDonateModalOpen) {
+            return;
         }
 
 
@@ -112,3 +113,4 @@ export function stopGameLoop() {
         gameLoopInterval = null;
     }
 }
+// © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).

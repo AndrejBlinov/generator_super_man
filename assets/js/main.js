@@ -127,6 +127,35 @@ function showMainMenu() {
 // ==========================================
 function bindEvents() {
 
+    // 🔑 ЛОГИКА МОДАЛКИ ПОДДЕРЖКИ
+    const donateModal = document.getElementById('donateModal');
+    const donateModalClose = document.getElementById('donateModalClose');
+    const donateModalBackdrop = document.getElementById('donateModalBackdrop');
+    const donateFromMenu = document.getElementById('donateFromMenuBtn');
+    const donateFromHelp = document.getElementById('donateFromHelpBtn');
+
+    function openDonateModal() {
+        donateModal.classList.add('is-open');
+        donateModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeDonateModal() {
+        donateModal.classList.remove('is-open');
+        donateModal.setAttribute('aria-hidden', 'true');
+    }
+
+    if (donateFromMenu) donateFromMenu.addEventListener('click', openDonateModal);
+    if (donateFromHelp) donateFromHelp.addEventListener('click', openDonateModal);
+    if (donateModalClose) donateModalClose.addEventListener('click', closeDonateModal);
+    if (donateModalBackdrop) donateModalBackdrop.addEventListener('click', closeDonateModal);
+
+    // Закрытие по Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && donateModal.classList.contains('is-open')) {
+            closeDonateModal();
+        }
+    });
+
     // 🔑 ОБРАБОТЧИК КНОПКИ "СООБЩИТЬ О БАГЕ"
     document.getElementById('bugReportBtn').addEventListener('click', () => {
         openPanel('bugReportPanel');
@@ -159,11 +188,11 @@ function bindEvents() {
             }
         };
 
-                try {
+        try {
             // 🔑 1. РЕАЛЬНАЯ ОТПРАВКА НА PHP СКРИПТ
             const response = await fetch('./api/submit-bug.php', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
@@ -191,17 +220,17 @@ function bindEvents() {
 
         } catch (error) {
             console.error('❌ Ошибка отправки на сервер:', error);
-            
+
             // 🔑 Фоллбек: если PHP-сервер недоступен (например, локальный запуск без OpenServer), 
             // мы все равно сохраняем отчет локально, чтобы данные не потерялись.
             const savedBugs = JSON.parse(localStorage.getItem('mock_bug_reports') || '[]');
             savedBugs.push(formData);
             localStorage.setItem('mock_bug_reports', JSON.stringify(savedBugs));
-            
+
             showMessage('⚠️ Сервер недоступен, но отчет сохранен локально.');
             document.getElementById('bugForm').reset();
             closePanel();
-            
+
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
@@ -411,3 +440,4 @@ bindEvents();
 showMainMenu();
 
 window.startGameEngine = startGameEngine;
+// © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).

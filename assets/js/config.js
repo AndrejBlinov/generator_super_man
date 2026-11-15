@@ -108,3 +108,4 @@ export const DIFFICULTY_CONFIG = {
         color: "#e53e3e"
     }
 };
+// © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).

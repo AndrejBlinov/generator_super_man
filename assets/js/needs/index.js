@@ -22,3 +22,4 @@ export {
 
 // 🔑 Болезни
 export * from './diseases/index.js';
+// © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).

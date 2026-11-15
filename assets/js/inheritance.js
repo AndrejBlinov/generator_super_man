@@ -123,3 +123,4 @@ export function getInheritancePreviewText() {
     
     return text;
 }
+// © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).

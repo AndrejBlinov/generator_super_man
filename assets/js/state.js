@@ -212,3 +212,4 @@ export function handleDeath() {
 export function getGameState() { return gameState; }
 export function getLegacy() { return legacy; }
 export function getStats() { return stats; }
+// © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).

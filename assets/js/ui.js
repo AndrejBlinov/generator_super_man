@@ -573,3 +573,4 @@ export function showDeathScreen(reason) {
 export function showGameOver(reason = "Ваш персонаж умер!") {
     showDeathScreen(reason);
 }
+// © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).

@@ -99,3 +99,4 @@ export function applyCharacterStates() {
         caption.textContent = "✨ Герой готов к тренировкам";
     }
 }
+// © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).

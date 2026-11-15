@@ -217,3 +217,4 @@ function tryMerge(zone1, index1, zone2, index2) {
 export function getSelection() {
     return { index: selectedCrystalIndex, zone: selectedCrystalZone };
 }
+// © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).

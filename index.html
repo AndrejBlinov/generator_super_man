@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="assets/css/menu.css">
     <link rel="stylesheet" href="assets/css/z-index.css">
     <link rel="stylesheet" href="assets/css/bug-button.css">
+    <link rel="stylesheet" href="assets/css/donations.css">
 </head>
 
 <body>
@@ -21,6 +22,9 @@
             <div class="menu-footer">
                 <p>Автосохранение каждые 30 секунд</p>
             </div>
+            <button class="donate-menu-btn" id="donateFromMenuBtn">
+                ☕ Поддержать проект
+            </button>
         </div>
     </div>
 
@@ -223,9 +227,29 @@
 
     <div id="helpPanelContainer"></div>
 
+    <!-- 🔑 МОДАЛКА ПОДДЕРЖКИ -->
+    <div class="donate-modal" id="donateModal" aria-hidden="true">
+        <div class="donate-modal-backdrop" id="donateModalBackdrop"></div>
+        <div class="donate-modal-content">
+            <button class="donate-modal-close" id="donateModalClose">✕</button>
+            <h2>☕ Поддержать проект</h2>
+            <p>Спасибо, что играешь! Твоя поддержка помогает развивать игру.</p>
+
+            <div class="donate-qr-wrapper">
+                <img src="assets/img/qr-donation.png" alt="QR-код для пожертвования" class="donate-qr">
+            </div>
+
+            <p class="donate-link-text">Или перейди по ссылке:</p>
+            <a href="https://tips.tips/000492200" target="_blank" rel="noopener noreferrer" class="donate-link-btn">
+                💖 tips.tips/000492200
+            </a>
+        </div>
+    </div>
+
     <div class="message" id="message"></div>
 
     <script type="module" src="./assets/js/main.js"></script>
 </body>
+<!-- © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved). -->
 
 </html>
