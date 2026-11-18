@@ -6,7 +6,7 @@ import { renderUI, updateUI, showCritPopup, showMessage, renderCrystals, renderU
 import { createCrystalBulk, selectCrystal, getMaxAffordableCrystals } from './crystals.js';
 import { initPanels, setOnPanelOpenCallback, openPanel, closePanel } from './panels.js';
 import { canTrain, getTrainingBlockReason, restoreNeedManual, renderNeeds, handleTreatDisease, renderDiseaseBlock } from './needs/index.js';
-import { initCharacter, updateCharacterStateFromGame } from './character/index.js';
+import { initCharacter, updateCharacterStateFromGame, updateHousingInfo } from './character/index.js';
 import { GAME_VERSION, HOUSING_CONFIG } from './config.js';
 
 // 🔑 ЗАГРУЗКА ИНСТРУКЦИИ (выполняется 1 раз при старте модуля)
@@ -356,24 +356,27 @@ function bindEvents() {
             return;
         }
 
-        // 🔑 НОВОЕ: Покупка жилья
+        // 🔑 Покупка жилья
         const housingBtn = e.target.closest('.upgrade-btn[data-housing]');
         if (housingBtn && !housingBtn.disabled) {
             const housingId = housingBtn.dataset.housing;
             const houseConfig = HOUSING_CONFIG[housingId];
-
+            
             if (gameState.money >= houseConfig.cost) {
                 gameState.money -= houseConfig.cost;
-                gameState.housing = housingId;
+                gameState.housing = housingId; // 🔑 Сначала обновляем состояние
                 showMessage(`🏠 Вы переехали в: ${houseConfig.name}!`);
-
+                
+                // Ограничиваем комфорт, если он выше нового максимума
                 if (gameState.needs.comfort > houseConfig.maxComfort) {
                     gameState.needs.comfort = houseConfig.maxComfort;
                 }
-
-                // 🔑 ДОБАВЬ ЭТУ СТРОКУ:
-                updateCharacterStateFromGame();
-
+                
+                // 🔑 ОБЯЗАТЕЛЬНО: Обновляем информационный блок ПОСЛЕ изменения состояния
+                if (typeof updateHousingInfo === 'function') {
+                    updateHousingInfo();
+                }
+                
                 renderNeeds();
                 renderUpgrades();
                 updateUI();

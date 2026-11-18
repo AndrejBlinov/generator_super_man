@@ -1,5 +1,6 @@
 import { gameState } from '../state.js';
 import { CharacterCanvasRenderer } from './canvasRenderer.js';
+import { HOUSING_CONFIG  } from './../config.js';
 
 let mainCanvasRenderer = null;
 
@@ -36,5 +37,45 @@ export function updateCharacterStateFromGame() {
 
     if (typeof updateHousingInfo === 'function') {
         updateHousingInfo();
+    }
+}
+
+export function updateHousingInfo() {
+    const housingNameEl = document.getElementById('housingName');
+    const housingMaxComfortEl = document.getElementById('housingMaxComfort');
+    const housingBonusEl = document.getElementById('housingBonus');
+    const housingIconEl = document.querySelector('.housing-icon');
+    
+    if (!housingNameEl || !housingMaxComfortEl || !housingBonusEl || !housingIconEl) {
+        console.warn('⚠️ [updateHousingInfo] Элементы не найдены');
+        return;
+    }
+
+    // 🔑 Читаем текущее жильё из gameState
+    const currentHousing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
+    
+    console.log('🏠 [updateHousingInfo] Текущее жильё:', gameState.housing, currentHousing.name);
+
+    // Иконка
+    const housingIcons = {
+        box: '📦', shed: '🏚️', dilapidated: '🏠', old: '🏠',
+        normal: '🏡', good: '🏡', mansion: '🏰'
+    };
+    housingIconEl.textContent = housingIcons[gameState.housing] || '📦';
+    
+    // Название
+    housingNameEl.textContent = currentHousing.name;
+    
+    // Максимальный комфорт
+    housingMaxComfortEl.textContent = currentHousing.maxComfort;
+    
+    // Бонус к доходу
+    if (currentHousing.incomeMult > 1.0) {
+        const bonusPercent = Math.round((currentHousing.incomeMult - 1) * 100);
+        housingBonusEl.textContent = `+${bonusPercent}% к доходу`;
+        housingBonusEl.style.color = '#28a745';
+    } else {
+        housingBonusEl.textContent = 'Без бонусов';
+        housingBonusEl.style.color = '#6c757d';
     }
 }
