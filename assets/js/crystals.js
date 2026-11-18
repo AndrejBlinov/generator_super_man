@@ -1,5 +1,5 @@
 import { gameState } from './state.js';
-import { CRYSTAL_COST } from './config.js';
+import { CRYSTAL_COST, HOUSING_CONFIG } from './config.js';
 import { showMessage } from './ui.js';
 import { renderCrystals } from './ui.js';
 
@@ -7,9 +7,24 @@ let selectedCrystalIndex = -1;
 let selectedCrystalZone = null;
 
 export function calculatePassiveIncome() {
-    return gameState.crystals.reduce((sum, crystal) => {
-        return sum + (crystal ? crystal.income : 0);
-    }, 0);
+    let baseIncome = 0;
+
+    // 🔑 Считаем доход ТОЛЬКО от активных слотов (gameState.crystals)
+    if (gameState.crystals && Array.isArray(gameState.crystals)) {
+        gameState.crystals.forEach(crystal => {
+            if (crystal && typeof crystal.income === 'number') {
+                baseIncome += crystal.income;
+            }
+        });
+    }
+
+    // 🔑 Применяем множитель от текущего жилья
+    const currentHousing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
+    
+    // Округляем вниз, чтобы не было дробных чисел
+    const finalIncome = Math.floor(baseIncome * currentHousing.incomeMult);
+
+    return finalIncome;
 }
 
 export function createCrystal() {
@@ -32,7 +47,7 @@ export function createCrystal() {
     }
 
     gameState.evolutionPoints -= CRYSTAL_COST;
-    
+
     const newCrystal = { level: 1, income: 1 };
     if (zone === 'active') {
         gameState.crystals[emptySlotIndex] = newCrystal;
@@ -48,32 +63,32 @@ export function createCrystal() {
 // 🔑 Массовое создание кристаллов
 export function createCrystalBulk(count) {
     let created = 0;
-    
+
     for (let i = 0; i < count; i++) {
         if (gameState.evolutionPoints < CRYSTAL_COST) break;
-        
+
         let emptySlotIndex = gameState.crystals.findIndex(c => c === null);
         let zone = 'active';
-        
+
         if (emptySlotIndex === -1) {
             emptySlotIndex = gameState.crystalsInventory.findIndex(c => c === null);
             zone = 'inventory';
         }
-        
+
         if (emptySlotIndex === -1) break;
-        
+
         gameState.evolutionPoints -= CRYSTAL_COST;
         const newCrystal = { level: 1, income: 1 };
-        
+
         if (zone === 'active') {
             gameState.crystals[emptySlotIndex] = newCrystal;
         } else {
             gameState.crystalsInventory[emptySlotIndex] = newCrystal;
         }
-        
+
         created++;
     }
-    
+
     if (created > 0) {
         showMessage(`Создано ${created} кристалл(ов)!`);
         renderCrystals();
@@ -95,7 +110,7 @@ export function getMaxAffordableCrystals() {
 
 export function selectCrystal(zone, index) {
     const crystalsArray = zone === 'active' ? gameState.crystals : gameState.crystalsInventory;
-    
+
     if (crystalsArray[index] === null) {
         if (selectedCrystalIndex !== -1 && selectedCrystalZone !== zone) {
             moveCrystal(selectedCrystalZone, selectedCrystalIndex, zone, index);
@@ -155,7 +170,7 @@ function moveCrystal(fromZone, fromIndex, toZone, toIndex) {
 
     setCrystal(toZone, toIndex, crystal);
     setCrystal(fromZone, fromIndex, null);
-    
+
     selectedCrystalIndex = -1;
     selectedCrystalZone = null;
     showMessage("Кристалл перемещен!");
@@ -172,7 +187,7 @@ function tryMerge(zone1, index1, zone2, index2) {
     for (let i = 0; i < gameState.crystals.length; i++) {
         if (zone1 === 'active' && i === index1) continue;
         if (zone2 === 'active' && i === index2) continue;
-        
+
         if (gameState.crystals[i] !== null && gameState.crystals[i].level === crystal1.level) {
             thirdZone = 'active';
             thirdIndex = i;
@@ -184,7 +199,7 @@ function tryMerge(zone1, index1, zone2, index2) {
         for (let i = 0; i < gameState.crystalsInventory.length; i++) {
             if (zone1 === 'inventory' && i === index1) continue;
             if (zone2 === 'inventory' && i === index2) continue;
-            
+
             if (gameState.crystalsInventory[i] !== null && gameState.crystalsInventory[i].level === crystal1.level) {
                 thirdZone = 'inventory';
                 thirdIndex = i;

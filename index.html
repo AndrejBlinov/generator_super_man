@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="assets/css/bug-button.css">
     <link rel="stylesheet" href="assets/css/donations.css">
     <link rel="stylesheet" href="assets/css/desctop_styles.css">
+    <link rel="stylesheet" href="assets/css/gender.css">
+    <link rel="stylesheet" href="assets/css/crystals.css">
 </head>
 
 <body>
@@ -35,11 +37,11 @@
     <div id="gameApp" class="game-layout">
 
         <!-- 🔑 ЛЕВАЯ КОЛОНКА: только анимация персонажа (теперь game-animation) -->
-        <div class="game-animation">
+        <!-- <div class="game-animation">
             <div class="animation-stage" id="animationStage">
                 <canvas id="characterCanvas" width="800" height="600"></canvas>
             </div>
-        </div>
+        </div> -->
 
         <div class="game-interface">
             <h1>🧬 Эволюция: Путь Сверхчеловека</h1>
@@ -82,30 +84,28 @@
                     <span class="action-icon">🛒</span>
                     <span class="action-label">Магазин</span>
                 </button>
-                <button class="action-btn action-btn-bug" id="bugReportBtn">
+                <!-- <button class="action-btn action-btn-bug" id="bugReportBtn">
                     <span class="action-icon">❗</span>
                     <span class="action-label">Баг</span>
-                </button>
+                </button> -->
             </div>
 
             <div class="character-stage" id="characterStage">
-                <div class="pixel-human" id="pixelHuman">
-                    <div class="pixel-shadow"></div>
-                    <div class="pixel-head">
-                        <div class="pixel-hair"></div>
-                        <div class="pixel-eye pixel-eye-left"></div>
-                        <div class="pixel-eye pixel-eye-right"></div>
-                    </div>
-                    <div class="pixel-neck"></div>
-                    <div class="pixel-body"></div>
-                    <div class="pixel-arm pixel-arm-left"></div>
-                    <div class="pixel-arm pixel-arm-right"></div>
-                    <div class="pixel-leg pixel-leg-left"></div>
-                    <div class="pixel-leg pixel-leg-right"></div>
-                    <div class="health-effects" id="healthEffects"></div>
-                    <div class="hunger-effects" id="hungerEffects"></div>
-                </div>
+                <!-- 🔑 НОВОЕ: Canvas для детального рендера персонажа (вместо HTML div) -->
+                <canvas id="characterCanvasMain" width="400" height="400"></canvas>
+
                 <div class="character-caption" id="characterCaption">Герой готов к тренировкам</div>
+
+                <!-- Блок жилья (остается без изменений) -->
+                <div class="housing-info" id="housingInfo">
+                    <span class="housing-icon">📦</span>
+                    <span class="housing-name" id="housingName">Картонная коробка</span>
+                    <span class="housing-separator">|</span>
+                    <span class="housing-max-comfort">Макс. комфорт: <strong id="housingMaxComfort">20</strong></span>
+                    <span class="housing-separator">|</span>
+                    <span class="housing-bonus" id="housingBonus">Без бонусов</span>
+                </div>
+
                 <div class="needs-compact" id="needsContainer"></div>
                 <div class="disease-container hidden" id="diseaseContainer"></div>
             </div>
@@ -167,6 +167,29 @@
         </div>
         <div class="side-panel-content">
             <div class="difficulty-options" id="difficultyOptions"></div>
+        </div>
+    </aside>
+
+    <!-- 🔑 ПАНЕЛЬ ВЫБОРА ПОЛА -->
+    <aside class="side-panel" id="genderPanel" aria-hidden="true">
+        <div class="side-panel-header">
+            <div>
+                <h2>👤 Выберите пол персонажа</h2>
+                <p>Это повлияет на внешний вид вашего героя</p>
+            </div>
+            <button class="side-panel-close" data-panel-close>✕</button>
+        </div>
+        <div class="side-panel-content">
+            <div class="gender-options" id="genderOptions">
+                <div class="gender-card" data-gender="male">
+                    <div class="gender-icon">👨</div>
+                    <div class="gender-name">Мужской</div>
+                </div>
+                <div class="gender-card" data-gender="female">
+                    <div class="gender-icon">👩</div>
+                    <div class="gender-name">Женский</div>
+                </div>
+            </div>
         </div>
     </aside>
 

@@ -1,13 +1,14 @@
 import { gameState, getCurrentExchangeRate } from './state.js';
-import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST, DIFFICULTY_CONFIG } from './config.js';
+import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST, DIFFICULTY_CONFIG, HOUSING_CONFIG } from './config.js';
 import { calculatePassiveIncome, getSelection, getMaxAffordableCrystals } from './crystals.js';
 import { calculateBulkCost, getMaxAffordableCount, getMaxAffordableItemCount } from './upgrades.js';
-import { getInheritancePreviewText, applyInheritance } from './inheritance.js';
+import { getInheritancePreviewText, finalizeRunAndSaveLegacy, startInheritedGame } from './inheritance.js';
+import { getCrystalIcon } from './crystalIcons.js';
 
 // 🔑 Импортируем из needs-модуля
-import { 
-    renderNeeds, 
-    updateNeedsBars, 
+import {
+    renderNeeds,
+    updateNeedsBars,
     updateNeedRestoreButtons,
     applyCharacterStates,
     renderDiseaseBlock,
@@ -19,14 +20,14 @@ import {
 export function renderDifficultyPanel() {
     const container = document.getElementById('difficultyOptions');
     if (!container) return;
-    
+
     container.innerHTML = '';
-    
+
     Object.values(DIFFICULTY_CONFIG).forEach(diff => {
         const diffCard = document.createElement('div');
         diffCard.className = 'difficulty-card';
         diffCard.style.borderLeftColor = diff.color;
-        
+
         diffCard.innerHTML = `
             <div class="difficulty-header">
                 <span class="difficulty-icon">${diff.icon}</span>
@@ -48,21 +49,21 @@ export function renderDifficultyPanel() {
 function startNewGameWithDifficulty(difficulty) {
     import('./state.js').then(stateModule => {
         stateModule.resetGameState(false, difficulty);
-        
+
         import('./storage.js').then(storageModule => {
             storageModule.saveGame();
         });
-        
+
         // Закрываем панель и запускаем игру
         import('./panels.js').then(panelsModule => {
             panelsModule.closePanel();
         });
-        
+
         const menu = document.getElementById('mainMenu');
         const app = document.getElementById('gameApp');
         menu.style.display = 'none';
         app.style.display = 'block';
-        
+
         // Запускаем движок
         import('./main.js').then(() => {
             // Вызываем startGameEngine через глобальную функцию
@@ -74,7 +75,7 @@ function startNewGameWithDifficulty(difficulty) {
 }
 
 // Делаем функцию доступной глобально
-window.startGameEngine = function() {
+window.startGameEngine = function () {
     import('./upgrades.js').then(upgradesModule => {
         upgradesModule.recalculateStats();
     });
@@ -90,14 +91,14 @@ function formatCalendarDate(years, days) {
         GAME_START_DATE.month - 1,
         GAME_START_DATE.day
     );
-    
+
     startDate.setFullYear(startDate.getFullYear() + (years - 30));
     startDate.setDate(startDate.getDate() + days);
-    
+
     const year = startDate.getFullYear();
     const month = String(startDate.getMonth() + 1).padStart(2, '0');
     const day = String(startDate.getDate()).padStart(2, '0');
-    
+
     return `${year}-${month}-${day}`;
 }
 
@@ -117,33 +118,33 @@ export function renderUI() {
 export function updateUI() {
     const bioDays = Math.floor(gameState.currentDayInYear);
 
-    document.getElementById('bioAge').textContent = 
+    document.getElementById('bioAge').textContent =
         `${gameState.ageInYears} лет ${bioDays} дн. / ${gameState.maxAgeInYears} лет`;
-    
-    document.getElementById('calendarAge').textContent = 
+
+    document.getElementById('calendarAge').textContent =
         formatCalendarDate(gameState.absoluteAgeInYears, gameState.absoluteCurrentDayInYear);
-        
-    document.getElementById('points').textContent = 
+
+    document.getElementById('points').textContent =
         Math.round(gameState.evolutionPoints);
-    
-    document.getElementById('money').textContent = 
+
+    document.getElementById('money').textContent =
         `${gameState.money} 💰`;
-        
-    document.getElementById('passive').textContent = 
+
+    document.getElementById('passive').textContent =
         `${calculatePassiveIncome()} ОЭ/день`;
-    document.getElementById('clickPower').textContent = 
+    document.getElementById('clickPower').textContent =
         `${Math.round(gameState.clickPower)} ОЭ`;
 
     // 🔑 Вызываем функции из needs-модуля
     updateNeedsBars();
     updateNeedRestoreButtons();
     updateDiseaseUI();
-    
+
     updateShopButtons();
     updateCrystalCreateButton();
     updateItemButtons();
     updateAutoExchangeButtons();
-    
+
     applyCharacterStates();
 }
 
@@ -152,7 +153,7 @@ export function renderCrystals() {
 
     const activeGrid = document.getElementById('activeCrystalsGrid');
     activeGrid.innerHTML = '';
-    
+
     gameState.crystals.forEach((crystal, index) => {
         const slot = createCrystalSlot(crystal, 'active', index, selectedIndex === index && selectedZone === 'active');
         activeGrid.appendChild(slot);
@@ -160,7 +161,7 @@ export function renderCrystals() {
 
     const inventoryGrid = document.getElementById('inventoryCrystalsGrid');
     inventoryGrid.innerHTML = '';
-    
+
     gameState.crystalsInventory.forEach((crystal, index) => {
         const slot = createCrystalSlot(crystal, 'inventory', index, selectedIndex === index && selectedZone === 'inventory');
         inventoryGrid.appendChild(slot);
@@ -178,8 +179,12 @@ function createCrystalSlot(crystal, zone, index, isSelected) {
     }
 
     if (crystal) {
+        // 🔑 НОВОЕ: Используем SVG-иконку вместо текста "Lvl"
+        const icon = getCrystalIcon(crystal.level);
         slot.innerHTML = `
-            <div class="crystal-level">Lvl ${crystal.level}</div>
+            <div class="crystal-icon-wrapper">
+                ${icon}
+            </div>
             <div class="crystal-income">+${crystal.income}/день</div>
         `;
     }
@@ -203,6 +208,68 @@ export function renderUpgrades() {
     `;
     container.appendChild(multiplierSwitcher);
 
+    // 🔑 РАЗДЕЛ: НЕДВИЖИМОСТЬ
+    const housingHeader = document.createElement('div');
+    housingHeader.className = 'shop-section-header';
+    housingHeader.innerHTML = `<h3>🏠 Недвижимость</h3><p>Определяет максимальный уровень комфорта и дает бонусы</p>`;
+    container.appendChild(housingHeader);
+
+    const housingLevels = Object.keys(HOUSING_CONFIG);
+    const currentIndex = housingLevels.indexOf(gameState.housing);
+
+    Object.values(HOUSING_CONFIG).forEach((house, index) => {
+        const isCurrent = gameState.housing === house.id;
+        const isPast = index < currentIndex; // Уже пройденные уровни
+        const isFuture = index > currentIndex; // Ещё не купленные
+
+        const item = document.createElement('div');
+        item.className = 'upgrade-item item-item';
+
+        let btnText = '';
+        let statusHtml = '';
+        let isDisabled = false;
+
+        if (isCurrent) {
+            btnText = '✅ Текущее';
+            const decayText = house.decayMult < 1.0 ? `📉 Комфорт падает на ${Math.round((1 - house.decayMult) * 100)}% медленнее` : '⚠️ Комфорт падает быстрее';
+            const incomeText = house.incomeMult > 1.0 ? `📈 +${Math.round((house.incomeMult - 1) * 100)}% к доходу` : '';
+            statusHtml = `<div style="font-size: 11px; color: #28a745; margin-top: 4px;">
+                Макс. комфорт: <strong>${house.maxComfort}</strong><br>
+                ${decayText}<br>
+                ${incomeText}
+            </div>`;
+            isDisabled = true;
+        } else if (isPast) {
+            btnText = '✅ Куплено';
+            statusHtml = `<div style="font-size: 11px; color: #6c757d; margin-top: 4px;">
+                Макс. комфорт: ${house.maxComfort}
+            </div>`;
+            isDisabled = true;
+        } else {
+            const canAfford = gameState.money >= house.cost;
+            const decayText = house.decayMult < 1.0 ? `📉 Комфорт падает на ${Math.round((1 - house.decayMult) * 100)}% медленнее` : '⚠️ Комфорт падает быстрее';
+            const incomeText = house.incomeMult > 1.0 ? `📈 +${Math.round((house.incomeMult - 1) * 100)}% к доходу` : '';
+
+            btnText = `Купить за ${house.cost.toLocaleString()} 💰`;
+            statusHtml = `<div style="font-size: 11px; color: #666; margin-top: 4px;">
+                Макс. комфорт: <strong>${house.maxComfort}</strong><br>
+                ${decayText}<br>
+                ${incomeText}
+            </div>`;
+            isDisabled = !canAfford;
+        }
+
+        item.innerHTML = `
+            <div class="upgrade-info">
+                <div class="upgrade-name">${house.name} ${statusHtml}</div>
+            </div>
+            <button class="upgrade-btn item-btn" data-housing="${house.id}" ${isDisabled ? 'disabled' : ''}>
+                ${btnText}
+            </button>
+        `;
+        container.appendChild(item);
+    });
+
     // 2. Заголовок Способностей
     const abilitiesHeader = document.createElement('div');
     abilitiesHeader.className = 'shop-section-header';
@@ -214,25 +281,25 @@ export function renderUpgrades() {
         const config = UPGRADES_CONFIG[upgradeId];
         const currentLevel = gameState.upgrades[upgradeId];
         const remainingToMax = config.maxLevel - currentLevel;
-        
+
         const maxAffordable = getMaxAffordableCount(upgradeId);
         const actualCount = getActualCount(gameState.purchaseMultiplier, Math.min(remainingToMax, maxAffordable > 0 ? maxAffordable : 0));
         const cost = actualCount > 0 ? calculateBulkCost(upgradeId, actualCount) : calculateBulkCost(upgradeId, 1);
-        
+
         const isMaxed = currentLevel >= config.maxLevel;
         const canAfford = gameState.evolutionPoints >= cost && actualCount > 0;
 
         const item = document.createElement('div');
         item.className = 'upgrade-item';
-        
+
         let effectText = config.desc;
         if (currentLevel > 0) {
             effectText = config.effect(currentLevel);
         }
-        
+
         const finalBuffText = config.finalBuff ? config.finalBuff(config.maxLevel) : '';
         let btnText = 'МАКС';
-        
+
         if (!isMaxed) {
             if (gameState.purchaseMultiplier === 'max') {
                 btnText = maxAffordable > 0 ? `${maxAffordable} ур. за ${cost} ОЭ` : 'Недоступно';
@@ -261,39 +328,39 @@ export function renderUpgrades() {
     itemsHeader.innerHTML = `<h3>🛍️ Вещи</h3><p>Одноразовые покупки и ресурсы</p>`;
     container.appendChild(itemsHeader);
 
-        // 5. Отрисовка Вещей (ITEMS_CONFIG)
+    // 5. Отрисовка Вещей (ITEMS_CONFIG)
     Object.keys(ITEMS_CONFIG).forEach(itemId => {
         const config = ITEMS_CONFIG[itemId];
         const maxAffordable = getMaxAffordableItemCount(itemId);
         const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
-        
+
         // 🔑 Динамический курс обмена
         const currentRate = getCurrentExchangeRate();
         const amountToExchange = actualCount > 0 ? actualCount : 1;
-        
+
         const totalCost = config.cost * amountToExchange;
         const totalReward = Math.floor(currentRate * amountToExchange);
-        
+
         const canAfford = gameState.evolutionPoints >= totalCost && actualCount > 0;
 
         const item = document.createElement('div');
         item.className = 'upgrade-item item-item';
-        
+
         // 🔑 Динамическое описание с актуальным курсом
         let descText = config.desc;
         if (itemId === 'money_exchange' || config.name === 'Обмен на деньги') {
             descText = `1 ОЭ = ${Math.floor(currentRate)} денег`;
         }
-        
+
         let btnText = `Купить за ${config.cost} ОЭ`;
         if (gameState.purchaseMultiplier === 'max') {
-            btnText = maxAffordable > 0 
-                ? `+${totalReward} 💰 за ${totalCost} ОЭ` 
+            btnText = maxAffordable > 0
+                ? `+${totalReward} 💰 за ${totalCost} ОЭ`
                 : 'Недоступно';
         } else if (parseInt(gameState.purchaseMultiplier) > 1) {
             btnText = `+${totalReward} 💰 за ${totalCost} ОЭ`;
         }
-        
+
         item.innerHTML = `
             <div class="upgrade-info">
                 <div class="upgrade-name">${config.icon} ${config.name}</div>
@@ -316,7 +383,7 @@ export function updateCrystalCreateButton() {
     if (!createBtn) return;
 
     const maxAffordable = getMaxAffordableCrystals();
-    
+
     // Определяем, сколько кристаллов мы реально можем создать с учётом множителя
     let actualCount = 0;
     if (gameState.purchaseMultiplier === 'max') {
@@ -359,7 +426,7 @@ export function updateItemButtons() {
         const maxAffordable = getMaxAffordableItemCount(itemId);
         const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
         const totalCost = config.cost * (actualCount > 0 ? actualCount : 1);
-        
+
         btn.disabled = gameState.evolutionPoints < totalCost || actualCount <= 0;
     });
 }
@@ -369,29 +436,29 @@ export function updateAutoExchangeButtons() {
         const amount = parseInt(btn.dataset.amount);
         btn.classList.toggle('active', amount === gameState.autoExchangeAmount);
     });
-    
+
     const valueDisplay = document.getElementById('autoExchangeValue');
     if (valueDisplay) {
         // 🔑 Показываем игроку, сколько денег он получит с учетом бонуса наследия
         const currentRate = getCurrentExchangeRate();
         const moneyGain = gameState.autoExchangeAmount * currentRate;
-        
-        valueDisplay.textContent = gameState.autoExchangeAmount === 0 
-            ? 'Выкл' 
+
+        valueDisplay.textContent = gameState.autoExchangeAmount === 0
+            ? 'Выкл'
             : `${gameState.autoExchangeAmount} ОЭ = ${moneyGain} 💰`;
     }
-    
+
     const autoSpendBtn = document.getElementById('autoSpendToggle');
     const autoSpendStatus = document.getElementById('autoSpendStatus');
-    
+
     if (autoSpendBtn && autoSpendStatus) {
         autoSpendStatus.textContent = gameState.autoSpendEnabled ? 'ВКЛ' : 'ВЫКЛ';
         autoSpendBtn.classList.toggle('active', gameState.autoSpendEnabled);
     }
-    
+
     const autoTreatBtn = document.getElementById('autoTreatToggle');
     const autoTreatStatus = document.getElementById('autoTreatStatus');
-    
+
     if (autoTreatBtn && autoTreatStatus) {
         autoTreatStatus.textContent = gameState.autoTreatEnabled ? 'ВКЛ' : 'ВЫКЛ';
         autoTreatBtn.classList.toggle('active', gameState.autoTreatEnabled);
@@ -418,31 +485,31 @@ export function showCritPopup(event, amount, customText = null) {
 // export function showGameOver(reason = "Ваш персонаж умер!") {
 //     const overlay = document.createElement('div');
 //     overlay.className = 'game-over';
-    
+
 //     let inheritancePreview = '';
 //     try {
 //         inheritancePreview = getInheritancePreviewText();
 //     } catch (e) {
 //         inheritancePreview = '<p>Бонусы наследия недоступны.</p>';
 //     }
-    
+
 //     overlay.innerHTML = `
 //         <div class="game-over-content" style="max-width: 600px; text-align: left; max-height: 85vh; overflow-y: auto;">
 //             <h2 style="text-align: center; color: #dc3545; margin-bottom: 15px;">💀 Игра окончена</h2>
 //             <p style="text-align: center; font-size: 18px; margin-bottom: 15px;"><strong>${reason}</strong></p>
-            
+
 //             <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
 //                 <p style="margin: 0 0 5px 0;"><strong>📊 Статистика этого поколения:</strong></p>
 //                 <p style="margin: 0;">Прожито лет: <strong>${gameState.ageInYears}</strong></p>
 //                 <p style="margin: 0;">Всего заработано ОЭ: <strong>${Math.round(gameState.totalPointsEarned)}</strong></p>
 //                 <p style="margin: 0;">Всего заработано 💰: <strong>${Math.round(gameState.stats.totalMoneyEarnedThisRun)}</strong></p>
 //             </div>
-            
+
 //             <div style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); padding: 15px; border-radius: 10px; border-left: 4px solid #9c27b0; margin-bottom: 15px;">
 //                 <h3 style="color: #6a1b9a; margin: 0 0 10px 0;">🧬 Бонусы наследия</h3>
 //                 ${inheritancePreview}
 //             </div>
-            
+
 //             <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
 //                 <button id="inheritAfterDeathBtn" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
 //                     🧬 Наследовать<br>
@@ -455,9 +522,9 @@ export function showCritPopup(event, amount, customText = null) {
 //             </div>
 //         </div>
 //     `;
-    
+
 //     document.body.appendChild(overlay);
-    
+
 //     // 🔑 Обработчик "Наследовать"
 //     document.getElementById('inheritAfterDeathBtn').addEventListener('click', () => {
 //         overlay.remove();
@@ -467,7 +534,7 @@ export function showCritPopup(event, amount, customText = null) {
 //             window.location.reload();
 //         });
 //     });
-    
+
 //     // 🔑 Обработчик "С нуля"
 //     document.getElementById('fullResetBtn').addEventListener('click', () => {
 //         if (confirm("Вы уверены? ВСЕ бонусы и статистика будут потеряны!")) {
@@ -480,7 +547,7 @@ export function showCritPopup(event, amount, customText = null) {
 
 export function showInheritanceModal(isAfterDeath = false) {
     const previewText = getInheritancePreviewText();
-    
+
     const overlay = document.createElement('div');
     overlay.className = 'game-over'; // Используем те же стили, что и для Game Over
     overlay.innerHTML = `
@@ -497,17 +564,18 @@ export function showInheritanceModal(isAfterDeath = false) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(overlay);
-    
+
     document.getElementById('cancelInheritBtn').addEventListener('click', () => {
         overlay.remove();
     });
-    
+
     document.getElementById('confirmInheritBtn').addEventListener('click', () => {
         overlay.remove();
         import('./inheritance.js').then(module => {
-            module.applyInheritance(isAfterDeath);
+            // Запускаем новую игру с бонусами
+            module.startInheritedGame(gameState.difficulty || 'medium');
             window.location.reload();
         });
     });
@@ -517,14 +585,14 @@ export function showInheritanceModal(isAfterDeath = false) {
 export function showDeathScreen(reason) {
     const overlay = document.createElement('div');
     overlay.className = 'game-over';
-    
+
     let inheritancePreview = '';
     try {
         inheritancePreview = getInheritancePreviewText();
     } catch (e) {
         inheritancePreview = '<p>Бонусы недоступны.</p>';
     }
-    
+
     overlay.innerHTML = `
         <div class="game-over-content" style="max-width: 600px; text-align: left; max-height: 85vh; overflow-y: auto;">
             <h2 style="text-align: center; color: #dc3545; margin-bottom: 15px;">💀 Игра окончена</h2>
@@ -559,20 +627,20 @@ export function showDeathScreen(reason) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(overlay);
-    
+
     // 🔑 Наследовать
     document.getElementById('inheritAfterDeathBtn').addEventListener('click', () => {
         overlay.remove();
         import('./inheritance.js').then(module => {
-            module.applyInheritance(); // Внутри уже есть saveGame()
-            
-            // 🔑 Перезагружаем страницу, чтобы гарантированно загрузить новое состояние
+            // 1. Сохраняем бонусы и удаляем старую игру
+            module.finalizeRunAndSaveLegacy();
+            // 2. Перезагружаем страницу, чтобы меню перестроилось
             window.location.reload();
         });
     });
-    
+
     // 🔑 Начать заново (с выбором сложности)
     document.getElementById('restartFromDeathBtn').addEventListener('click', () => {
         overlay.remove();
@@ -580,7 +648,7 @@ export function showDeathScreen(reason) {
         // Просто возвращаемся в меню
         window.location.reload();
     });
-    
+
     // 🔑 В меню (без бонусов)
     document.getElementById('backToMenuBtn').addEventListener('click', () => {
         overlay.remove();

@@ -1,0 +1,77 @@
+/* Панель выбора пола */
+.gender-options {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.gender-card {
+    flex: 1;
+    max-width: 200px;
+    padding: 30px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-align: center;
+}
+
+.gender-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.gender-card.selected {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 10px 30px rgba(245, 87, 108, 0.4);
+}
+
+.gender-icon {
+    font-size: 64px;
+    margin-bottom: 15px;
+}
+
+.gender-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+}
+
+
+/* 🔑 Женский персонаж */
+.pixel-human.female .pixel-hair {
+    background: #5c3a1e;
+    height: 14px;
+    border-radius: 8px 8px 0 0;
+}
+
+.pixel-human.female .pixel-body {
+    background: #e91e63; /* Розовая футболка */
+}
+
+.pixel-human.female .pixel-leg-left,
+.pixel-human.female .pixel-leg-right {
+    background: #3f51b5; /* Синие джинсы */
+}
+
+/* Длинные волосы для женского персонажа */
+.pixel-human.female .pixel-hair::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: -4px;
+    width: 4px;
+    height: 20px;
+    background: #5c3a1e;
+}
+
+.pixel-human.female .pixel-hair::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: -4px;
+    width: 4px;
+    height: 20px;
+    background: #5c3a1e;
+}
