@@ -74,24 +74,22 @@ export function finalizeRunAndSaveLegacy() {
 
 // 🔑 2. Вызывается из главного меню. Создает чистую новую игру с бонусами.
 export function startInheritedGame(difficulty = 'medium') {
-    console.log('🧬 [startInheritedGame] Запуск нового поколения');
+    console.log('🧬 [startInheritedGame] Запуск нового поколения на сложности:', difficulty);
     
-    // 🔑 СОХРАНЯЕМ ВЫБОР ПОЛА ДО СБРОСА
     const savedGender = gameState.gender || 'male';
     const diffConfig = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.medium;
     
-    import('./state.js').then(stateModule => {
+    return import('./state.js').then(stateModule => {
         // Полный сброс gameState
         Object.assign(stateModule.gameState, JSON.parse(JSON.stringify(stateModule.defaultGameState)));
-        stateModule.gameState.difficulty = difficulty;
-        stateModule.gameState.isGameOver = false;
         
-        // 🔑 ВОССТАНАВЛИВАЕМ ПОЛ ПОСЛЕ СБРОСА
+        // 🔑 Применяем НОВУЮ сложность и стартовые деньги
+        stateModule.gameState.difficulty = difficulty;
+        stateModule.gameState.money = diffConfig.startMoney || 0;
+        stateModule.gameState.isGameOver = false;
         stateModule.gameState.gender = savedGender;
         
-        // 🔑 НОВОЕ: Применяем стартовые деньги по сложности
-        stateModule.gameState.money = diffConfig.startMoney || 0;
-        console.log('🧬 [startInheritedGame] Пол восстановлен:', savedGender, '| Стартовые деньги:', stateModule.gameState.money);
+        console.log('🧬 [startInheritedGame] Пол:', savedGender, '| Сложность:', difficulty, '| Деньги:', stateModule.gameState.money);
         
         // Применяем стартовые бонусы (жилье, комфорт, кристаллы)
         applyStartingBonuses();

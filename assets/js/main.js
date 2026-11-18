@@ -78,9 +78,13 @@ function showMainMenu() {
         btn.textContent = `🧬 Начать новое поколение (+${legacy.exchangeRateBonus}% курс, ${crystalsCount} крист.${crystalLevels ? ` [${crystalLevels}${moreText}]` : ''})`;
 
         btn.onclick = () => {
-            // 🔑 Сначала показываем выбор пола
+            // 🔑 Сбрасываем старые флаги
+            window.pendingNewGame = false;
+            window.pendingDifficultyAfterInheritance = false;
+            
+            // 🔑 Сначала выбираем пол
             openPanel('genderPanel');
-            window.pendingInheritance = true; // Флаг для обработчика выбора пола
+            window.pendingInheritance = true; 
         };
         btnContainer.appendChild(btn);
     }
@@ -161,25 +165,27 @@ function bindEvents() {
             const card = e.target.closest('.gender-card');
             if (!card) return;
 
+            // Защита от двойного клика
+            if (!window.pendingInheritance && !window.pendingNewGame) return;
+
             const gender = card.dataset.gender;
 
-            // Визуально выделяем выбранную карточку
             document.querySelectorAll('.gender-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
 
-            // Запоминаем выбор
             gameState.gender = gender;
+            closePanel(); // Закрываем панель пола
 
-            // Закрываем панель пола
-            closePanel();
-
-            // Если было наследие — применяем его
             if (window.pendingInheritance) {
-                import('./inheritance.js').then(module => {
-                    module.startInheritedGame(gameState.difficulty || 'medium');
-                });
-            } else {
-                // Иначе показываем выбор сложности
+                window.pendingInheritance = false;
+                // 🔑 НОВОЕ: После выбора пола открываем выбор сложности для наследия
+                window.pendingDifficultyAfterInheritance = true;
+                renderDifficultyPanel();
+                openPanel('difficultyPanel');
+                
+            } else if (window.pendingNewGame) {
+                window.pendingNewGame = false;
+                // Для обычной новой игры тоже открываем выбор сложности
                 renderDifficultyPanel();
                 openPanel('difficultyPanel');
             }
@@ -453,7 +459,7 @@ function bindEvents() {
         openPanel('helpPanel');
     });
 
-    // 🔑 НОВЫЙ ОБРАБОТЧИК: Выбор сложности
+    // 🔑 ОБРАБОТЧИК: Выбор сложности (теперь универсальный)
     const diffContainer = document.getElementById('difficultyOptions');
     if (diffContainer) {
         diffContainer.addEventListener('click', (e) => {
@@ -461,27 +467,37 @@ function bindEvents() {
             if (!btn) return;
 
             const difficulty = btn.dataset.difficulty;
-
-            // 🔑 СОХРАНЯЕМ ПОЛ ПЕРЕД СБРОСОМ
             const savedGender = gameState.gender || 'male';
 
-            // Сбрасываем активную игру с выбранной сложностью
-            resetActiveGame(difficulty);
-
-            // 🔑 ВОССТАНАВЛИВАЕМ ПОЛ
-            gameState.gender = savedGender;
-            console.log('✅ [main.js] Пол восстановлен после сброса:', savedGender);
-
-            saveGame();
-
-            closePanel();
+            closePanel(); // Закрываем панель сложности
 
             const menu = document.getElementById('mainMenu');
             const app = document.getElementById('gameApp');
             menu.style.display = 'none';
             app.style.display = '';
 
-            startGameEngine();
+            if (window.pendingDifficultyAfterInheritance) {
+                // 🔑 ЗАПУСК С НАСЛЕДИЕМ И НОВОЙ СЛОЖНОСТЬЮ
+                window.pendingDifficultyAfterInheritance = false;
+                
+                import('./inheritance.js').then(module => {
+                    // Передаем именно ту сложность, которую выбрал игрок сейчас!
+                    return module.startInheritedGame(difficulty);
+                }).then(() => {
+                    startGameEngine();
+                    console.log(`✅ Игра с наследием запущена на сложности: ${difficulty}`);
+                }).catch(err => {
+                    console.error('❌ Ошибка запуска наследия:', err);
+                });
+
+            } else {
+                // 🔑 ОБЫЧНЫЙ ЗАПУСК НОВОЙ ИГРЫ
+                resetActiveGame(difficulty);
+                gameState.gender = savedGender;
+                console.log(`✅ Новая игра запущена на сложности: ${difficulty}`);
+                saveGame();
+                startGameEngine();
+            }
         });
     }
 
