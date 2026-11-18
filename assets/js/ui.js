@@ -3,6 +3,7 @@ import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST, DIFFICULT
 import { calculatePassiveIncome, getSelection, getMaxAffordableCrystals } from './crystals.js';
 import { calculateBulkCost, getMaxAffordableCount, getMaxAffordableItemCount } from './upgrades.js';
 import { getInheritancePreviewText, finalizeRunAndSaveLegacy, startInheritedGame } from './inheritance.js';
+import { getCrystalIcon } from './crystalIcons.js';
 
 // 🔑 Импортируем из needs-модуля
 import {
@@ -172,18 +173,22 @@ function createCrystalSlot(crystal, zone, index, isSelected) {
     slot.className = 'crystal-slot';
     slot.dataset.zone = zone;
     slot.dataset.index = index;
-
+    
     if (isSelected) {
         slot.classList.add('selected');
     }
 
     if (crystal) {
+        // 🔑 НОВОЕ: Используем SVG-иконку вместо текста "Lvl"
+        const icon = getCrystalIcon(crystal.level);
         slot.innerHTML = `
-            <div class="crystal-level">Lvl ${crystal.level}</div>
+            <div class="crystal-icon-wrapper">
+                ${icon}
+            </div>
             <div class="crystal-income">+${crystal.income}/день</div>
         `;
     }
-
+    
     return slot;
 }
 
