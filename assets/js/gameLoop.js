@@ -5,12 +5,18 @@ import { updateUI, showGameOver, showMessage } from './ui.js';
 import { processNeedsTick, processDiseasesTick } from './needs/index.js';
 import { getCurrentExchangeRate } from './state.js';
 import { updateCharacterStateFromGame } from './character/index.js';
+import { checkAndTriggerDailyEvent } from './events/logic.js';
 
 let gameLoopInterval = null;
 
 // 🔑 Безопасный запуск: если интервал уже есть — останавливаем его
 export function startGameLoop() {
     // 🔑 КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: предотвращаем дублирование
+
+    if (gameState.activeEvent) {
+        return;
+    }
+
     if (gameLoopInterval !== null) {
         clearInterval(gameLoopInterval);
         gameLoopInterval = null;
@@ -96,6 +102,7 @@ export function startGameLoop() {
         if (gameState.currentDayInYear >= gameState.daysInYear) {
             gameState.currentDayInYear -= gameState.daysInYear;
             gameState.ageInYears++;
+            checkAndTriggerDailyEvent();
 
             if (gameState.ageInYears >= gameState.maxAgeInYears) {
                 gameState.isGameOver = true;

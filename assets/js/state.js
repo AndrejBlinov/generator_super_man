@@ -71,7 +71,14 @@ export const defaultGameState = {
 
     stats: { totalMoneyEarnedThisRun: 0 }, // Для отслеживания трат внутри одного прохождения
 
-    isGameOver: false
+    isGameOver: false,
+
+    // 🔑 НОВЫЕ ПОЛЯ ДЛЯ СИСТЕМЫ СОБЫТИЙ
+    karma: 40, // Будет перезаписано сложностью при старте
+    flags: [], // Массив строк: ['married', 'engaged', 'has_dog']
+    scheduledEvent: null, // { eventId, triggerAtAbsoluteDay, context }
+    activeEvent: null, // { eventId, variantKey, choices } (если не null, игра на паузе)
+    lastEventDay: 0 // Абсолютный день последнего события (для кулдауна)
 };
 
 // Текущее состояние игры
@@ -137,6 +144,7 @@ function applyMigrations(state) {
     }
 
     // Миграции примитивов
+    if (state.karma === undefined) state.karma = 40;
     if (state.doubleClickChance === undefined) state.doubleClickChance = 0.0;
     if (state.diseaseResistance === undefined) state.diseaseResistance = 0.0;
     if (state.extraTrainingChance === undefined) state.extraTrainingChance = 0.0;

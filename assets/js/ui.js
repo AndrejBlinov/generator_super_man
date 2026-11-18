@@ -130,6 +130,8 @@ export function updateUI() {
     document.getElementById('money').textContent =
         `${gameState.money} 💰`;
 
+    document.getElementById('karmaValue').textContent = gameState.karma;
+
     document.getElementById('passive').textContent =
         `${calculatePassiveIncome()} ОЭ/день`;
     document.getElementById('clickPower').textContent =
@@ -173,7 +175,7 @@ function createCrystalSlot(crystal, zone, index, isSelected) {
     slot.className = 'crystal-slot';
     slot.dataset.zone = zone;
     slot.dataset.index = index;
-    
+
     if (isSelected) {
         slot.classList.add('selected');
     }
@@ -188,7 +190,7 @@ function createCrystalSlot(crystal, zone, index, isSelected) {
             <div class="crystal-income">+${crystal.income}/день</div>
         `;
     }
-    
+
     return slot;
 }
 

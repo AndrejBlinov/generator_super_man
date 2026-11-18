@@ -73,11 +73,15 @@
                         <span class="stat-label">Сила клика:</span>
                         <span class="stat-value" id="clickPower">1 ОЭ</span>
                     </div>
+                    <div class="stat-item stat-karma stat-hideable">
+                        <span class="stat-label">Карма:</span>
+                        <span class="stat-value" id="karmaValue" style="color: #f6e05e;">50</span>
+                    </div>
                 </div>
                 <button class="train-button" id="trainBtn">💪 ТРЕНИРОВАТЬСЯ</button>
             </div>
 
-            
+
 
             <div class="action-buttons-row">
                 <button class="action-btn" data-panel-target="crystalsPanel">
@@ -273,6 +277,22 @@
     </aside>
 
     <div id="helpPanelContainer"></div>
+
+    <!-- МОДАЛЬНОЕ ОКНО СОБЫТИЙ -->
+    <div class="event-modal-backdrop" id="eventModalBackdrop" aria-hidden="true">
+        <div class="event-modal">
+            <div class="event-modal-header">
+                <span class="event-icon" id="eventIcon">❓</span>
+                <h2 id="eventTitle">Название события</h2>
+            </div>
+            <div class="event-modal-body">
+                <p id="eventDescription">Описание события...</p>
+            </div>
+            <div class="event-modal-choices" id="eventChoices">
+                <!-- Кнопки генерируются через JS -->
+            </div>
+        </div>
+    </div>
 
     <!-- 🔑 МОДАЛКА ПОДДЕРЖКИ -->
     <div class="donate-modal" id="donateModal" aria-hidden="true">

@@ -540,5 +540,59 @@ if (versionDisplay) {
 bindEvents();
 showMainMenu();
 
+// ==========================================
+// ЛОГИКА МОДАЛЬНОГО ОКНА СОБЫТИЙ
+// ==========================================
+window.renderEventModal = function() {
+    const backdrop = document.getElementById('eventModalBackdrop');
+    const icon = document.getElementById('eventIcon');
+    const title = document.getElementById('eventTitle');
+    const desc = document.getElementById('eventDescription');
+    const choicesContainer = document.getElementById('eventChoices');
+
+    if (!gameState.activeEvent || !backdrop) return;
+
+    const ev = gameState.activeEvent;
+    icon.textContent = ev.icon;
+    title.textContent = ev.title;
+    desc.textContent = ev.description;
+    
+    choicesContainer.innerHTML = '';
+
+    ev.choices.forEach((choice, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'event-choice-btn';
+        
+        // Формируем текст кнопки
+        let btnText = choice.text;
+        if (choice.reqComfort && gameState.needs.comfort < choice.reqComfort) {
+            btnText += `<span class="req">⚠️ Требуется комфорт: ${choice.reqComfort} (У вас: ${gameState.needs.comfort})</span>`;
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        }
+
+        btn.innerHTML = btnText;
+        btn.onclick = () => {
+            // Импортируем и вызываем логику разрешения выбора
+            import('./events/logic.js').then(module => {
+                module.resolveEventChoice(index);
+            });
+        };
+        choicesContainer.appendChild(btn);
+    });
+
+    backdrop.classList.add('active');
+    backdrop.setAttribute('aria-hidden', 'false');
+};
+
+window.closeEventModal = function() {
+    const backdrop = document.getElementById('eventModalBackdrop');
+    if (backdrop) {
+        backdrop.classList.remove('active');
+        backdrop.setAttribute('aria-hidden', 'true');
+    }
+};
+
 window.startGameEngine = startGameEngine;
 // © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).
