@@ -247,3 +247,23 @@ body::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.3);
     border-radius: 4px;
 }
+
+@media (max-width: 768px) {
+    .game-layout {
+        padding: 0; /* Убираем внешний отступ */
+        margin: 0;
+    }
+    
+    .game-interface {
+        padding: 16px 12px; /* Уменьшаем внутренние отступы */
+        border-radius: 0; /* Убираем скругление на мобильных */
+        box-shadow: none; /* Убираем тень */
+        max-width: 100%; /* На всю ширину */
+    }
+    
+    /* Если есть внешний контейнер с фоном */
+    #gameApp {
+        padding: 0;
+        margin: 0;
+    }
+}

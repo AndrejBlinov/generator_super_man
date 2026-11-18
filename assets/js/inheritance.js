@@ -1,5 +1,5 @@
 import { gameState, legacy, stats, defaultGameState, saveGame } from './state.js';
-import { UPGRADES_CONFIG, INHERITANCE_CONFIG } from './config.js';
+import { UPGRADES_CONFIG, INHERITANCE_CONFIG, HOUSING_CONFIG, DIFFICULTY_CONFIG } from './config.js'; // 🔑 Добавлены HOUSING_CONFIG и DIFFICULTY_CONFIG
 import { saveLegacy, saveStats, clearActiveGame } from './storage.js';
 
 // 🔑 Расчет бонусов текущего прохождения
@@ -47,6 +47,7 @@ export function finalizeRunAndSaveLegacy() {
 
     // Добавляем бонусы в legacy
     legacy.exchangeRateBonus += bonuses.exchangeBonus;
+    legacy.inheritedHousing = gameState.housing || 'box'; // 🔑 НОВОЕ: сохраняем текущее жилье в наследие
     
     if (!Array.isArray(legacy.startingCrystals)) legacy.startingCrystals = [];
     if (legacy.startingCrystalsCount > 0) {
@@ -73,22 +74,27 @@ export function finalizeRunAndSaveLegacy() {
 
 // 🔑 2. Вызывается из главного меню. Создает чистую новую игру с бонусами.
 export function startInheritedGame(difficulty = 'medium') {
-    console.log('🧬 [startInheritedGame] Запуск нового поколения');
+    console.log('🧬 [startInheritedGame] Запуск нового поколения на сложности:', difficulty);
     
-    // 🔑 СОХРАНЯЕМ ВЫБОР ПОЛА ДО СБРОСА
     const savedGender = gameState.gender || 'male';
+    const diffConfig = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.medium;
     
-    import('./state.js').then(stateModule => {
+    return import('./state.js').then(stateModule => {
         // Полный сброс gameState
         Object.assign(stateModule.gameState, JSON.parse(JSON.stringify(stateModule.defaultGameState)));
+        
+        // 🔑 Применяем НОВУЮ сложность и стартовые параметры
         stateModule.gameState.difficulty = difficulty;
+        stateModule.gameState.money = diffConfig.startMoney || 0;
         stateModule.gameState.isGameOver = false;
-        
-        // 🔑 ВОССТАНАВЛИВАЕМ ПОЛ ПОСЛЕ СБРОСА
         stateModule.gameState.gender = savedGender;
-        console.log('🧬 [startInheritedGame] Пол восстановлен:', savedGender);
         
-        // Применяем стартовые бонусы
+        // 🔑 КЛЮЧЕВОЕ: Устанавливаем возраст и иммунитет по сложности
+        stateModule.gameState.ageInYears = diffConfig.startAge;
+        stateModule.gameState.absoluteAgeInYears = diffConfig.startAge;
+        stateModule.gameState.diseaseImmunityTicks = diffConfig.diseaseImmunityDays;
+        
+        // Применяем стартовые бонусы (жилье, комфорт, кристаллы)
         applyStartingBonuses();
         
         // Сохраняем новое состояние
@@ -96,74 +102,28 @@ export function startInheritedGame(difficulty = 'medium') {
     });
 }
 
-// (Функция applyStartingBonuses остается без изменений там же, где она была)
-
-// 🔑 Применение наследия (ПОЛНЫЙ СБРОС + БОНУСЫ)
-// export function applyInheritance() {
-//     console.log('🧬 [applyInheritance] Начало наследования');
-    
-//     const bonuses = calculateInheritanceBonuses();
-//     const currentDifficulty = gameState.difficulty || 'medium';
-
-//     // 1. Обновляем глобальную статистику
-//     stats.highestAgeReached = Math.max(stats.highestAgeReached, gameState.ageInYears);
-//     stats.totalDeaths += 1;
-//     stats.runsCompleted += 1;
-    
-//     const allCrystals = [...gameState.crystals, ...gameState.crystalsInventory];
-//     const maxLvl = allCrystals.filter(c => c).reduce((max, c) => Math.max(max, c.level), 1);
-//     stats.highestCrystalLevel = Math.max(stats.highestCrystalLevel, maxLvl);
-
-//     // 2. Применяем бонусы к объекту наследия
-//     legacy.exchangeRateBonus += bonuses.exchangeBonus;
-    
-//     if (!Array.isArray(legacy.startingCrystals)) {
-//         legacy.startingCrystals = [];
-//     }
-//     if (legacy.startingCrystalsCount > 0) {
-//         for (let i = 0; i < legacy.startingCrystalsCount; i++) {
-//             legacy.startingCrystals.push({ level: 1, income: 1 });
-//         }
-//         legacy.startingCrystalsCount = 0;
-//     }
-//     legacy.startingCrystals = legacy.startingCrystals.concat(bonuses.inheritanceCrystals);
-    
-//     const abilityIds = Object.keys(UPGRADES_CONFIG);
-//     for (let i = 0; i < bonuses.level5AbilitiesCount; i++) {
-//         const randomId = abilityIds[Math.floor(Math.random() * abilityIds.length)];
-//         legacy.startingAbilities.push(randomId);
-//     }
-
-//     console.log('🧬 [applyInheritance] Обновлённое наследие:', legacy);
-
-//     // 3. Сохраняем наследие и статистику
-//     saveLegacy(legacy);
-//     saveStats(stats);
-
-//     // 4. 🔑 ЖЁСТКОЕ УДАЛЕНИЕ старого сохранения из localStorage
-//     clearActiveGame();
-//     console.log('🧬 [applyInheritance] Старое активное сохранение удалено из хранилища');
-
-//     // 5. 🔑 ПОЛНЫЙ СБРОС gameState в памяти (Глубокая копия, чтобы не осталось старых ссылок на массивы!)
-//     Object.assign(gameState, JSON.parse(JSON.stringify(defaultGameState)));
-//     gameState.difficulty = currentDifficulty;
-//     gameState.isGameOver = false;
-    
-//     console.log('🧬 [applyInheritance] gameState полностью сброшен до дефолтного');
-
-//     // 6. Применяем стартовые бонусы к ЧИСТОМУ gameState
-//     applyStartingBonuses();
-
-//     // 7. Сохраняем НОВОЕ, чистое состояние с бонусами
-//     saveGame();
-//     console.log('🧬 [applyInheritance] Новое состояние сохранено и готово к запуску');
-// }
-
-// 🔑 Применение стартовых бонусов
+// 🔑 Применение стартовых бонусов (жилье, комфорт, кристаллы + способности)
 function applyStartingBonuses() {
     console.log('🧬 [applyStartingBonuses] Применяем стартовые бонусы');
-    console.log('🧬 Кристаллы для размещения:', legacy.startingCrystals);
 
+    // 🔑 1. ПРИМЕНЯЕМ УНАСЛЕДОВАННОЕ ЖИЛЬЁ
+    const inheritedHousing = legacy.inheritedHousing || 'box';
+    if (HOUSING_CONFIG[inheritedHousing]) {
+        gameState.housing = inheritedHousing;
+        console.log('🏠 Унаследовано жильё:', inheritedHousing);
+    } else {
+        gameState.housing = 'box';
+    }
+
+    // 🔑 2. ОБРЕЗАЕМ КОМФОРТ ПОД ЛИМИТ УНАСЛЕДОВАННОГО ЖИЛЬЯ
+    const housingConfig = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
+    if (gameState.needs.comfort > housingConfig.maxComfort) {
+        gameState.needs.comfort = housingConfig.maxComfort;
+        console.log('✂️ Комфорт обрезан до максимума жилья:', housingConfig.maxComfort);
+    }
+
+    // 🔑 3. РАЗМЕЩЕНИЕ КРИСТАЛЛОВ
+    console.log('🧬 Кристаллы для размещения:', legacy.startingCrystals);
     const crystalsToPlace = [...(legacy.startingCrystals || [])];
     let placed = 0;
     
@@ -188,7 +148,7 @@ function applyStartingBonuses() {
     // Очищаем список после применения
     legacy.startingCrystals = [];
 
-    // Стартовые способности
+    // 🔑 4. СТАРТОВЫЕ СПОСОБНОСТИ
     legacy.startingAbilities.forEach(abilityId => {
         if (gameState.upgrades[abilityId] !== undefined) {
             gameState.upgrades[abilityId] += 1;

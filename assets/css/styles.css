@@ -241,23 +241,6 @@ h1 {
     background: #c82333;
 }
 
-.message {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #333;
-    color: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    z-index: 100;
-}
-
-.message.show {
-    opacity: 1;
-}
-
 .game-over {
     position: fixed;
     top: 0;
@@ -2601,4 +2584,78 @@ body.panel-open {
     display: none !important;
 }
 
+/* ========================= */
+/* ПРИЛИПАЮЩАЯ ВЕРХНЯЯ ПАНЕЛЬ */
+/* ========================= */
+
+.top-sticky-panel {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    
+    transition: all 0.3s ease;
+}
+
+/* 🔑 КОМПАКТНЫЙ РЕЖИМ: когда панель прилипла */
+.top-sticky-panel.is-stuck {
+    padding: 10px 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    border-bottom: 2px solid #667eea;
+}
+
+/* Скрываем лишние статы в компактном режиме */
+.top-sticky-panel.is-stuck .stat-hideable {
+    display: none;
+}
+
+/* Уменьшаем кнопку тренировки в компактном режиме */
+.top-sticky-panel.is-stuck .train-button {
+    padding: 10px 20px;
+    font-size: 14px;
+    margin: 8px 0;
+}
+
+/* Уменьшаем ряд кнопок в компактном режиме */
+.top-sticky-panel.is-stuck .action-buttons-row {
+    gap: 8px;
+}
+
+.top-sticky-panel.is-stuck .action-btn {
+    padding: 8px 12px;
+}
+
+.top-sticky-panel.is-stuck .action-icon {
+    font-size: 18px;
+}
+
+.top-sticky-panel.is-stuck .action-label {
+    font-size: 10px;
+}
+
+/* На мобильных — адаптация */
+@media (max-width: 768px) {
+    .top-sticky-panel {
+        padding: 12px 14px;
+        margin-bottom: 12px;
+    }
+    
+    .top-sticky-panel.is-stuck {
+        padding: 8px 12px;
+    }
+    
+    .top-sticky-panel.is-stuck .train-button {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+}
 /* © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved). */

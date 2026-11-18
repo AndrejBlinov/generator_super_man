@@ -64,9 +64,21 @@ function showMainMenu() {
 
     // 2. Кнопка "Начать новое поколение"
     if (hasLeg) {
+        // --- Чистая кнопка без текста в скобках ---
         const btn = document.createElement('button');
         btn.className = 'menu-btn secondary';
+        btn.textContent = '🧬 Начать новое поколение';
+        btn.onclick = () => {
+            openPanel('genderPanel');
+            window.pendingInheritance = true;
+        };
+        btnContainer.appendChild(btn);
 
+        // --- Аккордеон с наследуемой статистикой ---
+        const accordion = document.createElement('div');
+        accordion.className = 'legacy-accordion';
+        
+        // Собираем данные из объекта legacy
         const crystalsCount = (legacy.startingCrystals || []).length;
         const crystalLevels = (legacy.startingCrystals || [])
             .map(c => c.level)
@@ -74,15 +86,54 @@ function showMainMenu() {
             .slice(0, 3)
             .join(', ');
         const moreText = crystalsCount > 3 ? ` +${crystalsCount - 3} ещё` : '';
+        const crystalText = crystalsCount > 0 ? `${crystalsCount} шт. ${crystalLevels ? `[${crystalLevels}${moreText}]` : ''}` : 'Нет';
 
-        btn.textContent = `🧬 Начать новое поколение (+${legacy.exchangeRateBonus}% курс, ${crystalsCount} крист.${crystalLevels ? ` [${crystalLevels}${moreText}]` : ''})`;
+        const housingName = HOUSING_CONFIG[legacy.inheritedHousing]?.name || 'Картонная коробка';
+        const exchangeText = legacy.exchangeRateBonus > 0 ? `+${legacy.exchangeRateBonus}%` : 'Нет';
 
-        btn.onclick = () => {
-            // 🔑 Сначала показываем выбор пола
-            openPanel('genderPanel');
-            window.pendingInheritance = true; // Флаг для обработчика выбора пола
-        };
-        btnContainer.appendChild(btn);
+        accordion.innerHTML = `
+            <button class="accordion-trigger" type="button">
+                <span>📦 Показать наследуемую статистику</span>
+                <span class="accordion-icon">▼</span>
+            </button>
+            <div class="accordion-content">
+                <div class="legacy-stats-grid">
+                    <div class="legacy-stat-item">
+                        <span class="legacy-icon">💰</span>
+                        <span class="legacy-label">Бонус к обмену</span>
+                        <span class="legacy-value">${exchangeText}</span>
+                    </div>
+                    <div class="legacy-stat-item">
+                        <span class="legacy-icon">💎</span>
+                        <span class="legacy-label">Кристаллы</span>
+                        <span class="legacy-value">${crystalText}</span>
+                    </div>
+                    <div class="legacy-stat-item">
+                        <span class="legacy-icon">🏠</span>
+                        <span class="legacy-label">Дом</span>
+                        <span class="legacy-value">${housingName}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Логика открытия/закрытия аккордеона
+        const trigger = accordion.querySelector('.accordion-trigger');
+        trigger.addEventListener('click', () => {
+            const isActive = accordion.classList.toggle('active');
+            const textSpan = trigger.querySelector('span:first-child');
+            const iconSpan = trigger.querySelector('.accordion-icon');
+            
+            if (isActive) {
+                textSpan.textContent = '📦 Скрыть наследуемую статистику';
+                iconSpan.style.transform = 'rotate(180deg)';
+            } else {
+                textSpan.textContent = '📦 Показать наследуемую статистику';
+                iconSpan.style.transform = 'rotate(0deg)';
+            }
+        });
+
+        btnContainer.appendChild(accordion);
     }
 
     // 3. Кнопка "Новая игра"
@@ -119,7 +170,6 @@ function showMainMenu() {
 // 3. ПРИВЯЗКА СОБЫТИЙ (выполняется 1 раз)
 // ==========================================
 function bindEvents() {
-
     // 🔑 ЛОГИКА МОДАЛКИ ПОДДЕРЖКИ
     const donateModal = document.getElementById('donateModal');
     const donateModalClose = document.getElementById('donateModalClose');
@@ -142,62 +192,52 @@ function bindEvents() {
     if (donateModalClose) donateModalClose.addEventListener('click', closeDonateModal);
     if (donateModalBackdrop) donateModalBackdrop.addEventListener('click', closeDonateModal);
 
-    // Закрытие по Escape
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && donateModal.classList.contains('is-open')) {
             closeDonateModal();
         }
     });
 
-    // 🔑 ОБРАБОТЧИК КНОПКИ "СООБЩИТЬ О БАГЕ"
-    // document.getElementById('bugReportBtn').addEventListener('click', () => {
-    //     openPanel('bugReportPanel');
-    // });
-
-    // 🔑 Обработчик выбора пола
+    // 🔑 ОБРАБОТЧИК ВЫБОРА ПОЛА (УНИВЕРСАЛЬНЫЙ)
     const genderContainer = document.getElementById('genderOptions');
     if (genderContainer) {
         genderContainer.addEventListener('click', (e) => {
             const card = e.target.closest('.gender-card');
             if (!card) return;
 
-            const gender = card.dataset.gender;
+            // Защита от двойного клика
+            if (!window.pendingInheritance && !window.pendingNewGame) return;
 
-            // Визуально выделяем выбранную карточку
+            const gender = card.dataset.gender;
             document.querySelectorAll('.gender-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
 
-            // Запоминаем выбор
             gameState.gender = gender;
+            closePanel(); // Закрываем панель пола
 
-            // Закрываем панель пола
-            closePanel();
-
-            // Если было наследие — применяем его
             if (window.pendingInheritance) {
-                import('./inheritance.js').then(module => {
-                    module.startInheritedGame(gameState.difficulty || 'medium');
-                });
-            } else {
-                // Иначе показываем выбор сложности
+                window.pendingInheritance = false;
+                // 🔑 После выбора пола открываем выбор сложности
+                window.pendingDifficultyAfterInheritance = true;
+                renderDifficultyPanel();
+                openPanel('difficultyPanel');
+            } else if (window.pendingNewGame) {
+                window.pendingNewGame = false;
+                // Для обычной новой игры тоже открываем выбор сложности
                 renderDifficultyPanel();
                 openPanel('difficultyPanel');
             }
         });
     }
 
-    // 🔑 ОБРАБОТЧИК ОТПРАВКИ ФОРМЫ
+    // 🔑 ОБРАБОТЧИК ОТПРАВКИ ФОРМЫ БАГА (без изменений)
     document.getElementById('bugForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-
         const submitBtn = document.getElementById('submitBugBtn');
         const originalText = submitBtn.textContent;
-
-        // Блокируем кнопку на время отправки
         submitBtn.disabled = true;
         submitBtn.textContent = '⏳ Отправка...';
 
-        // Собираем данные
         const formData = {
             name: document.getElementById('bugName').value.trim() || 'Аноним',
             email: document.getElementById('bugEmail').value.trim() || 'Не указан',
@@ -214,54 +254,30 @@ function bindEvents() {
         };
 
         try {
-            // 🔑 1. РЕАЛЬНАЯ ОТПРАВКА НА PHP СКРИПТ
             const response = await fetch('./api/submit-bug.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify(formData)
             });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ошибка! Статус: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`HTTP ошибка! Статус: ${response.status}`);
             const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.message || 'Ошибка на стороне сервера');
-            }
-
-            // 🔑 2. ЛОКАЛЬНАЯ ЗАГЛУШКА (дубликат для надежности или тестов без сервера)
-            console.log('📦 Данные бага успешно отправлены на сервер:', formData);
-            const savedBugs = JSON.parse(localStorage.getItem('mock_bug_reports') || '[]');
-            savedBugs.push(formData);
-            localStorage.setItem('mock_bug_reports', JSON.stringify(savedBugs));
+            if (!result.success) throw new Error(result.message || 'Ошибка на стороне сервера');
 
             showMessage('✅ Спасибо! Отчет о баге успешно отправлен.');
             document.getElementById('bugForm').reset();
             closePanel();
-
         } catch (error) {
-            console.error('❌ Ошибка отправки на сервер:', error);
-
-            // 🔑 Фоллбек: если PHP-сервер недоступен (например, локальный запуск без OpenServer), 
-            // мы все равно сохраняем отчет локально, чтобы данные не потерялись.
-            const savedBugs = JSON.parse(localStorage.getItem('mock_bug_reports') || '[]');
-            savedBugs.push(formData);
-            localStorage.setItem('mock_bug_reports', JSON.stringify(savedBugs));
-
+            console.error('❌ Ошибка отправки:', error);
             showMessage('⚠️ Сервер недоступен, но отчет сохранен локально.');
             document.getElementById('bugForm').reset();
             closePanel();
-
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
         }
     });
 
+    // 🔑 ОБРАБОТЧИК ТРЕНИРОВКИ
     document.getElementById('trainBtn').addEventListener('click', (event) => {
         if (gameState.isGameOver) return;
         if (!canTrain()) {
@@ -281,14 +297,8 @@ function bindEvents() {
         let isDoubleClick = false;
         let isCrit = false;
 
-        if (Math.random() < gameState.doubleClickChance) {
-            earned *= 2;
-            isDoubleClick = true;
-        }
-        if (Math.random() < gameState.critChance) {
-            earned *= gameState.critMultiplier;
-            isCrit = true;
-        }
+        if (Math.random() < gameState.doubleClickChance) { earned *= 2; isDoubleClick = true; }
+        if (Math.random() < gameState.critChance) { earned *= gameState.critMultiplier; isCrit = true; }
 
         if (isCrit || isDoubleClick) {
             let popupText = isDoubleClick && isCrit ? `ДВОЙНОЙ + КРИТ! +${Math.round(earned)}` :
@@ -361,22 +371,17 @@ function bindEvents() {
         if (housingBtn && !housingBtn.disabled) {
             const housingId = housingBtn.dataset.housing;
             const houseConfig = HOUSING_CONFIG[housingId];
-            
+
             if (gameState.money >= houseConfig.cost) {
                 gameState.money -= houseConfig.cost;
-                gameState.housing = housingId; // 🔑 Сначала обновляем состояние
+                gameState.housing = housingId;
                 showMessage(`🏠 Вы переехали в: ${houseConfig.name}!`);
-                
-                // Ограничиваем комфорт, если он выше нового максимума
+
                 if (gameState.needs.comfort > houseConfig.maxComfort) {
                     gameState.needs.comfort = houseConfig.maxComfort;
                 }
-                
-                // 🔑 ОБЯЗАТЕЛЬНО: Обновляем информационный блок ПОСЛЕ изменения состояния
-                if (typeof updateHousingInfo === 'function') {
-                    updateHousingInfo();
-                }
-                
+
+                if (typeof updateHousingInfo === 'function') updateHousingInfo();
                 renderNeeds();
                 renderUpgrades();
                 updateUI();
@@ -433,27 +438,23 @@ function bindEvents() {
     });
 
     document.getElementById('menuBtn').addEventListener('click', () => {
-        saveGame();          // 1. Сохраняем текущий прогресс
-        stopGameLoop();      // 2. Останавливаем игровой цикл (пауза)
-        showMainMenu();      // 3. Возвращаемся на главный экран
+        saveGame();
+        stopGameLoop();
+        showMainMenu();
     });
 
     document.getElementById('resetBtn').addEventListener('click', () => {
-        if (confirm("Вы уверены? Весь прогресс будет потерян, а дата сброшена к 2026-01-01!")) {
+        if (confirm("Вы уверены? Весь прогресс будет потерян!")) {
             resetAll();
             window.location.replace(window.location.href);
         }
     });
 
-    // document.getElementById('inheritBtn').addEventListener('click', () => {
-    //     showInheritanceModal(false);
-    // });
-
     document.getElementById('helpButton').addEventListener('click', () => {
         openPanel('helpPanel');
     });
 
-    // 🔑 НОВЫЙ ОБРАБОТЧИК: Выбор сложности
+    // 🔑 ОБРАБОТЧИК ВЫБОРА СЛОЖНОСТИ (УНИВЕРСАЛЬНЫЙ)
     const diffContainer = document.getElementById('difficultyOptions');
     if (diffContainer) {
         diffContainer.addEventListener('click', (e) => {
@@ -461,19 +462,6 @@ function bindEvents() {
             if (!btn) return;
 
             const difficulty = btn.dataset.difficulty;
-
-            // 🔑 СОХРАНЯЕМ ПОЛ ПЕРЕД СБРОСОМ
-            const savedGender = gameState.gender || 'male';
-
-            // Сбрасываем активную игру с выбранной сложностью
-            resetActiveGame(difficulty);
-
-            // 🔑 ВОССТАНАВЛИВАЕМ ПОЛ
-            gameState.gender = savedGender;
-            console.log('✅ [main.js] Пол восстановлен после сброса:', savedGender);
-
-            saveGame();
-
             closePanel();
 
             const menu = document.getElementById('mainMenu');
@@ -481,9 +469,54 @@ function bindEvents() {
             menu.style.display = 'none';
             app.style.display = '';
 
-            startGameEngine();
+            if (window.pendingDifficultyAfterInheritance) {
+                // 🔑 ЗАПУСК С НАСЛЕДИЕМ И ВЫБРАННОЙ СЛОЖНОСТЬЮ
+                window.pendingDifficultyAfterInheritance = false;
+
+                import('./inheritance.js').then(module => {
+                    return module.startInheritedGame(difficulty); // Передаем именно выбранную сложность!
+                }).then(() => {
+                    startGameEngine();
+                    console.log(`✅ Игра с наследием запущена на сложности: ${difficulty}`);
+                }).catch(err => {
+                    console.error('❌ Ошибка запуска наследия:', err);
+                });
+
+            } else {
+                // 🔑 ОБЫЧНЫЙ ЗАПУСК НОВОЙ ИГРЫ
+                resetActiveGame(difficulty);
+                console.log(`✅ Новая игра запущена на сложности: ${difficulty}`);
+                saveGame();
+                startGameEngine();
+            }
         });
     }
+
+    // 🔑 Эффект "прилипания" верхней панели
+    const stickyPanel = document.querySelector('.top-sticky-panel');
+    if (stickyPanel) {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) {
+                        stickyPanel.classList.add('is-stuck');
+                    } else {
+                        stickyPanel.classList.remove('is-stuck');
+                    }
+                });
+            },
+            { threshold: [1], rootMargin: '-1px 0px 0px 0px' }
+        );
+        
+        const anchor = document.createElement('div');
+        anchor.style.position = 'absolute';
+        anchor.style.top = '-1px';
+        anchor.style.height = '1px';
+        anchor.style.width = '100%';
+        stickyPanel.parentElement.insertBefore(anchor, stickyPanel);
+        observer.observe(anchor);
+    }
+
 
     setOnPanelOpenCallback((panelId) => {
         if (panelId === 'shopPanel') renderUpgrades();

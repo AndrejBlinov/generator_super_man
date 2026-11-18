@@ -146,6 +146,7 @@ export const DIFFICULTY_CONFIG = {
         name: "Просто",
         icon: "🌱",
         startAge: 20,
+        startMoney: 500,
         diseaseImmunityDays: 180, // 6 месяцев = 180 дней
         description: "Начинаете с 20 лет. Первые полгода защищены от болезней.",
         color: "#48bb78"
@@ -155,6 +156,7 @@ export const DIFFICULTY_CONFIG = {
         name: "Средне",
         icon: "⚖️",
         startAge: 30,
+        startMoney: 100,
         diseaseImmunityDays: 30, // 1 месяц = 30 дней
         description: "Начинаете с 30 лет. Первый месяц защищены от болезней.",
         color: "#ed8936"
@@ -164,6 +166,7 @@ export const DIFFICULTY_CONFIG = {
         name: "Сложно",
         icon: "💀",
         startAge: 40,
+        startMoney: 0,
         diseaseImmunityDays: 0, // Нет защиты
         description: "Начинаете с 40 лет. Болезни атакуют с самого начала.",
         color: "#e53e3e"
