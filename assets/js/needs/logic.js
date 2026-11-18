@@ -58,10 +58,18 @@ export function applyAutoSpend(needId) {
 
         if (restoresToApply > 0) {
             gameState.money -= restoresToApply * config.restoreCost;
-            gameState.needs[needId] = Math.min(
-                config.max,
-                gameState.needs[needId] + restoresToApply * config.restoreAmount
-            );
+            
+            // 🔑 ИСПРАВЛЕНИЕ: Ограничиваем комфорт лимитом жилья, а не config.max (100)
+            let newValue = gameState.needs[needId] + restoresToApply * config.restoreAmount;
+            
+            if (needId === 'comfort') {
+                const currentHousing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
+                newValue = Math.min(currentHousing.maxComfort, newValue);
+            } else {
+                newValue = Math.min(config.max, newValue);
+            }
+            
+            gameState.needs[needId] = newValue;
         }
     }
 }

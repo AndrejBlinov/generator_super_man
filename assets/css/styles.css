@@ -19,7 +19,8 @@ body {
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     width: 100%;
-    max-width: 600px; /* По умолчанию — мобильная версия */
+    max-width: 600px;
+    /* По умолчанию — мобильная версия */
     padding: 30px;
     position: relative;
     margin: 0 auto;
@@ -296,6 +297,7 @@ h1 {
         transform: translateY(0);
         opacity: 1;
     }
+
     100% {
         transform: translateY(-50px);
         opacity: 0;
@@ -792,8 +794,15 @@ body.panel-open {
 }
 
 @keyframes rain {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
 }
 
 /* ========================= */
@@ -806,9 +815,19 @@ body.panel-open {
 }
 
 @keyframes hungryShake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-2px); }
-    75% { transform: translateX(2px); }
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-2px);
+    }
+
+    75% {
+        transform: translateX(2px);
+    }
 }
 
 /* Голодает */
@@ -844,6 +863,7 @@ body.panel-open {
         transform: scale(0.5);
         opacity: 1;
     }
+
     100% {
         transform: scale(1.5);
         opacity: 0;
@@ -861,9 +881,19 @@ body.panel-open {
 }
 
 @keyframes sickShake {
-    0%, 100% { transform: translateX(0) rotate(0deg); }
-    25% { transform: translateX(-1px) rotate(-1deg); }
-    75% { transform: translateX(1px) rotate(1deg); }
+
+    0%,
+    100% {
+        transform: translateX(0) rotate(0deg);
+    }
+
+    25% {
+        transform: translateX(-1px) rotate(-1deg);
+    }
+
+    75% {
+        transform: translateX(1px) rotate(1deg);
+    }
 }
 
 /* Эффекты болезней */
@@ -877,8 +907,15 @@ body.panel-open {
 }
 
 @keyframes blisterPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
 }
 
 .pixel-human.effect-greenSkin .pixel-head,
@@ -896,8 +933,18 @@ body.panel-open {
 }
 
 @keyframes vomitAnim {
-    0%, 90%, 100% { opacity: 0; transform: translateY(0); }
-    50% { opacity: 1; transform: translateY(10px); }
+
+    0%,
+    90%,
+    100% {
+        opacity: 0;
+        transform: translateY(0);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateY(10px);
+    }
 }
 
 /* В больнице */
@@ -921,8 +968,15 @@ body.panel-open {
 }
 
 @keyframes comaBreath {
-    0%, 100% { transform: rotate(90deg) translateY(30px) scale(1); }
-    50% { transform: rotate(90deg) translateY(30px) scale(1.02); }
+
+    0%,
+    100% {
+        transform: rotate(90deg) translateY(30px) scale(1);
+    }
+
+    50% {
+        transform: rotate(90deg) translateY(30px) scale(1.02);
+    }
 }
 
 .pixel-human.in-coma::after {
@@ -935,8 +989,17 @@ body.panel-open {
 }
 
 @keyframes zzz {
-    0%, 100% { opacity: 0; transform: translateY(0); }
-    50% { opacity: 1; transform: translateY(-10px); }
+
+    0%,
+    100% {
+        opacity: 0;
+        transform: translateY(0);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateY(-10px);
+    }
 }
 
 /* Эффекты здоровья (контейнер) */
@@ -1085,12 +1148,12 @@ body.panel-open {
 
 /* 🏰 Роскошный замок (80-100%) */
 .character-stage.env-luxury {
-    background: 
+    background:
         radial-gradient(circle at 20% 30%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
         radial-gradient(circle at 80% 70%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
         linear-gradient(180deg, #fff9e6 0%, #ffeaa7 50%, #ffd700 100%);
     border-color: #ffd700;
-    box-shadow: 
+    box-shadow:
         0 0 30px rgba(255, 215, 0, 0.4),
         inset 0 0 20px rgba(255, 215, 0, 0.1);
 }
@@ -1102,14 +1165,14 @@ body.panel-open {
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: 
+    background-image:
         repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255, 215, 0, 0.08) 20px, rgba(255, 215, 0, 0.08) 21px);
     pointer-events: none;
 }
 
 /* 🏠 Обычный дом (50-80%) */
 .character-stage.env-normal {
-    background: 
+    background:
         linear-gradient(180deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%);
     border-color: #64b5f6;
     box-shadow: 0 4px 12px rgba(100, 181, 246, 0.2);
@@ -1122,7 +1185,7 @@ body.panel-open {
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: 
+    background-image:
         linear-gradient(90deg, transparent 49%, rgba(255, 255, 255, 0.3) 49%, rgba(255, 255, 255, 0.3) 51%, transparent 51%),
         linear-gradient(0deg, transparent 49%, rgba(255, 255, 255, 0.3) 49%, rgba(255, 255, 255, 0.3) 51%, transparent 51%);
     background-size: 40px 40px;
@@ -1132,7 +1195,7 @@ body.panel-open {
 
 /* 🏚️ Старый дом (30-50%) */
 .character-stage.env-poor {
-    background: 
+    background:
         linear-gradient(180deg, #cfd8dc 0%, #90a4ae 50%, #607d8b 100%);
     border-color: #78909c;
     box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.2);
@@ -1145,7 +1208,7 @@ body.panel-open {
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: 
+    background-image:
         repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(0, 0, 0, 0.1) 30px, rgba(0, 0, 0, 0.1) 31px),
         repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(0, 0, 0, 0.08) 50px, rgba(0, 0, 0, 0.08) 51px);
     pointer-events: none;
@@ -1160,7 +1223,7 @@ body.panel-open {
     height: 2px;
     background: rgba(0, 0, 0, 0.3);
     transform: rotate(-15deg);
-    box-shadow: 
+    box-shadow:
         20px 15px 0 rgba(0, 0, 0, 0.2),
         -10px 30px 0 rgba(0, 0, 0, 0.25);
     pointer-events: none;
@@ -1168,7 +1231,7 @@ body.panel-open {
 
 /* 🌧️ Улица / бездомный (<30%) */
 .character-stage.env-homeless {
-    background: 
+    background:
         linear-gradient(180deg, #263238 0%, #37474f 50%, #455a64 100%);
     border-color: #546e7a;
     box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
@@ -1181,14 +1244,12 @@ body.panel-open {
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: 
-        repeating-linear-gradient(
-            100deg,
+    background-image:
+        repeating-linear-gradient(100deg,
             transparent,
             transparent 8px,
             rgba(150, 200, 255, 0.15) 8px,
-            rgba(150, 200, 255, 0.15) 9px
-        );
+            rgba(150, 200, 255, 0.15) 9px);
     animation: rainFall 0.8s linear infinite;
     pointer-events: none;
 }
@@ -1197,6 +1258,7 @@ body.panel-open {
     0% {
         background-position: 0 0;
     }
+
     100% {
         background-position: 20px 40px;
     }
@@ -1350,7 +1412,8 @@ body.panel-open {
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     transition: transform 0.2s, box-shadow 0.2s;
-    pointer-events: auto; /* Явно разрешаем клики */
+    pointer-events: auto;
+    /* Явно разрешаем клики */
 }
 
 .help-button:hover {
@@ -1491,8 +1554,15 @@ body.panel-open {
 }
 
 @keyframes diseasePulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
 }
 
 .disease-timer-text {
@@ -1539,8 +1609,15 @@ body.panel-open {
 }
 
 @keyframes plasterShake {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(5deg); }
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(5deg);
+    }
 }
 
 /* Грипп — зелёная кожа + пар от тела */
@@ -1559,8 +1636,17 @@ body.panel-open {
 }
 
 @keyframes cough {
-    0%, 100% { opacity: 0; transform: translateX(0); }
-    50% { opacity: 1; transform: translateX(-10px); }
+
+    0%,
+    100% {
+        opacity: 0;
+        transform: translateX(0);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateX(-10px);
+    }
 }
 
 .pixel-human.disease-flu {
@@ -1568,9 +1654,19 @@ body.panel-open {
 }
 
 @keyframes fluShiver {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-1px); }
-    75% { transform: translateX(1px); }
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-1px);
+    }
+
+    75% {
+        transform: translateX(1px);
+    }
 }
 
 /* Инсульт — лежит, парализован */
@@ -1591,13 +1687,25 @@ body.panel-open {
 }
 
 @keyframes starsRotate {
-    0% { transform: translateX(-50%) rotate(0deg); }
-    100% { transform: translateX(-50%) rotate(360deg); }
+    0% {
+        transform: translateX(-50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translateX(-50%) rotate(360deg);
+    }
 }
 
 @keyframes strokeBreath {
-    0%, 100% { transform: rotate(90deg) translateY(30px) scale(1); }
-    50% { transform: rotate(90deg) translateY(30px) scale(0.98); }
+
+    0%,
+    100% {
+        transform: rotate(90deg) translateY(30px) scale(1);
+    }
+
+    50% {
+        transform: rotate(90deg) translateY(30px) scale(0.98);
+    }
 }
 
 /* ========================= */
@@ -1681,8 +1789,15 @@ body.panel-open {
 }
 
 @keyframes diseasePulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
 }
 
 .disease-timer-text {
@@ -1729,8 +1844,15 @@ body.panel-open {
 }
 
 @keyframes plasterShake {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(5deg); }
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(5deg);
+    }
 }
 
 /* Грипп */
@@ -1749,8 +1871,17 @@ body.panel-open {
 }
 
 @keyframes cough {
-    0%, 100% { opacity: 0; transform: translateX(0); }
-    50% { opacity: 1; transform: translateX(-10px); }
+
+    0%,
+    100% {
+        opacity: 0;
+        transform: translateX(0);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateX(-10px);
+    }
 }
 
 .pixel-human.disease-flu {
@@ -1758,9 +1889,19 @@ body.panel-open {
 }
 
 @keyframes fluShiver {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-1px); }
-    75% { transform: translateX(1px); }
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-1px);
+    }
+
+    75% {
+        transform: translateX(1px);
+    }
 }
 
 /* Инсульт */
@@ -1781,13 +1922,25 @@ body.panel-open {
 }
 
 @keyframes starsRotate {
-    0% { transform: translateX(-50%) rotate(0deg); }
-    100% { transform: translateX(-50%) rotate(360deg); }
+    0% {
+        transform: translateX(-50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translateX(-50%) rotate(360deg);
+    }
 }
 
 @keyframes strokeBreath {
-    0%, 100% { transform: rotate(90deg) translateY(30px) scale(1); }
-    50% { transform: rotate(90deg) translateY(30px) scale(0.98); }
+
+    0%,
+    100% {
+        transform: rotate(90deg) translateY(30px) scale(1);
+    }
+
+    50% {
+        transform: rotate(90deg) translateY(30px) scale(0.98);
+    }
 }
 
 .inherit-btn {
@@ -1886,16 +2039,16 @@ body.panel-open {
         gap: 8px;
         margin: 16px 0;
     }
-    
+
     .action-btn {
         padding: 12px 6px;
         border-radius: 12px;
     }
-    
+
     .action-icon {
         font-size: 24px;
     }
-    
+
     .action-label {
         font-size: 10px;
     }
@@ -1905,15 +2058,15 @@ body.panel-open {
     .action-buttons-row {
         gap: 6px;
     }
-    
+
     .action-btn {
         padding: 10px 4px;
     }
-    
+
     .action-icon {
         font-size: 22px;
     }
-    
+
     .action-label {
         font-size: 9px;
     }
@@ -1973,7 +2126,7 @@ body.panel-open {
     .auto-exchange-toggle {
         gap: 6px;
     }
-    
+
     .auto-spend-toggle-btn {
         min-width: 100px;
         padding: 8px 6px;
@@ -2033,16 +2186,16 @@ body.panel-open {
     .stats {
         padding: 12px;
     }
-    
+
     .stat-item {
         padding: 6px 0;
         gap: 8px;
     }
-    
+
     .stat-label {
         font-size: 12px;
     }
-    
+
     .stat-value {
         font-size: 13px;
     }
@@ -2128,10 +2281,13 @@ body.panel-open {
 }
 
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 1;
         transform: scale(1);
     }
+
     50% {
         opacity: 0.7;
         transform: scale(1.05);
@@ -2147,12 +2303,12 @@ body.panel-open {
     .needs-compact {
         gap: 10px;
     }
-    
+
     .need-icon-wrapper {
         width: 50px;
         height: 50px;
     }
-    
+
     .need-icon {
         font-size: 22px;
     }
@@ -2165,25 +2321,25 @@ body.panel-open {
         margin-top: 12px;
         padding-top: 12px;
     }
-    
+
     .need-compact-item {
         gap: 6px;
     }
-    
+
     .need-icon-wrapper {
         width: 44px;
         height: 44px;
         border-radius: 10px;
     }
-    
+
     .need-icon {
         font-size: 20px;
     }
-    
+
     .need-value-compact {
         font-size: 10px;
     }
-    
+
     .need-restore-btn-compact {
         padding: 5px 8px;
         font-size: 10px;
@@ -2196,21 +2352,21 @@ body.panel-open {
     .needs-compact {
         gap: 6px;
     }
-    
+
     .need-icon-wrapper {
         width: 40px;
         height: 40px;
         border-radius: 8px;
     }
-    
+
     .need-icon {
         font-size: 18px;
     }
-    
+
     .need-value-compact {
         font-size: 9px;
     }
-    
+
     .need-restore-btn-compact {
         padding: 4px 6px;
         font-size: 9px;
@@ -2224,25 +2380,25 @@ body.panel-open {
         margin-top: 10px;
         padding-top: 10px;
     }
-    
+
     .need-compact-item {
         gap: 4px;
     }
-    
+
     .need-icon-wrapper {
         width: 36px;
         height: 36px;
         border-radius: 6px;
     }
-    
+
     .need-icon {
         font-size: 16px;
     }
-    
+
     .need-value-compact {
         font-size: 8px;
     }
-    
+
     .need-restore-btn-compact {
         padding: 3px 5px;
         font-size: 8px;
@@ -2275,7 +2431,8 @@ body.panel-open {
     .control-btn {
         padding: 10px 8px;
         font-size: 13px;
-        min-width: 0; /* 🔑 ключ: разрешает кнопке сжиматься */
+        min-width: 0;
+        /* 🔑 ключ: разрешает кнопке сжиматься */
         overflow: hidden;
     }
 }
@@ -2368,7 +2525,8 @@ body.panel-open {
     }
 
     .control-btn {
-        flex: 1 1 calc(50% - 6px); /* две кнопки в строке */
+        flex: 1 1 calc(50% - 6px);
+        /* две кнопки в строке */
         font-size: 11px;
         padding: 9px 6px;
     }
@@ -2376,8 +2534,56 @@ body.panel-open {
     /* «В меню» оставляем на всю ширину — это главная кнопка */
     .control-btn.menu-btn {
         flex: 1 1 100%;
-        order: -1; /* поднимаем наверх, чтобы была видна первой */
+        order: -1;
+        /* поднимаем наверх, чтобы была видна первой */
     }
+}
+
+/* Компактный блок информации о жилье */
+.housing-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    margin: 12px 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #495057;
+    width: 100%;
+    max-width: 400px;
+    flex-wrap: wrap;
+}
+
+.housing-icon {
+    font-size: 16px;
+}
+
+.housing-name {
+    font-weight: 600;
+    color: #212529;
+}
+
+.housing-separator {
+    color: #adb5bd;
+    font-weight: 300;
+}
+
+.housing-max-comfort {
+    font-size: 11px;
+}
+
+.housing-max-comfort strong {
+    color: #667eea;
+    font-weight: 700;
+}
+
+.housing-bonus {
+    font-size: 11px;
+    color: #28a745;
+    font-weight: 500;
 }
 
 /* © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved). */

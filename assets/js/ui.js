@@ -209,42 +209,56 @@ export function renderUpgrades() {
     housingHeader.innerHTML = `<h3>🏠 Недвижимость</h3><p>Определяет максимальный уровень комфорта и дает бонусы</p>`;
     container.appendChild(housingHeader);
 
-    Object.values(HOUSING_CONFIG).forEach(house => {
-        // Скрываем жилье, которое уже ниже текущего уровня
-        const housingLevels = Object.keys(HOUSING_CONFIG);
-        const currentIndex = housingLevels.indexOf(gameState.housing);
-        const houseIndex = housingLevels.indexOf(house.id);
-        
-        if (houseIndex < currentIndex) return; // Не показываем прошлые уровни
+    const housingLevels = Object.keys(HOUSING_CONFIG);
+    const currentIndex = housingLevels.indexOf(gameState.housing);
 
+    Object.values(HOUSING_CONFIG).forEach((house, index) => {
         const isCurrent = gameState.housing === house.id;
-        const canAfford = gameState.money >= house.cost && !isCurrent;
-
+        const isPast = index < currentIndex; // Уже пройденные уровни
+        const isFuture = index > currentIndex; // Ещё не купленные
+        
         const item = document.createElement('div');
         item.className = 'upgrade-item item-item';
         
-        let btnText = `Купить за ${house.cost.toLocaleString()} 💰`;
-        let statusText = '';
-        
+        let btnText = '';
+        let statusHtml = '';
+        let isDisabled = false;
+
         if (isCurrent) {
-            btnText = 'Текущее жилье';
-            statusText = '<span style="color: #28a745; font-weight: bold;">✅ Активно</span>';
-        } else {
+            btnText = '✅ Текущее';
             const decayText = house.decayMult < 1.0 ? `📉 Комфорт падает на ${Math.round((1-house.decayMult)*100)}% медленнее` : '⚠️ Комфорт падает быстрее';
-            const incomeText = house.incomeMult > 1.0 ? `📈 +${Math.round((house.incomeMult-1)*100)}% к пассивному доходу` : 'Без бонуса к доходу';
-            
-            statusText = `<div style="font-size: 11px; color: #666; margin-top: 4px;">
+            const incomeText = house.incomeMult > 1.0 ? `📈 +${Math.round((house.incomeMult-1)*100)}% к доходу` : '';
+            statusHtml = `<div style="font-size: 11px; color: #28a745; margin-top: 4px;">
                 Макс. комфорт: <strong>${house.maxComfort}</strong><br>
                 ${decayText}<br>
                 ${incomeText}
             </div>`;
+            isDisabled = true;
+        } else if (isPast) {
+            btnText = '✅ Куплено';
+            statusHtml = `<div style="font-size: 11px; color: #6c757d; margin-top: 4px;">
+                Макс. комфорт: ${house.maxComfort}
+            </div>`;
+            isDisabled = true;
+        } else {
+            const canAfford = gameState.money >= house.cost;
+            const decayText = house.decayMult < 1.0 ? `📉 Комфорт падает на ${Math.round((1-house.decayMult)*100)}% медленнее` : '⚠️ Комфорт падает быстрее';
+            const incomeText = house.incomeMult > 1.0 ? `📈 +${Math.round((house.incomeMult-1)*100)}% к доходу` : '';
+            
+            btnText = `Купить за ${house.cost.toLocaleString()} 💰`;
+            statusHtml = `<div style="font-size: 11px; color: #666; margin-top: 4px;">
+                Макс. комфорт: <strong>${house.maxComfort}</strong><br>
+                ${decayText}<br>
+                ${incomeText}
+            </div>`;
+            isDisabled = !canAfford;
         }
 
         item.innerHTML = `
             <div class="upgrade-info">
-                <div class="upgrade-name">${house.name} ${statusText}</div>
+                <div class="upgrade-name">${house.name} ${statusHtml}</div>
             </div>
-            <button class="upgrade-btn item-btn" data-housing="${house.id}" ${!canAfford ? 'disabled' : ''}>
+            <button class="upgrade-btn item-btn" data-housing="${house.id}" ${isDisabled ? 'disabled' : ''}>
                 ${btnText}
             </button>
         `;

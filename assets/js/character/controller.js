@@ -1,6 +1,7 @@
 import { gameState } from '../state.js';
 import { renderCharacter, initCanvasRenderer, updateCharacterState } from './renderer.js';
 import { applyDiseaseEffects, clearDiseaseEffects } from './effects.js';
+import { HOUSING_CONFIG } from '../config.js';
 
 export function initCharacter() {
     const container = document.getElementById('characterStage');
@@ -37,4 +38,33 @@ export function updateCharacterStateFromGame() {
         isCritical: (gameState.needs?.health || 100) < 20,
         ageInYears: gameState.ageInYears || 30
     });
+    updateHousingInfo();
+}
+
+function updateHousingInfo() {
+    const housingNameEl = document.getElementById('housingName');
+    const housingMaxComfortEl = document.getElementById('housingMaxComfort');
+    const housingBonusEl = document.getElementById('housingBonus');
+    const housingIconEl = document.querySelector('.housing-icon');
+    
+    if (!housingNameEl || !housingMaxComfortEl || !housingBonusEl || !housingIconEl) return;
+
+    const currentHousing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
+    
+    const housingIcons = {
+        box: '📦', shed: '🏚️', dilapidated: '🏠', old: '🏠',
+        normal: '🏡', good: '🏡', mansion: '🏰'
+    };
+    housingIconEl.textContent = housingIcons[gameState.housing] || '📦';
+    housingNameEl.textContent = currentHousing.name;
+    housingMaxComfortEl.textContent = currentHousing.maxComfort;
+    
+    if (currentHousing.incomeMult > 1.0) {
+        const bonusPercent = Math.round((currentHousing.incomeMult - 1) * 100);
+        housingBonusEl.textContent = `+${bonusPercent}% к доходу`;
+        housingBonusEl.style.color = '#28a745';
+    } else {
+        housingBonusEl.textContent = 'Без бонусов';
+        housingBonusEl.style.color = '#6c757d';
+    }
 }

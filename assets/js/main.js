@@ -347,15 +347,15 @@ function bindEvents() {
                 gameState.housing = housingId;
                 showMessage(`🏠 Вы переехали в: ${houseConfig.name}!`);
 
-                // Сразу ограничиваем комфорт, если он был выше нового максимума
-                import('./needs/index.js').then(needsModule => {
-                    if (gameState.needs.comfort > houseConfig.maxComfort) {
-                        gameState.needs.comfort = houseConfig.maxComfort;
-                    }
-                    needsModule.renderNeeds(); // Обновляем полоски
-                });
+                if (gameState.needs.comfort > houseConfig.maxComfort) {
+                    gameState.needs.comfort = houseConfig.maxComfort;
+                }
 
-                renderUpgrades(); // Перерисовываем магазин
+                // 🔑 ДОБАВЬ ЭТУ СТРОКУ:
+                updateCharacterStateFromGame();
+
+                renderNeeds();
+                renderUpgrades();
                 updateUI();
             }
             return;
