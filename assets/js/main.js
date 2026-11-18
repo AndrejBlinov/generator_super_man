@@ -47,14 +47,7 @@ function showMainMenu() {
     const hasLeg = hasLegacy();
     const isAlive = !gameState.isGameOver;
 
-    console.log('📊 [showMainMenu] Состояние:', {
-        hasActive,
-        hasLeg,
-        isAlive,
-        isGameOver: gameState.isGameOver
-    });
-
-    // 🔑 Кнопка "Продолжить" — ТОЛЬКО если есть сохранение И персонаж жив
+    // 1. Кнопка "Продолжить игру"
     if (hasActive && isAlive) {
         const btn = document.createElement('button');
         btn.className = 'menu-btn';
@@ -69,7 +62,7 @@ function showMainMenu() {
         btnContainer.appendChild(btn);
     }
 
-    // 2. Кнопка "Начать новое поколение" (если есть бонусы)
+    // 2. Кнопка "Начать новое поколение"
     if (hasLeg) {
         const btn = document.createElement('button');
         btn.className = 'menu-btn secondary';
@@ -85,20 +78,14 @@ function showMainMenu() {
         btn.textContent = `🧬 Начать новое поколение (+${legacy.exchangeRateBonus}% курс, ${crystalsCount} крист.${crystalLevels ? ` [${crystalLevels}${moreText}]` : ''})`;
 
         btn.onclick = () => {
-            // 1. Запускаем новую игру с применением бонусов
-            import('./inheritance.js').then(module => {
-                module.startInheritedGame(gameState.difficulty || 'medium');
-            });
-
-            // 2. Переключаем экраны и запускаем движок
-            menu.style.display = 'none';
-            app.style.display = '';
-            startGameEngine();
+            // 🔑 Сначала показываем выбор пола
+            openPanel('genderPanel');
+            window.pendingInheritance = true; // Флаг для обработчика выбора пола
         };
         btnContainer.appendChild(btn);
     }
 
-    // 🔑 Кнопка "Новая игра" — ВСЕГДА доступна
+    // 3. Кнопка "Новая игра"
     const newGameBtn = document.createElement('button');
     newGameBtn.className = 'menu-btn danger';
     newGameBtn.textContent = hasActive ? '🔄 Новая игра (выбрать сложность)' : '🔄 Новая игра';
@@ -110,8 +97,9 @@ function showMainMenu() {
             }
             clearActiveGame();
         }
-        renderDifficultyPanel();
-        openPanel('difficultyPanel');
+        // 🔑 Сначала показываем выбор пола
+        openPanel('genderPanel');
+        window.pendingInheritance = false;
     };
     btnContainer.appendChild(newGameBtn);
 
@@ -163,6 +151,38 @@ function bindEvents() {
     // document.getElementById('bugReportBtn').addEventListener('click', () => {
     //     openPanel('bugReportPanel');
     // });
+
+    // 🔑 Обработчик выбора пола
+    const genderContainer = document.getElementById('genderOptions');
+    if (genderContainer) {
+        genderContainer.addEventListener('click', (e) => {
+            const card = e.target.closest('.gender-card');
+            if (!card) return;
+
+            const gender = card.dataset.gender;
+
+            // Визуально выделяем выбранную карточку
+            document.querySelectorAll('.gender-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+
+            // Запоминаем выбор
+            gameState.gender = gender;
+
+            // Закрываем панель пола
+            closePanel();
+
+            // Если было наследие — применяем его
+            if (window.pendingInheritance) {
+                import('./inheritance.js').then(module => {
+                    module.startInheritedGame(gameState.difficulty || 'medium');
+                });
+            } else {
+                // Иначе показываем выбор сложности
+                renderDifficultyPanel();
+                openPanel('difficultyPanel');
+            }
+        });
+    }
 
     // 🔑 ОБРАБОТЧИК ОТПРАВКИ ФОРМЫ
     document.getElementById('bugForm').addEventListener('submit', async (e) => {

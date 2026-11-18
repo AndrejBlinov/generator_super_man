@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="assets/css/bug-button.css">
     <link rel="stylesheet" href="assets/css/donations.css">
     <link rel="stylesheet" href="assets/css/desctop_styles.css">
+    <link rel="stylesheet" href="assets/css/gender.css">
 </head>
 
 <body>
@@ -176,6 +177,29 @@
         </div>
         <div class="side-panel-content">
             <div class="difficulty-options" id="difficultyOptions"></div>
+        </div>
+    </aside>
+
+    <!-- 🔑 ПАНЕЛЬ ВЫБОРА ПОЛА -->
+    <aside class="side-panel" id="genderPanel" aria-hidden="true">
+        <div class="side-panel-header">
+            <div>
+                <h2>👤 Выберите пол персонажа</h2>
+                <p>Это повлияет на внешний вид вашего героя</p>
+            </div>
+            <button class="side-panel-close" data-panel-close>✕</button>
+        </div>
+        <div class="side-panel-content">
+            <div class="gender-options" id="genderOptions">
+                <div class="gender-card" data-gender="male">
+                    <div class="gender-icon">👨</div>
+                    <div class="gender-name">Мужской</div>
+                </div>
+                <div class="gender-card" data-gender="female">
+                    <div class="gender-icon">👩</div>
+                    <div class="gender-name">Женский</div>
+                </div>
+            </div>
         </div>
     </aside>
 
