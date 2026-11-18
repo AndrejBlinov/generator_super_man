@@ -31,7 +31,6 @@ export function startGameLoop() {
             return;
         }
 
-
         if (gameState.isGameOver) return;
 
         // 🔑 Уменьшаем счетчик иммунитета
@@ -41,6 +40,8 @@ export function startGameLoop() {
                 showMessage("⚠️ Иммунитет от болезней закончился!");
             }
         }
+
+        checkAndTriggerDailyEvent();
 
         // 1. Пассивный доход
         const passiveIncome = calculatePassiveIncome();
@@ -102,7 +103,6 @@ export function startGameLoop() {
         if (gameState.currentDayInYear >= gameState.daysInYear) {
             gameState.currentDayInYear -= gameState.daysInYear;
             gameState.ageInYears++;
-            checkAndTriggerDailyEvent();
 
             if (gameState.ageInYears >= gameState.maxAgeInYears) {
                 gameState.isGameOver = true;
