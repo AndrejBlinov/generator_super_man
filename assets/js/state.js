@@ -38,6 +38,7 @@ export const defaultGameState = {
     
     needs: getDefaultNeeds(),
     activeDiseases: [],
+    housing: 'box',
     
     diseaseImmunityTicks: 0,
     difficulty: 'medium',

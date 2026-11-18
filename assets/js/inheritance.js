@@ -1,6 +1,5 @@
-import { gameState, legacy, stats, defaultLegacy, resetActiveGame, saveGame } from './state.js';
+import { gameState, legacy, stats, defaultGameState, saveGame } from './state.js';
 import { UPGRADES_CONFIG, INHERITANCE_CONFIG } from './config.js';
-import { getDefaultNeeds } from './needs/index.js';
 import { saveLegacy, saveStats, clearActiveGame } from './storage.js';
 
 // 🔑 Расчет бонусов текущего прохождения
@@ -9,15 +8,12 @@ export function calculateInheritanceBonuses() {
     const exchangeBonusSteps = Math.floor(moneySpent / INHERITANCE_CONFIG.moneySpentPerBonus);
     const exchangeBonus = exchangeBonusSteps * INHERITANCE_CONFIG.exchangeRateBonusPerStep;
 
-    // 🔑 НОВАЯ ЛОГИКА: собираем кристаллы 5+ уровня с их уровнями наследия
     const allCrystals = [...gameState.crystals, ...gameState.crystalsInventory];
     const inheritanceCrystals = allCrystals
         .filter(c => c && typeof c.level === 'number' && c.level >= INHERITANCE_CONFIG.crystalLevelForBonus)
         .map(c => {
-            // Формула: уровень наследия = уровень кристалла - 4
-            // Кристалл 5 ур. → 1 ур., 6 ур. → 2 ур., 8 ур. → 4 ур., 9 ур. → 5 ур.
             const newLevel = c.level - 4;
-            const income = Math.pow(2, newLevel - 1); // 1, 2, 4, 8, 16...
+            const income = Math.pow(2, newLevel - 1);
             return { level: newLevel, income: income };
         });
 
@@ -32,22 +28,17 @@ export function calculateInheritanceBonuses() {
         level5AbilitiesCount
     });
 
-    return {
-        exchangeBonus,
-        inheritanceCrystals, // 🔑 Теперь массив объектов, а не просто число
-        level5AbilitiesCount,
-        moneySpent
-    };
+    return { exchangeBonus, inheritanceCrystals, level5AbilitiesCount, moneySpent };
 }
 
-// 🔑 Применение наследия
+// 🔑 Применение наследия (ПОЛНЫЙ СБРОС + БОНУСЫ)
 export function applyInheritance() {
     console.log('🧬 [applyInheritance] Начало наследования');
     
     const bonuses = calculateInheritanceBonuses();
     const currentDifficulty = gameState.difficulty || 'medium';
 
-    // 1. Обновляем статистику
+    // 1. Обновляем глобальную статистику
     stats.highestAgeReached = Math.max(stats.highestAgeReached, gameState.ageInYears);
     stats.totalDeaths += 1;
     stats.runsCompleted += 1;
@@ -56,7 +47,7 @@ export function applyInheritance() {
     const maxLvl = allCrystals.filter(c => c).reduce((max, c) => Math.max(max, c.level), 1);
     stats.highestCrystalLevel = Math.max(stats.highestCrystalLevel, maxLvl);
 
-    // 2. Применяем бонусы к наследию
+    // 2. Применяем бонусы к объекту наследия
     legacy.exchangeRateBonus += bonuses.exchangeBonus;
     
     if (!Array.isArray(legacy.startingCrystals)) {
@@ -82,26 +73,30 @@ export function applyInheritance() {
     saveLegacy(legacy);
     saveStats(stats);
 
-    // 4. Удаляем старое активное сохранение
+    // 4. 🔑 ЖЁСТКОЕ УДАЛЕНИЕ старого сохранения из localStorage
     clearActiveGame();
+    console.log('🧬 [applyInheritance] Старое активное сохранение удалено из хранилища');
 
-    // 5. Сбрасываем активную игру
-    resetActiveGame(currentDifficulty);
-
-    // 6. Применяем стартовые бонусы
-    applyStartingBonuses();
+    // 5. 🔑 ПОЛНЫЙ СБРОС gameState в памяти (Глубокая копия, чтобы не осталось старых ссылок на массивы!)
+    Object.assign(gameState, JSON.parse(JSON.stringify(defaultGameState)));
+    gameState.difficulty = currentDifficulty;
+    gameState.isGameOver = false;
     
-    // 7. 🔑 КРИТИЧНО: Сохраняем новое состояние с бонусами
+    console.log('🧬 [applyInheritance] gameState полностью сброшен до дефолтного');
+
+    // 6. Применяем стартовые бонусы к ЧИСТОМУ gameState
+    applyStartingBonuses();
+
+    // 7. Сохраняем НОВОЕ, чистое состояние с бонусами
     saveGame();
-    console.log('🧬 [applyInheritance] Новое состояние сохранено');
+    console.log('🧬 [applyInheritance] Новое состояние сохранено и готово к запуску');
 }
 
-// 🔑 Применение стартовых бонусов (кристаллы + способности)
+// 🔑 Применение стартовых бонусов
 function applyStartingBonuses() {
     console.log('🧬 [applyStartingBonuses] Применяем стартовые бонусы');
     console.log('🧬 Кристаллы для размещения:', legacy.startingCrystals);
 
-    // Размещаем кристаллы по одному
     const crystalsToPlace = [...(legacy.startingCrystals || [])];
     let placed = 0;
     
@@ -110,16 +105,10 @@ function applyStartingBonuses() {
         const emptyInv = gameState.crystalsInventory.findIndex(c => c === null);
         
         if (emptyActive !== -1) {
-            gameState.crystals[emptyActive] = { 
-                level: crystal.level, 
-                income: crystal.income 
-            };
+            gameState.crystals[emptyActive] = { level: crystal.level, income: crystal.income };
             placed++;
         } else if (emptyInv !== -1) {
-            gameState.crystalsInventory[emptyInv] = { 
-                level: crystal.level, 
-                income: crystal.income 
-            };
+            gameState.crystalsInventory[emptyInv] = { level: crystal.level, income: crystal.income };
             placed++;
         } else {
             console.warn('⚠️ Нет свободных слотов для кристалла', crystal);
@@ -128,8 +117,6 @@ function applyStartingBonuses() {
     }
     
     console.log(`🧬 Размещено ${placed}/${crystalsToPlace.length} кристаллов`);
-    console.log('🧬 Активные слоты:', gameState.crystals);
-    console.log('🧬 Инвентарь:', gameState.crystalsInventory);
     
     // Очищаем список после применения
     legacy.startingCrystals = [];
@@ -145,7 +132,7 @@ function applyStartingBonuses() {
     saveLegacy(legacy);
 }
 
-// 🔑 Текст превью наследия
+// 🔑 Текст превью наследия (ОБЯЗАТЕЛЬНО НУЖЕН ДЛЯ UI)
 export function getInheritancePreviewText() {
     const bonuses = calculateInheritanceBonuses();
     let text = `<p>Вы собираетесь начать новое поколение. Текущий прогресс будет сброшен, но вы получите:</p><ul>`;
@@ -156,7 +143,6 @@ export function getInheritancePreviewText() {
         text += `<li>💱 Потрачено ${bonuses.moneySpent} 💰 (нужно ${INHERITANCE_CONFIG.moneySpentPerBonus} для бонуса)</li>`;
     }
 
-    // 🔑 Показываем конкретные кристаллы
     if (bonuses.inheritanceCrystals.length > 0) {
         const crystalList = bonuses.inheritanceCrystals
             .map(c => `кристалл ${c.level} ур. (+${c.income} ОЭ/день)`)

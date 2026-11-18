@@ -44,6 +44,65 @@ export const UPGRADES_CONFIG = {
     }
 };
 
+export const HOUSING_CONFIG = {
+    box: {
+        id: 'box',
+        name: 'Картонная коробка',
+        cost: 0,
+        maxComfort: 20,
+        decayMult: 1.5,   // Комфорт падает в 1.5 раза быстрее
+        incomeMult: 1.0   // Бонус к доходу 0%
+    },
+    shed: {
+        id: 'shed',
+        name: 'Сарай на окраине',
+        cost: 1000,
+        maxComfort: 30,
+        decayMult: 1.3,
+        incomeMult: 1.05  // +5% к доходу
+    },
+    dilapidated: {
+        id: 'dilapidated',
+        name: 'Полуразвалившийся дом',
+        cost: 3000,
+        maxComfort: 40,
+        decayMult: 1.1,
+        incomeMult: 1.1   // +10% к доходу
+    },
+    old: {
+        id: 'old',
+        name: 'Старый дом',
+        cost: 5000,
+        maxComfort: 50,
+        decayMult: 1.0,   // Нормальная скорость падения
+        incomeMult: 1.2   // +20% к доходу
+    },
+    normal: {
+        id: 'normal',
+        name: 'Обычный дом',
+        cost: 7000,
+        maxComfort: 70,
+        decayMult: 0.8,   // Падает на 20% медленнее
+        incomeMult: 1.3   // +30% к доходу
+    },
+    good: {
+        id: 'good',
+        name: 'Хороший дом',
+        cost: 10000,
+        maxComfort: 90,
+        decayMult: 0.6,   // Падает на 40% медленнее
+        incomeMult: 1.5   // +50% к доходу
+    },
+    mansion: {
+        id: 'mansion',
+        name: 'Особняк',
+        cost: 15000,
+        maxComfort: 100,
+        decayMult: 0.4,   // Падает на 60% медленнее
+        incomeMult: 2.0   // +100% к доходу
+    }
+};
+
 export const ITEMS_CONFIG = {
     money_exchange: {
         icon: '💰',

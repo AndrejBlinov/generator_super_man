@@ -1,5 +1,5 @@
 import { gameState, getCurrentExchangeRate } from './state.js';
-import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST, DIFFICULTY_CONFIG } from './config.js';
+import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST, DIFFICULTY_CONFIG, HOUSING_CONFIG } from './config.js';
 import { calculatePassiveIncome, getSelection, getMaxAffordableCrystals } from './crystals.js';
 import { calculateBulkCost, getMaxAffordableCount, getMaxAffordableItemCount } from './upgrades.js';
 import { getInheritancePreviewText, applyInheritance } from './inheritance.js';
@@ -203,6 +203,54 @@ export function renderUpgrades() {
     `;
     container.appendChild(multiplierSwitcher);
 
+        // 🔑 РАЗДЕЛ: НЕДВИЖИМОСТЬ
+    const housingHeader = document.createElement('div');
+    housingHeader.className = 'shop-section-header';
+    housingHeader.innerHTML = `<h3>🏠 Недвижимость</h3><p>Определяет максимальный уровень комфорта и дает бонусы</p>`;
+    container.appendChild(housingHeader);
+
+    Object.values(HOUSING_CONFIG).forEach(house => {
+        // Скрываем жилье, которое уже ниже текущего уровня
+        const housingLevels = Object.keys(HOUSING_CONFIG);
+        const currentIndex = housingLevels.indexOf(gameState.housing);
+        const houseIndex = housingLevels.indexOf(house.id);
+        
+        if (houseIndex < currentIndex) return; // Не показываем прошлые уровни
+
+        const isCurrent = gameState.housing === house.id;
+        const canAfford = gameState.money >= house.cost && !isCurrent;
+
+        const item = document.createElement('div');
+        item.className = 'upgrade-item item-item';
+        
+        let btnText = `Купить за ${house.cost.toLocaleString()} 💰`;
+        let statusText = '';
+        
+        if (isCurrent) {
+            btnText = 'Текущее жилье';
+            statusText = '<span style="color: #28a745; font-weight: bold;">✅ Активно</span>';
+        } else {
+            const decayText = house.decayMult < 1.0 ? `📉 Комфорт падает на ${Math.round((1-house.decayMult)*100)}% медленнее` : '⚠️ Комфорт падает быстрее';
+            const incomeText = house.incomeMult > 1.0 ? `📈 +${Math.round((house.incomeMult-1)*100)}% к пассивному доходу` : 'Без бонуса к доходу';
+            
+            statusText = `<div style="font-size: 11px; color: #666; margin-top: 4px;">
+                Макс. комфорт: <strong>${house.maxComfort}</strong><br>
+                ${decayText}<br>
+                ${incomeText}
+            </div>`;
+        }
+
+        item.innerHTML = `
+            <div class="upgrade-info">
+                <div class="upgrade-name">${house.name} ${statusText}</div>
+            </div>
+            <button class="upgrade-btn item-btn" data-housing="${house.id}" ${!canAfford ? 'disabled' : ''}>
+                ${btnText}
+            </button>
+        `;
+        container.appendChild(item);
+    });
+    
     // 2. Заголовок Способностей
     const abilitiesHeader = document.createElement('div');
     abilitiesHeader.className = 'shop-section-header';

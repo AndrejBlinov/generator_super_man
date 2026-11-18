@@ -48,11 +48,11 @@ function showMainMenu() {
     const hasLeg = hasLegacy();
     const isAlive = !gameState.isGameOver;
 
-    console.log('📊 [showMainMenu] Состояние:', { 
-        hasActive, 
-        hasLeg, 
-        isAlive, 
-        isGameOver: gameState.isGameOver 
+    console.log('📊 [showMainMenu] Состояние:', {
+        hasActive,
+        hasLeg,
+        isAlive,
+        isGameOver: gameState.isGameOver
     });
 
     // 🔑 Кнопка "Продолжить" — ТОЛЬКО если есть сохранение И персонаж жив
@@ -71,10 +71,11 @@ function showMainMenu() {
     }
 
     // 🔑 Кнопка "Начать новое поколение" — ТОЛЬКО если есть наследие
+    // 2. Кнопка "С бонусами наследия" (если есть бонусы)
     if (hasLeg) {
         const btn = document.createElement('button');
         btn.className = 'menu-btn secondary';
-        
+
         const crystalsCount = (legacy.startingCrystals || []).length;
         const crystalLevels = (legacy.startingCrystals || [])
             .map(c => c.level)
@@ -82,12 +83,18 @@ function showMainMenu() {
             .slice(0, 3)
             .join(', ');
         const moreText = crystalsCount > 3 ? ` +${crystalsCount - 3} ещё` : '';
-        
+
         btn.textContent = `🧬 Начать новое поколение (+${legacy.exchangeRateBonus}% курс, ${crystalsCount} крист.${crystalLevels ? ` [${crystalLevels}${moreText}]` : ''})`;
+
         btn.onclick = () => {
+            // 1. Применяем наследие (внутри уже есть полный сброс и сохранение нового состояния)
             applyInheritance();
+
+            // 2. Переключаем экраны
             menu.style.display = 'none';
-            app.style.display = '';
+            app.style.display = ''; // Пустая строка возвращает управление CSS
+
+            // 3. Запускаем движок с УЖЕ обновлённым и чистым gameState
             startGameEngine();
         };
         btnContainer.appendChild(btn);
@@ -97,7 +104,7 @@ function showMainMenu() {
     const newGameBtn = document.createElement('button');
     newGameBtn.className = 'menu-btn danger';
     newGameBtn.textContent = hasActive ? '🔄 Новая игра (выбрать сложность)' : '🔄 Новая игра';
-    
+
     newGameBtn.onclick = () => {
         if (hasActive) {
             if (!confirm("⚠️ ВНИМАНИЕ: Это удалит текущее сохранение. Продолжить?")) {
@@ -155,9 +162,9 @@ function bindEvents() {
     });
 
     // 🔑 ОБРАБОТЧИК КНОПКИ "СООБЩИТЬ О БАГЕ"
-    document.getElementById('bugReportBtn').addEventListener('click', () => {
-        openPanel('bugReportPanel');
-    });
+    // document.getElementById('bugReportBtn').addEventListener('click', () => {
+    //     openPanel('bugReportPanel');
+    // });
 
     // 🔑 ОБРАБОТЧИК ОТПРАВКИ ФОРМЫ
     document.getElementById('bugForm').addEventListener('submit', async (e) => {
@@ -324,6 +331,31 @@ function bindEvents() {
         if (itemBtn && !itemBtn.disabled) {
             if (buyItemBulk(itemBtn.dataset.item, parseInt(itemBtn.dataset.count) || 1)) {
                 renderUpgrades();
+                updateUI();
+            }
+            return;
+        }
+
+        // 🔑 НОВОЕ: Покупка жилья
+        const housingBtn = e.target.closest('.upgrade-btn[data-housing]');
+        if (housingBtn && !housingBtn.disabled) {
+            const housingId = housingBtn.dataset.housing;
+            const houseConfig = HOUSING_CONFIG[housingId];
+
+            if (gameState.money >= houseConfig.cost) {
+                gameState.money -= houseConfig.cost;
+                gameState.housing = housingId;
+                showMessage(`🏠 Вы переехали в: ${houseConfig.name}!`);
+
+                // Сразу ограничиваем комфорт, если он был выше нового максимума
+                import('./needs/index.js').then(needsModule => {
+                    if (gameState.needs.comfort > houseConfig.maxComfort) {
+                        gameState.needs.comfort = houseConfig.maxComfort;
+                    }
+                    needsModule.renderNeeds(); // Обновляем полоски
+                });
+
+                renderUpgrades(); // Перерисовываем магазин
                 updateUI();
             }
             return;

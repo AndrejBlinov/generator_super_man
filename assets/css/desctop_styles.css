@@ -1,17 +1,33 @@
 /* ========================= */
-/* ДВУХКОЛОНОЧНАЯ РАСКЛАДКА (Десктоп) */
+/* ВРЕМЕННО СКРЫТО: Двухколоночная раскладка */
 /* ========================= */
-
+/*
 .game-layout {
     display: flex;
     gap: 24px;
     width: 100%;
     max-width: 1500px;
     margin: 0 auto;
-    /* 🔑 Ключ к одинаковой высоте: растягиваем колонки на всю доступную высоту */
-    min-height: calc(100vh - 40px); 
+    min-height: calc(100vh - 40px);
     align-items: stretch;
 }
+
+.game-animation {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a1a2e;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.animation-stage { ... }
+.animation-stage canvas { ... }
+*/
 
 /* ========================= */
 /* ЛЕВАЯ КОЛОНКА: Анимация */
@@ -145,14 +161,14 @@
 
 /* На десктопе скрываем CSS-человечка в интерфейсе */
 @media (min-width: 1024px) {
-    .game-interface .character-stage .pixel-human {
+    /* .game-interface .character-stage .pixel-human {
         display: none !important;
-    }
+    } */
     
     /* Также скрываем подпись под человечком, если она есть */
-    .game-interface .character-stage .character-caption {
+    /* .game-interface .character-stage .character-caption {
         display: none !important;
-    }
+    } */
 }
 
 /* ========================= */
@@ -185,4 +201,49 @@
     .game-interface .action-label {
         font-size: 11px;
     }
+}
+
+/* ========================= */
+/* ЕДИНЫЙ ЦЕНТРИРОВАННЫЙ ИНТЕРФЕЙС (для всех устройств) */
+/* ========================= */
+
+.game-layout {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Фон страницы */
+}
+
+.game-interface {
+    width: 100%;
+    max-width: 600px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    padding: 28px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    /* Убираем ограничение высоты, чтобы скроллилась вся страница, а не блок */
+    max-height: none;
+    overflow-y: visible;
+}
+
+/* Красивый скроллбар для всей страницы (если нужен) */
+body::-webkit-scrollbar {
+    width: 8px;
+}
+body::-webkit-scrollbar-track {
+    background: transparent;
+}
+body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
 }
