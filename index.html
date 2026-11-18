@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="assets/css/desctop_styles.css">
     <link rel="stylesheet" href="assets/css/gender.css">
     <link rel="stylesheet" href="assets/css/crystals.css">
+    <link rel="stylesheet" href="assets/css/messages.css">
 </head>
 
 <body>
@@ -46,34 +47,37 @@
         <div class="game-interface">
             <h1>🧬 Эволюция: Путь Сверхчеловека</h1>
 
-            <div class="stats">
-                <div class="stat-item">
-                    <span class="stat-label">Биологический возраст:</span>
-                    <span class="stat-value" id="bioAge">30 лет 0 дн. / 100 лет</span>
+            <div class="top-sticky-panel">
+                <div class="stats">
+                    <div class="stat-item stat-hideable">
+                        <span class="stat-label">Биологический возраст:</span>
+                        <span class="stat-value" id="bioAge">30 лет 0 дн. / 100 лет</span>
+                    </div>
+                    <div class="stat-item stat-hideable">
+                        <span class="stat-label">Календарное время:</span>
+                        <span class="stat-value" id="calendarAge">2026-01-01</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Очки Эволюции:</span>
+                        <span class="stat-value" id="points">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Деньги:</span>
+                        <span class="stat-value" id="money">0 💰</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Пассивный доход:</span>
+                        <span class="stat-value" id="passive">0 ОЭ/день</span>
+                    </div>
+                    <div class="stat-item stat-hideable">
+                        <span class="stat-label">Сила клика:</span>
+                        <span class="stat-value" id="clickPower">1 ОЭ</span>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">Календарное время:</span>
-                    <span class="stat-value" id="calendarAge">2026-01-01</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Очки Эволюции:</span>
-                    <span class="stat-value" id="points">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Деньги:</span>
-                    <span class="stat-value" id="money">0 💰</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Пассивный доход:</span>
-                    <span class="stat-value" id="passive">0 ОЭ/день</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Сила клика:</span>
-                    <span class="stat-value" id="clickPower">1 ОЭ</span>
-                </div>
+                <button class="train-button" id="trainBtn">💪 ТРЕНИРОВАТЬСЯ</button>
             </div>
 
-            <button class="train-button" id="trainBtn">💪 ТРЕНИРОВАТЬСЯ</button>
+            
 
             <div class="action-buttons-row">
                 <button class="action-btn" data-panel-target="crystalsPanel">
@@ -116,7 +120,7 @@
                     <div class="auto-exchange-toggle">
                         <button class="auto-spend-toggle-btn" id="autoSpendToggle"
                             title="Авто-трата денег на потребности">
-                            💸 Авто-трата: <span id="autoSpendStatus">ВКЛ</span>
+                            💸 Авто-трата: <span id="autoSpendStatus">ВЫКЛ</span>
                         </button>
                         <button class="auto-spend-toggle-btn" id="autoTreatToggle"
                             title="Автоматическое лечение болезней">

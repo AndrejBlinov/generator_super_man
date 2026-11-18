@@ -81,10 +81,10 @@ function showMainMenu() {
             // 🔑 Сбрасываем старые флаги
             window.pendingNewGame = false;
             window.pendingDifficultyAfterInheritance = false;
-            
+
             // 🔑 Сначала выбираем пол
             openPanel('genderPanel');
-            window.pendingInheritance = true; 
+            window.pendingInheritance = true;
         };
         btnContainer.appendChild(btn);
     }
@@ -324,16 +324,16 @@ function bindEvents() {
         if (housingBtn && !housingBtn.disabled) {
             const housingId = housingBtn.dataset.housing;
             const houseConfig = HOUSING_CONFIG[housingId];
-            
+
             if (gameState.money >= houseConfig.cost) {
                 gameState.money -= houseConfig.cost;
                 gameState.housing = housingId;
                 showMessage(`🏠 Вы переехали в: ${houseConfig.name}!`);
-                
+
                 if (gameState.needs.comfort > houseConfig.maxComfort) {
                     gameState.needs.comfort = houseConfig.maxComfort;
                 }
-                
+
                 if (typeof updateHousingInfo === 'function') updateHousingInfo();
                 renderNeeds();
                 renderUpgrades();
@@ -425,7 +425,7 @@ function bindEvents() {
             if (window.pendingDifficultyAfterInheritance) {
                 // 🔑 ЗАПУСК С НАСЛЕДИЕМ И ВЫБРАННОЙ СЛОЖНОСТЬЮ
                 window.pendingDifficultyAfterInheritance = false;
-                
+
                 import('./inheritance.js').then(module => {
                     return module.startInheritedGame(difficulty); // Передаем именно выбранную сложность!
                 }).then(() => {
@@ -444,6 +444,32 @@ function bindEvents() {
             }
         });
     }
+
+    // 🔑 Эффект "прилипания" верхней панели
+    const stickyPanel = document.querySelector('.top-sticky-panel');
+    if (stickyPanel) {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) {
+                        stickyPanel.classList.add('is-stuck');
+                    } else {
+                        stickyPanel.classList.remove('is-stuck');
+                    }
+                });
+            },
+            { threshold: [1], rootMargin: '-1px 0px 0px 0px' }
+        );
+        
+        const anchor = document.createElement('div');
+        anchor.style.position = 'absolute';
+        anchor.style.top = '-1px';
+        anchor.style.height = '1px';
+        anchor.style.width = '100%';
+        stickyPanel.parentElement.insertBefore(anchor, stickyPanel);
+        observer.observe(anchor);
+    }
+
 
     setOnPanelOpenCallback((panelId) => {
         if (panelId === 'shopPanel') renderUpgrades();

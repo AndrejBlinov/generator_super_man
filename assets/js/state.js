@@ -34,7 +34,7 @@ export const defaultGameState = {
     money: 0,
 
     autoExchangeAmount: 0,
-    autoSpendEnabled: true,
+    autoSpendEnabled: false,
     autoTreatEnabled: false,
     purchaseMultiplier: 1,
 
@@ -143,7 +143,7 @@ function applyMigrations(state) {
     if (state.money === undefined) state.money = 0;
     if (state.purchaseMultiplier === undefined) state.purchaseMultiplier = 1;
     if (state.autoExchangeAmount === undefined) state.autoExchangeAmount = 0;
-    if (state.autoSpendEnabled === undefined) state.autoSpendEnabled = true;
+    if (state.autoSpendEnabled === undefined) state.autoSpendEnabled = false;
     if (state.autoTreatEnabled === undefined) state.autoTreatEnabled = false;
     if (state.diseaseImmunityTicks === undefined) state.diseaseImmunityTicks = 0;
     if (state.difficulty === undefined) state.difficulty = 'medium';

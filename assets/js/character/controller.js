@@ -15,7 +15,6 @@ export function initCharacter() {
 
 export function updateCharacterStateFromGame() {
     if (!mainCanvasRenderer) {
-        console.warn('⚠️ [controller] Canvas-рендерер не инициализирован');
         return;
     }
 
@@ -32,7 +31,6 @@ export function updateCharacterStateFromGame() {
         isCritical: (gameState.needs?.health || 100) < 20
     };
     
-    console.log('🎮 [controller] Передаём в рендерер:', newState);
     mainCanvasRenderer.updateState(newState);
 
     if (typeof updateHousingInfo === 'function') {
@@ -47,14 +45,11 @@ export function updateHousingInfo() {
     const housingIconEl = document.querySelector('.housing-icon');
     
     if (!housingNameEl || !housingMaxComfortEl || !housingBonusEl || !housingIconEl) {
-        console.warn('⚠️ [updateHousingInfo] Элементы не найдены');
         return;
     }
 
     // 🔑 Читаем текущее жильё из gameState
     const currentHousing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
-    
-    console.log('🏠 [updateHousingInfo] Текущее жильё:', gameState.housing, currentHousing.name);
 
     // Иконка
     const housingIcons = {
