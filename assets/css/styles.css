@@ -2586,4 +2586,19 @@ body.panel-open {
     font-weight: 500;
 }
 
+.character-stage canvas#characterCanvasMain {
+    width: 100%;
+    max-width: 300px; /* 🔑 Увеличили максимальный размер */
+    height: auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    margin: 0 auto 15px auto;
+    display: block;
+}
+
+/* Скрываем старый HTML-вариант, чтобы не мешал */
+.character-stage .pixel-human {
+    display: none !important;
+}
+
 /* © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved). */

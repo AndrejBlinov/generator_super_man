@@ -90,24 +90,12 @@
             </div>
 
             <div class="character-stage" id="characterStage">
-                <div class="pixel-human" id="pixelHuman">
-                    <div class="pixel-shadow"></div>
-                    <div class="pixel-head">
-                        <div class="pixel-hair"></div>
-                        <div class="pixel-eye pixel-eye-left"></div>
-                        <div class="pixel-eye pixel-eye-right"></div>
-                    </div>
-                    <div class="pixel-neck"></div>
-                    <div class="pixel-body"></div>
-                    <div class="pixel-arm pixel-arm-left"></div>
-                    <div class="pixel-arm pixel-arm-right"></div>
-                    <div class="pixel-leg pixel-leg-left"></div>
-                    <div class="pixel-leg pixel-leg-right"></div>
-                    <div class="health-effects" id="healthEffects"></div>
-                    <div class="hunger-effects" id="hungerEffects"></div>
-                </div>
+                <!-- 🔑 НОВОЕ: Canvas для детального рендера персонажа (вместо HTML div) -->
+                <canvas id="characterCanvasMain" width="400" height="400"></canvas>
+
                 <div class="character-caption" id="characterCaption">Герой готов к тренировкам</div>
-                <!-- 🔑 НОВОЕ: Компактный блок жилья -->
+
+                <!-- Блок жилья (остается без изменений) -->
                 <div class="housing-info" id="housingInfo">
                     <span class="housing-icon">📦</span>
                     <span class="housing-name" id="housingName">Картонная коробка</span>
@@ -116,6 +104,7 @@
                     <span class="housing-separator">|</span>
                     <span class="housing-bonus" id="housingBonus">Без бонусов</span>
                 </div>
+
                 <div class="needs-compact" id="needsContainer"></div>
                 <div class="disease-container hidden" id="diseaseContainer"></div>
             </div>

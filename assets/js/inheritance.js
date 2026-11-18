@@ -75,16 +75,23 @@ export function finalizeRunAndSaveLegacy() {
 export function startInheritedGame(difficulty = 'medium') {
     console.log('🧬 [startInheritedGame] Запуск нового поколения');
     
+    // 🔑 СОХРАНЯЕМ ВЫБОР ПОЛА ДО СБРОСА
+    const savedGender = gameState.gender || 'male';
+    
     import('./state.js').then(stateModule => {
-        // 1. Полный сброс gameState (глубокая копия)
+        // Полный сброс gameState
         Object.assign(stateModule.gameState, JSON.parse(JSON.stringify(stateModule.defaultGameState)));
         stateModule.gameState.difficulty = difficulty;
         stateModule.gameState.isGameOver = false;
         
-        // 2. Применяем стартовые бонусы (функция уже есть в этом файле ниже)
+        // 🔑 ВОССТАНАВЛИВАЕМ ПОЛ ПОСЛЕ СБРОСА
+        stateModule.gameState.gender = savedGender;
+        console.log('🧬 [startInheritedGame] Пол восстановлен:', savedGender);
+        
+        // Применяем стартовые бонусы
         applyStartingBonuses();
         
-        // 3. Сохраняем новое, чистое состояние
+        // Сохраняем новое состояние
         stateModule.saveGame();
     });
 }

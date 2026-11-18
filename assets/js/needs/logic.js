@@ -68,29 +68,40 @@ export function applyAutoSpend(needId) {
 
     const config = NEEDS_CONFIG[needId];
     
-    // 🔑 Определяем реальный максимум для комфорта
+    // 🔑 Определяем РЕАЛЬНЫЙ максимум для этой потребности
     let currentMax = config.max;
     if (needId === 'comfort') {
         const housing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
         currentMax = housing.maxComfort;
     }
 
-    // Проверяем, есть ли куда восстанавливать и хватает ли денег
-    if (gameState.needs[needId] < currentMax && gameState.money >= config.restoreCost) {
-        const deficit = currentMax - gameState.needs[needId];
-        const restoresNeeded = Math.ceil(deficit / config.restoreAmount);
-        const affordableRestores = Math.floor(gameState.money / config.restoreCost);
-        const restoresToApply = Math.min(restoresNeeded, affordableRestores);
+    const currentValue = gameState.needs[needId];
 
-        if (restoresToApply > 0) {
-            gameState.money -= restoresToApply * config.restoreCost;
-            
-            // 🔑 Ограничиваем реальным максимумом жилья, а не config.max (100)
-            let newValue = gameState.needs[needId] + restoresToApply * config.restoreAmount;
-            newValue = Math.min(currentMax, newValue);
-            
-            gameState.needs[needId] = newValue;
-        }
+    // 🔑 ПРОВЕРКА 1: Нужно ли вообще восстанавливать?
+    if (currentValue >= currentMax) return;
+
+    // 🔑 ПРОВЕРКА 2: Рентабельно ли пополнять?
+    // Если при пополнении мы выйдем за лимит, то часть денег потратится впустую
+    if (currentValue + config.restoreAmount > currentMax) {
+        return; // Не пополняем, ждём пока значение упадёт ниже
+    }
+
+    // 🔑 ПРОВЕРКА 3: Хватает ли денег?
+    if (gameState.money < config.restoreCost) return;
+
+    // Рассчитываем количество пополнений
+    const deficit = currentMax - currentValue;
+    const restoresNeeded = Math.ceil(deficit / config.restoreAmount);
+    const affordableRestores = Math.floor(gameState.money / config.restoreCost);
+    const restoresToApply = Math.min(restoresNeeded, affordableRestores);
+
+    if (restoresToApply > 0) {
+        gameState.money -= restoresToApply * config.restoreCost;
+        
+        let newValue = currentValue + restoresToApply * config.restoreAmount;
+        newValue = Math.min(currentMax, newValue);
+        
+        gameState.needs[needId] = newValue;
     }
 }
 

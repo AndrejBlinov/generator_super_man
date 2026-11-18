@@ -97,9 +97,11 @@ function showMainMenu() {
             }
             clearActiveGame();
         }
-        // 🔑 Сначала показываем выбор пола
+
+        // 🔑 Показываем выбор пола ПЕРЕД выбором сложности
         openPanel('genderPanel');
         window.pendingInheritance = false;
+        window.pendingNewGame = true; // 🔑 Новый флаг
     };
     btnContainer.appendChild(newGameBtn);
 
@@ -457,8 +459,16 @@ function bindEvents() {
 
             const difficulty = btn.dataset.difficulty;
 
+            // 🔑 СОХРАНЯЕМ ПОЛ ПЕРЕД СБРОСОМ
+            const savedGender = gameState.gender || 'male';
+
             // Сбрасываем активную игру с выбранной сложностью
             resetActiveGame(difficulty);
+
+            // 🔑 ВОССТАНАВЛИВАЕМ ПОЛ
+            gameState.gender = savedGender;
+            console.log('✅ [main.js] Пол восстановлен после сброса:', savedGender);
+
             saveGame();
 
             closePanel();
