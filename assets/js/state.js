@@ -1,6 +1,7 @@
-import { GAME_VERSION, DIFFICULTY_CONFIG } from './config.js';
+import { GAME_VERSION, DIFFICULTY_CONFIG, HOUSING_CONFIG } from './config.js';
 import { NEEDS_CONFIG, getDefaultNeeds } from './needs/index.js';
-import { 
+
+import {
     saveActiveGame, loadActiveGame, clearActiveGame,
     saveLegacy, loadLegacy,
     saveStats, loadStats,
@@ -12,7 +13,8 @@ import {
 export const defaultLegacy = {
     exchangeRateBonus: 0,
     startingCrystalsCount: 0,
-    startingAbilities: []
+    startingAbilities: [],
+    inheritedHousing: 'box'
 };
 
 // Дефолтная статистика
@@ -30,20 +32,20 @@ export const defaultGameState = {
     evolutionPoints: 0,
     totalPointsEarned: 0,
     money: 0,
-    
+
     autoExchangeAmount: 0,
     autoSpendEnabled: true,
     autoTreatEnabled: false,
     purchaseMultiplier: 1,
-    
+
     needs: getDefaultNeeds(),
     activeDiseases: [],
     housing: 'box',
     gender: 'male',
-    
+
     diseaseImmunityTicks: 0,
     difficulty: 'medium',
-    
+
     ageInYears: 30,
     currentDayInYear: 0,
     maxAgeInYears: 100,
@@ -51,7 +53,7 @@ export const defaultGameState = {
     absoluteCurrentDayInYear: 0,
     daysInYear: 365,
     lastSaveTimestamp: Date.now(),
-    
+
     clickPower: 1,
     ageTickRate: 1.0,
     doubleClickChance: 0.0,
@@ -59,16 +61,16 @@ export const defaultGameState = {
     critMultiplier: 2,
     diseaseResistance: 0.0,
     extraTrainingChance: 0.0,
-    
+
     crystals: [null, null, null, null, null],
     crystalsInventory: [null, null, null, null, null, null, null, null, null, null],
-    
+
     upgrades: {
         slowAging: 0, crystals: 0, levitation: 0, xrayVision: 0, regeneration: 0, telekinesis: 0
     },
-    
+
     stats: { totalMoneyEarnedThisRun: 0 }, // Для отслеживания трат внутри одного прохождения
-    
+
     isGameOver: false
 };
 
@@ -83,28 +85,28 @@ export let stats = { ...defaultStats };
 export function loadFullGame() {
     // 1. Миграция со старого формата
     migrateFromOldFormat();
-    
+
     // 2. Загружаем наследие
     const savedLegacy = loadLegacy();
     if (savedLegacy) {
         legacy = { ...defaultLegacy, ...savedLegacy };
     }
-    
+
     // 3. Загружаем статистику
     const savedStats = loadStats();
     if (savedStats) {
         stats = { ...defaultStats, ...savedStats };
     }
-    
+
     // 4. Загружаем активную игру
     const savedActive = loadActiveGame();
-    
+
     // 🔑 ЗАЩИТА ОТ ЗОМБИ: Не загружаем сохранение, если в нём персонаж уже мёртв
     if (savedActive && !savedActive.isGameOver) {
         gameState = applyMigrations({ ...defaultGameState, ...savedActive });
         return true; // Есть активное сохранение
     }
-    
+
     // 5. Если нет активной игры (или персонаж мёртв) — начинаем с дефолтного состояния
     gameState = { ...defaultGameState };
     return false;
@@ -133,7 +135,7 @@ function applyMigrations(state) {
             if (state.needs[needId] === undefined) state.needs[needId] = defaults[needId];
         });
     }
-    
+
     // Миграции примитивов
     if (state.doubleClickChance === undefined) state.doubleClickChance = 0.0;
     if (state.diseaseResistance === undefined) state.diseaseResistance = 0.0;
@@ -145,10 +147,12 @@ function applyMigrations(state) {
     if (state.autoTreatEnabled === undefined) state.autoTreatEnabled = false;
     if (state.diseaseImmunityTicks === undefined) state.diseaseImmunityTicks = 0;
     if (state.difficulty === undefined) state.difficulty = 'medium';
+    if (state.housing === undefined) state.housing = 'box';
+    if (state.gender === undefined) state.gender = 'male';
     if (typeof state.stats !== 'object' || state.stats === null) {
         state.stats = { totalMoneyEarnedThisRun: 0 };
     }
-    
+
     return state;
 }
 
@@ -160,7 +164,7 @@ export function saveGame() {
         clearActiveGame();
         return;
     }
-    
+
     saveActiveGame(gameState);
 }
 
@@ -179,9 +183,9 @@ export function getCurrentExchangeRate() {
 // Сброс активной игры (при смерти или начале новой)
 export function resetActiveGame(difficulty = 'medium') {
     const diffConfig = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.medium;
-    
-    console.log(`🔄 [resetActiveGame] Сброс с сложностью: ${difficulty}, старт. возраст: ${diffConfig.startAge}`);
-    
+
+    console.log(`🔄 [resetActiveGame] Сброс: ${difficulty}, возраст: ${diffConfig.startAge}, деньги: ${diffConfig.startMoney}`);
+
     gameState = {
         ...defaultGameState,
         needs: getDefaultNeeds(),
@@ -189,10 +193,17 @@ export function resetActiveGame(difficulty = 'medium') {
         ageInYears: diffConfig.startAge,
         absoluteAgeInYears: diffConfig.startAge,
         diseaseImmunityTicks: diffConfig.diseaseImmunityDays,
+        money: diffConfig.startMoney || 0,          // 🔑 Стартовые деньги
+        housing: 'box',                              // 🔑 Новая игра всегда с коробки
         lastSaveTimestamp: Date.now()
     };
-    
-    // Сохраняем сложность в статистику
+
+    // 🔑 Обрезаем комфорт под лимит жилья (коробка = 20)
+    const housing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
+    if (gameState.needs.comfort > housing.maxComfort) {
+        gameState.needs.comfort = housing.maxComfort;
+    }
+
     stats.lastRunDifficulty = difficulty;
     saveStats(stats);
 }
@@ -202,29 +213,29 @@ export function resetAll() {
     gameState = { ...defaultGameState, needs: getDefaultNeeds() };
     legacy = { ...defaultLegacy };
     stats = { ...defaultStats };
-    
+
     clearAll();
 }
 
 export function handleDeath() {
     console.log('💀 [handleDeath] Персонаж умер. Возраст:', gameState.ageInYears);
-    
+
     // Обновляем статистику
     stats.totalDeaths += 1;
     stats.runsCompleted += 1;
     stats.highestAgeReached = Math.max(stats.highestAgeReached, gameState.ageInYears);
     stats.totalMoneyEarnedAllTime += (gameState.stats?.totalMoneyEarnedThisRun || 0);
-    
+
     const allCrystals = [...gameState.crystals, ...gameState.crystalsInventory];
     const maxLvl = allCrystals.filter(c => c).reduce((max, c) => Math.max(max, c.level), 1);
     stats.highestCrystalLevel = Math.max(stats.highestCrystalLevel, maxLvl);
-    
+
     // Сохраняем статистику
     saveStats(stats);
-    
+
     // 🔑 Помечаем игру как мёртвую
     gameState.isGameOver = true;
-    
+
     // Удаляем активную игру
     clearActiveGame();
     console.log('💀 [handleDeath] Активное сохранение удалено');
