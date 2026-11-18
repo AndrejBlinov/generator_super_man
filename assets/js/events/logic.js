@@ -29,7 +29,7 @@ export function checkAndTriggerDailyEvent() {
 
     const totalWeight = availableEvents.reduce((sum, ev) => sum + ev.weight, 0);
     let random = Math.random() * totalWeight;
-    
+
     let chosenEvent = null;
     for (const ev of availableEvents) {
         random -= ev.weight;
@@ -64,7 +64,7 @@ function getAvailableEvents() {
 
         // Сафгард 3: Блокировка при тяжелых болезнях
         if (cond.blockedByDiseases && Array.isArray(cond.blockedByDiseases)) {
-            const hasBlockedDisease = gameState.activeDiseases.some(d => 
+            const hasBlockedDisease = gameState.activeDiseases.some(d =>
                 cond.blockedByDiseases.includes(d.id) || d.severity === 'heavy' // Универсальная защита
             );
             if (hasBlockedDisease) continue;
@@ -104,7 +104,7 @@ function activateEvent(eventId) {
     // Динамические заголовки (для цепных событий)
     let finalTitle = displayData.title;
     let finalDesc = displayData.description;
-    
+
     // Если это цепное событие и у него есть функции генерации текста
     if (config.isScheduled && gameState.scheduledEvent?.context) {
         const ctx = gameState.scheduledEvent.context;
@@ -160,7 +160,16 @@ export function resolveEventChoice(choiceIndex) {
         gameState.flags = gameState.flags.filter(f => f !== effects.removeFlag);
     }
 
-    // 4. Планирование цепного события
+    // 4. Добавление питомца
+    if (effects.setPet) {
+        gameState.pet = {
+            type: effects.setPet.type,
+            lifespanDays: effects.setPet.lifespanDays,
+            daysLived: 0
+        };
+    }
+
+    // 5. Планирование цепного события
     if (effects.scheduleEvent) {
         const currentAbsoluteDay = (gameState.absoluteAgeInYears * 365) + gameState.absoluteCurrentDayInYear;
         gameState.scheduledEvent = {
@@ -170,7 +179,7 @@ export function resolveEventChoice(choiceIndex) {
         };
     }
 
-    // 5. Показываем сообщение и очищаем активное событие
+    // 6. Показываем сообщение и очищаем активное событие
     if (effects.message) {
         showMessage(effects.message);
     }
@@ -183,7 +192,7 @@ export function resolveEventChoice(choiceIndex) {
     if (typeof window.closeEventModal === 'function') {
         window.closeEventModal();
     }
-    
+
     // Принудительно обновляем UI после изменений
     if (typeof window.updateUI === 'function') {
         window.updateUI();

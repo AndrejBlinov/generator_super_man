@@ -78,7 +78,8 @@ export const defaultGameState = {
     flags: [], // Массив строк: ['married', 'engaged', 'has_dog']
     scheduledEvent: null, // { eventId, triggerAtAbsoluteDay, context }
     activeEvent: null, // { eventId, variantKey, choices } (если не null, игра на паузе)
-    lastEventDay: 0 // Абсолютный день последнего события (для кулдауна)
+    lastEventDay: 0, // Абсолютный день последнего события (для кулдауна)
+    pet: null 
 };
 
 // Текущее состояние игры

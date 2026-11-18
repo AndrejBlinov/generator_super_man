@@ -9,22 +9,20 @@ import { checkAndTriggerDailyEvent } from './events/logic.js';
 
 let gameLoopInterval = null;
 
-// 🔑 Безопасный запуск: если интервал уже есть — останавливаем его
 export function startGameLoop() {
-    // 🔑 КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: предотвращаем дублирование
-
-    if (gameState.activeEvent) {
-        return;
-    }
-
+    // Если интервал уже есть — очищаем его, чтобы не было дублирования скорости
     if (gameLoopInterval !== null) {
         clearInterval(gameLoopInterval);
         gameLoopInterval = null;
     }
 
     gameLoopInterval = setInterval(() => {
+        // 🔑 1. ГЛАВНАЯ ПАУЗА: Если активно событие, пропускаем тик ПОЛНОСТЬЮ
+        if (gameState.activeEvent) {
+            return; 
+        }
 
-        // 🔑 УНИВЕРСАЛЬНАЯ ПАУЗА: Если открыта ЛЮБАЯ боковая панель, пропускаем тик
+        // 🔑 2. ПАУЗА ПРИ ОТКРЫТЫХ ПАНЕЛЯХ
         const isAnyPanelOpen = document.querySelector('.side-panel.is-open') !== null;
         const isDonateModalOpen = document.querySelector('.donate-modal.is-open') !== null;
         if (isAnyPanelOpen || isDonateModalOpen) {
@@ -33,7 +31,7 @@ export function startGameLoop() {
 
         if (gameState.isGameOver) return;
 
-        // 🔑 Уменьшаем счетчик иммунитета
+        // 3. Уменьшаем счетчик иммунитета
         if (gameState.diseaseImmunityTicks > 0) {
             gameState.diseaseImmunityTicks--;
             if (gameState.diseaseImmunityTicks === 0) {
@@ -41,20 +39,27 @@ export function startGameLoop() {
             }
         }
 
+        // 4. ПРОВЕРКА СОБЫТИЙ
         checkAndTriggerDailyEvent();
+        
+        // 🔑 КРИТИЧЕСКИ ВАЖНО: Если событие только что сработало, 
+        // НЕМЕДЛЕННО прерываем тик. Иначе начислятся ресурсы и пройдет день.
+        if (gameState.activeEvent) {
+            return;
+        }
 
-        // 1. Пассивный доход
+        // 5. Пассивный доход
         const passiveIncome = calculatePassiveIncome();
         gameState.evolutionPoints += passiveIncome;
         gameState.totalPointsEarned += passiveIncome;
 
-        // 2. Телекинез
+        // 6. Телекинез
         if (Math.random() < gameState.extraTrainingChance) {
             gameState.evolutionPoints += 1;
             gameState.totalPointsEarned += 1;
         }
 
-        // 3. Автоматический обмен ОЭ на деньги
+        // 7. Автоматический обмен ОЭ на деньги
         const currentExchangeRate = getCurrentExchangeRate();
         if (gameState.autoExchangeAmount > 0 && gameState.evolutionPoints >= gameState.autoExchangeAmount) {
             gameState.evolutionPoints -= gameState.autoExchangeAmount;
@@ -65,17 +70,17 @@ export function startGameLoop() {
             gameState.stats.totalMoneyEarnedThisRun += moneyGained;
         }
 
-        // 4. Потребности
+        // 8. Потребности
         const needsResults = processNeedsTick();
         if (needsResults.deaths.length > 0) {
             gameState.isGameOver = true;
-            stopGameLoop(); // 🔑 Останавливаем gameLoop при смерти!
+            stopGameLoop();
             handleDeath();
             showGameOver(`Ваш персонаж умер от ${needsResults.deaths[0]}!`);
             return;
         }
 
-        // 5. Болезни
+        // 9. Болезни
         const diseaseResult = processDiseasesTick();
         if (diseaseResult.spawned.length > 0) {
             showMessage(`⚠️ Персонаж заболел: ${diseaseResult.spawned.map(d => d.name).join(', ')}!`);
@@ -85,20 +90,33 @@ export function startGameLoop() {
         }
         if (diseaseResult.died) {
             gameState.isGameOver = true;
-            stopGameLoop(); // 🔑 Останавливаем gameLoop при смерти!
+            stopGameLoop();
             handleDeath();
             showGameOver(`Персонаж умер от неизлеченной болезни: ${diseaseResult.died}!`);
             return;
         }
 
-        // 6. Календарное время
+        // 🔑 10. ЛОГИКА ПИТОМЦЕВ (Собака и др.)
+        if (gameState.pet) {
+            // Увеличиваем расход еды (например, на 0.5 за тик)
+            gameState.needs.food = Math.max(0, gameState.needs.food - 0.5);
+            
+            gameState.pet.daysLived++;
+            if (gameState.pet.daysLived >= gameState.pet.lifespanDays) {
+                showMessage(`😢 Ваш питомец (${gameState.pet.type === 'dog' ? 'пёс' : gameState.pet.type}) умер от старости.`);
+                gameState.karma = Math.max(0, gameState.karma - 5); // Немного грустно
+                gameState.pet = null; // Удаляем питомца
+            }
+        }
+
+        // 11. Календарное время
         gameState.absoluteCurrentDayInYear += 1.0;
         if (gameState.absoluteCurrentDayInYear >= gameState.daysInYear) {
             gameState.absoluteCurrentDayInYear -= gameState.daysInYear;
             gameState.absoluteAgeInYears++;
         }
 
-        // 7. Биологическое время
+        // 12. Биологическое время
         gameState.currentDayInYear += gameState.ageTickRate;
         if (gameState.currentDayInYear >= gameState.daysInYear) {
             gameState.currentDayInYear -= gameState.daysInYear;
@@ -106,7 +124,7 @@ export function startGameLoop() {
 
             if (gameState.ageInYears >= gameState.maxAgeInYears) {
                 gameState.isGameOver = true;
-                stopGameLoop(); // 🔑 Останавливаем gameLoop при смерти!
+                stopGameLoop();
                 handleDeath();
                 showGameOver("Персонаж умер от старости!");
             }
