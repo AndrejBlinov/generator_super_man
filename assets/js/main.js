@@ -123,7 +123,6 @@ function showMainMenu() {
 // 3. ПРИВЯЗКА СОБЫТИЙ (выполняется 1 раз)
 // ==========================================
 function bindEvents() {
-
     // 🔑 ЛОГИКА МОДАЛКИ ПОДДЕРЖКИ
     const donateModal = document.getElementById('donateModal');
     const donateModalClose = document.getElementById('donateModalClose');
@@ -146,19 +145,13 @@ function bindEvents() {
     if (donateModalClose) donateModalClose.addEventListener('click', closeDonateModal);
     if (donateModalBackdrop) donateModalBackdrop.addEventListener('click', closeDonateModal);
 
-    // Закрытие по Escape
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && donateModal.classList.contains('is-open')) {
             closeDonateModal();
         }
     });
 
-    // 🔑 ОБРАБОТЧИК КНОПКИ "СООБЩИТЬ О БАГЕ"
-    // document.getElementById('bugReportBtn').addEventListener('click', () => {
-    //     openPanel('bugReportPanel');
-    // });
-
-    // 🔑 Обработчик выбора пола
+    // 🔑 ОБРАБОТЧИК ВЫБОРА ПОЛА (УНИВЕРСАЛЬНЫЙ)
     const genderContainer = document.getElementById('genderOptions');
     if (genderContainer) {
         genderContainer.addEventListener('click', (e) => {
@@ -169,7 +162,6 @@ function bindEvents() {
             if (!window.pendingInheritance && !window.pendingNewGame) return;
 
             const gender = card.dataset.gender;
-
             document.querySelectorAll('.gender-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
 
@@ -178,11 +170,10 @@ function bindEvents() {
 
             if (window.pendingInheritance) {
                 window.pendingInheritance = false;
-                // 🔑 НОВОЕ: После выбора пола открываем выбор сложности для наследия
+                // 🔑 После выбора пола открываем выбор сложности
                 window.pendingDifficultyAfterInheritance = true;
                 renderDifficultyPanel();
                 openPanel('difficultyPanel');
-                
             } else if (window.pendingNewGame) {
                 window.pendingNewGame = false;
                 // Для обычной новой игры тоже открываем выбор сложности
@@ -192,18 +183,14 @@ function bindEvents() {
         });
     }
 
-    // 🔑 ОБРАБОТЧИК ОТПРАВКИ ФОРМЫ
+    // 🔑 ОБРАБОТЧИК ОТПРАВКИ ФОРМЫ БАГА (без изменений)
     document.getElementById('bugForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-
         const submitBtn = document.getElementById('submitBugBtn');
         const originalText = submitBtn.textContent;
-
-        // Блокируем кнопку на время отправки
         submitBtn.disabled = true;
         submitBtn.textContent = '⏳ Отправка...';
 
-        // Собираем данные
         const formData = {
             name: document.getElementById('bugName').value.trim() || 'Аноним',
             email: document.getElementById('bugEmail').value.trim() || 'Не указан',
@@ -220,54 +207,30 @@ function bindEvents() {
         };
 
         try {
-            // 🔑 1. РЕАЛЬНАЯ ОТПРАВКА НА PHP СКРИПТ
             const response = await fetch('./api/submit-bug.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify(formData)
             });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ошибка! Статус: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`HTTP ошибка! Статус: ${response.status}`);
             const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.message || 'Ошибка на стороне сервера');
-            }
-
-            // 🔑 2. ЛОКАЛЬНАЯ ЗАГЛУШКА (дубликат для надежности или тестов без сервера)
-            console.log('📦 Данные бага успешно отправлены на сервер:', formData);
-            const savedBugs = JSON.parse(localStorage.getItem('mock_bug_reports') || '[]');
-            savedBugs.push(formData);
-            localStorage.setItem('mock_bug_reports', JSON.stringify(savedBugs));
+            if (!result.success) throw new Error(result.message || 'Ошибка на стороне сервера');
 
             showMessage('✅ Спасибо! Отчет о баге успешно отправлен.');
             document.getElementById('bugForm').reset();
             closePanel();
-
         } catch (error) {
-            console.error('❌ Ошибка отправки на сервер:', error);
-
-            // 🔑 Фоллбек: если PHP-сервер недоступен (например, локальный запуск без OpenServer), 
-            // мы все равно сохраняем отчет локально, чтобы данные не потерялись.
-            const savedBugs = JSON.parse(localStorage.getItem('mock_bug_reports') || '[]');
-            savedBugs.push(formData);
-            localStorage.setItem('mock_bug_reports', JSON.stringify(savedBugs));
-
+            console.error('❌ Ошибка отправки:', error);
             showMessage('⚠️ Сервер недоступен, но отчет сохранен локально.');
             document.getElementById('bugForm').reset();
             closePanel();
-
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
         }
     });
 
+    // 🔑 ОБРАБОТЧИК ТРЕНИРОВКИ
     document.getElementById('trainBtn').addEventListener('click', (event) => {
         if (gameState.isGameOver) return;
         if (!canTrain()) {
@@ -287,14 +250,8 @@ function bindEvents() {
         let isDoubleClick = false;
         let isCrit = false;
 
-        if (Math.random() < gameState.doubleClickChance) {
-            earned *= 2;
-            isDoubleClick = true;
-        }
-        if (Math.random() < gameState.critChance) {
-            earned *= gameState.critMultiplier;
-            isCrit = true;
-        }
+        if (Math.random() < gameState.doubleClickChance) { earned *= 2; isDoubleClick = true; }
+        if (Math.random() < gameState.critChance) { earned *= gameState.critMultiplier; isCrit = true; }
 
         if (isCrit || isDoubleClick) {
             let popupText = isDoubleClick && isCrit ? `ДВОЙНОЙ + КРИТ! +${Math.round(earned)}` :
@@ -370,19 +327,14 @@ function bindEvents() {
             
             if (gameState.money >= houseConfig.cost) {
                 gameState.money -= houseConfig.cost;
-                gameState.housing = housingId; // 🔑 Сначала обновляем состояние
+                gameState.housing = housingId;
                 showMessage(`🏠 Вы переехали в: ${houseConfig.name}!`);
                 
-                // Ограничиваем комфорт, если он выше нового максимума
                 if (gameState.needs.comfort > houseConfig.maxComfort) {
                     gameState.needs.comfort = houseConfig.maxComfort;
                 }
                 
-                // 🔑 ОБЯЗАТЕЛЬНО: Обновляем информационный блок ПОСЛЕ изменения состояния
-                if (typeof updateHousingInfo === 'function') {
-                    updateHousingInfo();
-                }
-                
+                if (typeof updateHousingInfo === 'function') updateHousingInfo();
                 renderNeeds();
                 renderUpgrades();
                 updateUI();
@@ -439,27 +391,23 @@ function bindEvents() {
     });
 
     document.getElementById('menuBtn').addEventListener('click', () => {
-        saveGame();          // 1. Сохраняем текущий прогресс
-        stopGameLoop();      // 2. Останавливаем игровой цикл (пауза)
-        showMainMenu();      // 3. Возвращаемся на главный экран
+        saveGame();
+        stopGameLoop();
+        showMainMenu();
     });
 
     document.getElementById('resetBtn').addEventListener('click', () => {
-        if (confirm("Вы уверены? Весь прогресс будет потерян, а дата сброшена к 2026-01-01!")) {
+        if (confirm("Вы уверены? Весь прогресс будет потерян!")) {
             resetAll();
             window.location.replace(window.location.href);
         }
     });
 
-    // document.getElementById('inheritBtn').addEventListener('click', () => {
-    //     showInheritanceModal(false);
-    // });
-
     document.getElementById('helpButton').addEventListener('click', () => {
         openPanel('helpPanel');
     });
 
-    // 🔑 ОБРАБОТЧИК: Выбор сложности (теперь универсальный)
+    // 🔑 ОБРАБОТЧИК ВЫБОРА СЛОЖНОСТИ (УНИВЕРСАЛЬНЫЙ)
     const diffContainer = document.getElementById('difficultyOptions');
     if (diffContainer) {
         diffContainer.addEventListener('click', (e) => {
@@ -467,9 +415,7 @@ function bindEvents() {
             if (!btn) return;
 
             const difficulty = btn.dataset.difficulty;
-            const savedGender = gameState.gender || 'male';
-
-            closePanel(); // Закрываем панель сложности
+            closePanel();
 
             const menu = document.getElementById('mainMenu');
             const app = document.getElementById('gameApp');
@@ -477,12 +423,11 @@ function bindEvents() {
             app.style.display = '';
 
             if (window.pendingDifficultyAfterInheritance) {
-                // 🔑 ЗАПУСК С НАСЛЕДИЕМ И НОВОЙ СЛОЖНОСТЬЮ
+                // 🔑 ЗАПУСК С НАСЛЕДИЕМ И ВЫБРАННОЙ СЛОЖНОСТЬЮ
                 window.pendingDifficultyAfterInheritance = false;
                 
                 import('./inheritance.js').then(module => {
-                    // Передаем именно ту сложность, которую выбрал игрок сейчас!
-                    return module.startInheritedGame(difficulty);
+                    return module.startInheritedGame(difficulty); // Передаем именно выбранную сложность!
                 }).then(() => {
                     startGameEngine();
                     console.log(`✅ Игра с наследием запущена на сложности: ${difficulty}`);
@@ -493,7 +438,6 @@ function bindEvents() {
             } else {
                 // 🔑 ОБЫЧНЫЙ ЗАПУСК НОВОЙ ИГРЫ
                 resetActiveGame(difficulty);
-                gameState.gender = savedGender;
                 console.log(`✅ Новая игра запущена на сложности: ${difficulty}`);
                 saveGame();
                 startGameEngine();

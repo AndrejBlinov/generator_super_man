@@ -83,13 +83,16 @@ export function startInheritedGame(difficulty = 'medium') {
         // Полный сброс gameState
         Object.assign(stateModule.gameState, JSON.parse(JSON.stringify(stateModule.defaultGameState)));
         
-        // 🔑 Применяем НОВУЮ сложность и стартовые деньги
+        // 🔑 Применяем НОВУЮ сложность и стартовые параметры
         stateModule.gameState.difficulty = difficulty;
         stateModule.gameState.money = diffConfig.startMoney || 0;
         stateModule.gameState.isGameOver = false;
         stateModule.gameState.gender = savedGender;
         
-        console.log('🧬 [startInheritedGame] Пол:', savedGender, '| Сложность:', difficulty, '| Деньги:', stateModule.gameState.money);
+        // 🔑 КЛЮЧЕВОЕ: Устанавливаем возраст и иммунитет по сложности
+        stateModule.gameState.ageInYears = diffConfig.startAge;
+        stateModule.gameState.absoluteAgeInYears = diffConfig.startAge;
+        stateModule.gameState.diseaseImmunityTicks = diffConfig.diseaseImmunityDays;
         
         // Применяем стартовые бонусы (жилье, комфорт, кристаллы)
         applyStartingBonuses();
