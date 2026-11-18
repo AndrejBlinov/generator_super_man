@@ -45,61 +45,61 @@ export const UPGRADES_CONFIG = {
 };
 
 export const HOUSING_CONFIG = {
-    box: {
-        id: 'box',
-        name: 'Картонная коробка',
-        cost: 0,
-        maxComfort: 20,
-        decayMult: 1.5,   // Комфорт падает в 1.5 раза быстрее
-        incomeMult: 1.0   // Бонус к доходу 0%
+    box: { 
+        id: 'box', 
+        name: 'Картонная коробка', 
+        cost: 0, 
+        maxComfort: 20, 
+        decayMult: 1.10,   // 🔑 На 10% БЫСТРЕЕ
+        incomeMult: 1.0
     },
-    shed: {
-        id: 'shed',
-        name: 'Сарай на окраине',
-        cost: 1000,
-        maxComfort: 30,
-        decayMult: 1.3,
-        incomeMult: 1.05  // +5% к доходу
+    shed: { 
+        id: 'shed', 
+        name: 'Сарай на окраине', 
+        cost: 1000, 
+        maxComfort: 30, 
+        decayMult: 1.05,   // 🔑 На 5% БЫСТРЕЕ
+        incomeMult: 1.05
     },
-    dilapidated: {
-        id: 'dilapidated',
-        name: 'Полуразвалившийся дом',
-        cost: 3000,
-        maxComfort: 40,
-        decayMult: 1.1,
-        incomeMult: 1.1   // +10% к доходу
+    dilapidated: { 
+        id: 'dilapidated', 
+        name: 'Полуразвалившийся дом', 
+        cost: 3000, 
+        maxComfort: 40, 
+        decayMult: 1.0,    // 🔑 СТАНДАРТНО
+        incomeMult: 1.1
     },
-    old: {
-        id: 'old',
-        name: 'Старый дом',
-        cost: 5000,
-        maxComfort: 50,
-        decayMult: 1.0,   // Нормальная скорость падения
-        incomeMult: 1.2   // +20% к доходу
+    old: { 
+        id: 'old', 
+        name: 'Старый дом', 
+        cost: 5000, 
+        maxComfort: 50, 
+        decayMult: 0.9,    // 🔑 На 10% МЕДЛЕННЕЕ
+        incomeMult: 1.2
     },
-    normal: {
-        id: 'normal',
-        name: 'Обычный дом',
-        cost: 7000,
-        maxComfort: 70,
-        decayMult: 0.8,   // Падает на 20% медленнее
-        incomeMult: 1.3   // +30% к доходу
+    normal: { 
+        id: 'normal', 
+        name: 'Обычный дом', 
+        cost: 10000, 
+        maxComfort: 70, 
+        decayMult: 0.8,    // 🔑 На 20% МЕДЛЕННЕЕ
+        incomeMult: 1.3
     },
-    good: {
-        id: 'good',
-        name: 'Хороший дом',
-        cost: 10000,
-        maxComfort: 90,
-        decayMult: 0.6,   // Падает на 40% медленнее
-        incomeMult: 1.5   // +50% к доходу
+    good: { 
+        id: 'good', 
+        name: 'Хороший дом', 
+        cost: 20000, 
+        maxComfort: 90, 
+        decayMult: 0.6,    // 🔑 На 40% МЕДЛЕННЕЕ
+        incomeMult: 1.5
     },
-    mansion: {
-        id: 'mansion',
-        name: 'Особняк',
-        cost: 15000,
-        maxComfort: 100,
-        decayMult: 0.4,   // Падает на 60% медленнее
-        incomeMult: 2.0   // +100% к доходу
+    mansion: { 
+        id: 'mansion', 
+        name: 'Особняк', 
+        cost: 50000, 
+        maxComfort: 100, 
+        decayMult: 0.5,    // 🔑 На 50% МЕДЛЕННЕЕ
+        incomeMult: 2.0
     }
 };
 
@@ -122,7 +122,7 @@ export const AUTO_EXCHANGE_CONFIG = {
 
 export const INHERITANCE_CONFIG = {
     moneySpentPerBonus: 5000,      // 10 000 💰 = +5% к курсу
-    exchangeRateBonusPerStep: 5,    // +5% за каждый шаг
+    exchangeRateBonusPerStep: 10,    // +5% за каждый шаг
     crystalLevelForBonus: 5,        // Минимальный уровень кристалла для наследия
     abilityLevelForBonus: 5         // Минимальный уровень способности для наследия
 };

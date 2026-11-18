@@ -31,14 +31,12 @@ export function calculateInheritanceBonuses() {
     return { exchangeBonus, inheritanceCrystals, level5AbilitiesCount, moneySpent };
 }
 
-// 🔑 Применение наследия (ПОЛНЫЙ СБРОС + БОНУСЫ)
-export function applyInheritance() {
-    console.log('🧬 [applyInheritance] Начало наследования');
-    
+// 🔑 1. Вызывается при смерти. Сохраняет бонусы в наследие и УДАЛЯЕТ старую игру.
+export function finalizeRunAndSaveLegacy() {
+    console.log('🧬 [finalizeRunAndSaveLegacy] Обработка наследства после смерти');
     const bonuses = calculateInheritanceBonuses();
-    const currentDifficulty = gameState.difficulty || 'medium';
 
-    // 1. Обновляем глобальную статистику
+    // Обновляем статистику
     stats.highestAgeReached = Math.max(stats.highestAgeReached, gameState.ageInYears);
     stats.totalDeaths += 1;
     stats.runsCompleted += 1;
@@ -47,50 +45,112 @@ export function applyInheritance() {
     const maxLvl = allCrystals.filter(c => c).reduce((max, c) => Math.max(max, c.level), 1);
     stats.highestCrystalLevel = Math.max(stats.highestCrystalLevel, maxLvl);
 
-    // 2. Применяем бонусы к объекту наследия
+    // Добавляем бонусы в legacy
     legacy.exchangeRateBonus += bonuses.exchangeBonus;
     
-    if (!Array.isArray(legacy.startingCrystals)) {
-        legacy.startingCrystals = [];
-    }
+    if (!Array.isArray(legacy.startingCrystals)) legacy.startingCrystals = [];
     if (legacy.startingCrystalsCount > 0) {
-        for (let i = 0; i < legacy.startingCrystalsCount; i++) {
-            legacy.startingCrystals.push({ level: 1, income: 1 });
-        }
+        for (let i = 0; i < legacy.startingCrystalsCount; i++) legacy.startingCrystals.push({ level: 1, income: 1 });
         legacy.startingCrystalsCount = 0;
     }
     legacy.startingCrystals = legacy.startingCrystals.concat(bonuses.inheritanceCrystals);
     
     const abilityIds = Object.keys(UPGRADES_CONFIG);
     for (let i = 0; i < bonuses.level5AbilitiesCount; i++) {
-        const randomId = abilityIds[Math.floor(Math.random() * abilityIds.length)];
-        legacy.startingAbilities.push(randomId);
+        legacy.startingAbilities.push(abilityIds[Math.floor(Math.random() * abilityIds.length)]);
     }
 
-    console.log('🧬 [applyInheritance] Обновлённое наследие:', legacy);
-
-    // 3. Сохраняем наследие и статистику
+    // Сохраняем только наследие и статистику
     saveLegacy(legacy);
     saveStats(stats);
 
-    // 4. 🔑 ЖЁСТКОЕ УДАЛЕНИЕ старого сохранения из localStorage
-    clearActiveGame();
-    console.log('🧬 [applyInheritance] Старое активное сохранение удалено из хранилища');
-
-    // 5. 🔑 ПОЛНЫЙ СБРОС gameState в памяти (Глубокая копия, чтобы не осталось старых ссылок на массивы!)
-    Object.assign(gameState, JSON.parse(JSON.stringify(defaultGameState)));
-    gameState.difficulty = currentDifficulty;
-    gameState.isGameOver = false;
-    
-    console.log('🧬 [applyInheritance] gameState полностью сброшен до дефолтного');
-
-    // 6. Применяем стартовые бонусы к ЧИСТОМУ gameState
-    applyStartingBonuses();
-
-    // 7. Сохраняем НОВОЕ, чистое состояние с бонусами
-    saveGame();
-    console.log('🧬 [applyInheritance] Новое состояние сохранено и готово к запуску');
+    // 🔑 КЛЮЧЕВОЕ: Удаляем старое сохранение умершей игры из localStorage
+    import('./storage.js').then(storage => {
+        storage.clearActiveGame();
+        console.log('🧬 Старая игра удалена. В меню будет только "Начать новое поколение"');
+    });
 }
+
+// 🔑 2. Вызывается из главного меню. Создает чистую новую игру с бонусами.
+export function startInheritedGame(difficulty = 'medium') {
+    console.log('🧬 [startInheritedGame] Запуск нового поколения');
+    
+    import('./state.js').then(stateModule => {
+        // 1. Полный сброс gameState (глубокая копия)
+        Object.assign(stateModule.gameState, JSON.parse(JSON.stringify(stateModule.defaultGameState)));
+        stateModule.gameState.difficulty = difficulty;
+        stateModule.gameState.isGameOver = false;
+        
+        // 2. Применяем стартовые бонусы (функция уже есть в этом файле ниже)
+        applyStartingBonuses();
+        
+        // 3. Сохраняем новое, чистое состояние
+        stateModule.saveGame();
+    });
+}
+
+// (Функция applyStartingBonuses остается без изменений там же, где она была)
+
+// 🔑 Применение наследия (ПОЛНЫЙ СБРОС + БОНУСЫ)
+// export function applyInheritance() {
+//     console.log('🧬 [applyInheritance] Начало наследования');
+    
+//     const bonuses = calculateInheritanceBonuses();
+//     const currentDifficulty = gameState.difficulty || 'medium';
+
+//     // 1. Обновляем глобальную статистику
+//     stats.highestAgeReached = Math.max(stats.highestAgeReached, gameState.ageInYears);
+//     stats.totalDeaths += 1;
+//     stats.runsCompleted += 1;
+    
+//     const allCrystals = [...gameState.crystals, ...gameState.crystalsInventory];
+//     const maxLvl = allCrystals.filter(c => c).reduce((max, c) => Math.max(max, c.level), 1);
+//     stats.highestCrystalLevel = Math.max(stats.highestCrystalLevel, maxLvl);
+
+//     // 2. Применяем бонусы к объекту наследия
+//     legacy.exchangeRateBonus += bonuses.exchangeBonus;
+    
+//     if (!Array.isArray(legacy.startingCrystals)) {
+//         legacy.startingCrystals = [];
+//     }
+//     if (legacy.startingCrystalsCount > 0) {
+//         for (let i = 0; i < legacy.startingCrystalsCount; i++) {
+//             legacy.startingCrystals.push({ level: 1, income: 1 });
+//         }
+//         legacy.startingCrystalsCount = 0;
+//     }
+//     legacy.startingCrystals = legacy.startingCrystals.concat(bonuses.inheritanceCrystals);
+    
+//     const abilityIds = Object.keys(UPGRADES_CONFIG);
+//     for (let i = 0; i < bonuses.level5AbilitiesCount; i++) {
+//         const randomId = abilityIds[Math.floor(Math.random() * abilityIds.length)];
+//         legacy.startingAbilities.push(randomId);
+//     }
+
+//     console.log('🧬 [applyInheritance] Обновлённое наследие:', legacy);
+
+//     // 3. Сохраняем наследие и статистику
+//     saveLegacy(legacy);
+//     saveStats(stats);
+
+//     // 4. 🔑 ЖЁСТКОЕ УДАЛЕНИЕ старого сохранения из localStorage
+//     clearActiveGame();
+//     console.log('🧬 [applyInheritance] Старое активное сохранение удалено из хранилища');
+
+//     // 5. 🔑 ПОЛНЫЙ СБРОС gameState в памяти (Глубокая копия, чтобы не осталось старых ссылок на массивы!)
+//     Object.assign(gameState, JSON.parse(JSON.stringify(defaultGameState)));
+//     gameState.difficulty = currentDifficulty;
+//     gameState.isGameOver = false;
+    
+//     console.log('🧬 [applyInheritance] gameState полностью сброшен до дефолтного');
+
+//     // 6. Применяем стартовые бонусы к ЧИСТОМУ gameState
+//     applyStartingBonuses();
+
+//     // 7. Сохраняем НОВОЕ, чистое состояние с бонусами
+//     saveGame();
+//     console.log('🧬 [applyInheritance] Новое состояние сохранено и готово к запуску');
+// }
 
 // 🔑 Применение стартовых бонусов
 function applyStartingBonuses() {

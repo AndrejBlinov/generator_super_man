@@ -7,8 +7,7 @@ import { createCrystalBulk, selectCrystal, getMaxAffordableCrystals } from './cr
 import { initPanels, setOnPanelOpenCallback, openPanel, closePanel } from './panels.js';
 import { canTrain, getTrainingBlockReason, restoreNeedManual, renderNeeds, handleTreatDisease, renderDiseaseBlock } from './needs/index.js';
 import { initCharacter, updateCharacterStateFromGame } from './character/index.js';
-import { applyInheritance } from './inheritance.js';
-import { GAME_VERSION } from './config.js';
+import { GAME_VERSION, HOUSING_CONFIG } from './config.js';
 
 // 🔑 ЗАГРУЗКА ИНСТРУКЦИИ (выполняется 1 раз при старте модуля)
 const helpResponse = await fetch('./include/instruction.html');
@@ -70,8 +69,7 @@ function showMainMenu() {
         btnContainer.appendChild(btn);
     }
 
-    // 🔑 Кнопка "Начать новое поколение" — ТОЛЬКО если есть наследие
-    // 2. Кнопка "С бонусами наследия" (если есть бонусы)
+    // 2. Кнопка "Начать новое поколение" (если есть бонусы)
     if (hasLeg) {
         const btn = document.createElement('button');
         btn.className = 'menu-btn secondary';
@@ -87,14 +85,14 @@ function showMainMenu() {
         btn.textContent = `🧬 Начать новое поколение (+${legacy.exchangeRateBonus}% курс, ${crystalsCount} крист.${crystalLevels ? ` [${crystalLevels}${moreText}]` : ''})`;
 
         btn.onclick = () => {
-            // 1. Применяем наследие (внутри уже есть полный сброс и сохранение нового состояния)
-            applyInheritance();
+            // 1. Запускаем новую игру с применением бонусов
+            import('./inheritance.js').then(module => {
+                module.startInheritedGame(gameState.difficulty || 'medium');
+            });
 
-            // 2. Переключаем экраны
+            // 2. Переключаем экраны и запускаем движок
             menu.style.display = 'none';
-            app.style.display = ''; // Пустая строка возвращает управление CSS
-
-            // 3. Запускаем движок с УЖЕ обновлённым и чистым gameState
+            app.style.display = '';
             startGameEngine();
         };
         btnContainer.appendChild(btn);

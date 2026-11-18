@@ -7,8 +7,15 @@ export function decayNeed(needId) {
     const config = NEEDS_CONFIG[needId];
     let decay = config.decayPerDay;
 
+    // 🔑 Для здоровья — бонус от болезней
     if (needId === 'health') {
         decay += getDiseaseHealthDecayBonus();
+    }
+
+    // 🔑 Для комфорта — применяем множитель жилья
+    if (needId === 'comfort') {
+        const housing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
+        decay = decay * housing.decayMult;
     }
 
     gameState.needs[needId] = Math.max(0, gameState.needs[needId] - decay);
@@ -16,6 +23,17 @@ export function decayNeed(needId) {
 
 export function restoreNeed(needId, amount = null) {
     const config = NEEDS_CONFIG[needId];
+
+    let currentMax = config.max;
+    if (needId === 'comfort') {
+        const housing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
+        currentMax = housing.maxComfort;
+    }
+
+    if (gameState.needs[needId] >= currentMax) {
+        return false;
+    }
+
     const restoreAmount = amount !== null ? amount : config.restoreAmount;
 
     // 1. Проверяем, хватает ли денег
@@ -49,9 +67,17 @@ export function applyAutoSpend(needId) {
     if (!gameState.autoSpendEnabled) return;
 
     const config = NEEDS_CONFIG[needId];
+    
+    // 🔑 Определяем реальный максимум для комфорта
+    let currentMax = config.max;
+    if (needId === 'comfort') {
+        const housing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
+        currentMax = housing.maxComfort;
+    }
 
-    if (gameState.needs[needId] < config.max && gameState.money >= config.restoreCost) {
-        const deficit = config.max - gameState.needs[needId];
+    // Проверяем, есть ли куда восстанавливать и хватает ли денег
+    if (gameState.needs[needId] < currentMax && gameState.money >= config.restoreCost) {
+        const deficit = currentMax - gameState.needs[needId];
         const restoresNeeded = Math.ceil(deficit / config.restoreAmount);
         const affordableRestores = Math.floor(gameState.money / config.restoreCost);
         const restoresToApply = Math.min(restoresNeeded, affordableRestores);
@@ -59,15 +85,9 @@ export function applyAutoSpend(needId) {
         if (restoresToApply > 0) {
             gameState.money -= restoresToApply * config.restoreCost;
             
-            // 🔑 ИСПРАВЛЕНИЕ: Ограничиваем комфорт лимитом жилья, а не config.max (100)
+            // 🔑 Ограничиваем реальным максимумом жилья, а не config.max (100)
             let newValue = gameState.needs[needId] + restoresToApply * config.restoreAmount;
-            
-            if (needId === 'comfort') {
-                const currentHousing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
-                newValue = Math.min(currentHousing.maxComfort, newValue);
-            } else {
-                newValue = Math.min(config.max, newValue);
-            }
+            newValue = Math.min(currentMax, newValue);
             
             gameState.needs[needId] = newValue;
         }
@@ -90,16 +110,8 @@ export function processNeedsTick() {
         restored: []
     };
 
-    const currentHousing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
-    const baseComfortDecay = 1.0; // Твое базовое значение падения комфорта за тик
-    const actualDecay = baseComfortDecay * currentHousing.decayMult;
-    gameState.needs.comfort = Math.max(0, gameState.needs.comfort - actualDecay);
-
-    const maxPossibleComfort = currentHousing.maxComfort;
-    if (gameState.needs.comfort > maxPossibleComfort) {
-        gameState.needs.comfort = maxPossibleComfort;
-    }
-
+    // 🔑 ВСЁ падение потребностей теперь идёт через decayNeed
+    // (включая множитель жилья для комфорта)
     Object.keys(NEEDS_CONFIG).forEach(needId => {
         decayNeed(needId);
 
@@ -115,12 +127,20 @@ export function processNeedsTick() {
         }
     });
 
+    // 🔑 ЖЁСТКИЙ ПОТОЛОК: комфорт не может быть выше лимита жилья
+    const currentHousing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
+    if (gameState.needs.comfort > currentHousing.maxComfort) {
+        gameState.needs.comfort = currentHousing.maxComfort;
+    }
+
     return results;
 }
 
 export function canTrain() {
-    // 🔑 Проверка болезни
-    if (isDiseaseBlockingTraining()) return false;
+    // Проверка на болезнь (если есть такая функция)
+    if (typeof isDiseaseBlockingTraining === 'function' && isDiseaseBlockingTraining()) {
+        return false;
+    }
 
     const hungerPercent = (gameState.needs.hunger / NEEDS_CONFIG.hunger.max) * 100;
     if (hungerPercent < 30) return false;
@@ -128,28 +148,37 @@ export function canTrain() {
     const healthPercent = (gameState.needs.health / NEEDS_CONFIG.health.max) * 100;
     if (healthPercent < 40) return false;
 
+    // 🔑 ГЛАВНОЕ: Запрет только при 0 или ниже
+    if (gameState.needs.comfort <= 0) {
+        return false;
+    }
+
     return true;
 }
 
 export function getTrainingBlockReason() {
-    // 🔑 Сначала проверяем болезнь
-    if (isDiseaseBlockingTraining()) {
-        const diseases = getActiveDiseasesInfo();
-        const blocking = diseases.filter(d => d.effects.blockTraining);
-        if (blocking.length > 0) {
-            return `Персонаж болен (${blocking.map(d => d.name).join(', ')})! Нужно лечение.`;
+    if (typeof isDiseaseBlockingTraining === 'function' && isDiseaseBlockingTraining()) {
+        if (typeof getActiveDiseasesInfo === 'function') {
+            const diseases = getActiveDiseasesInfo();
+            const blocking = diseases.filter(d => d.effects && d.effects.blockTraining);
+            if (blocking.length > 0) {
+                return `Персонаж болен (${blocking.map(d => d.name).join(', ')})! Нужно лечение.`;
+            }
         }
     }
 
     const hungerPercent = (gameState.needs.hunger / NEEDS_CONFIG.hunger.max) * 100;
-    const comfortPercent = (gameState.needs.comfort / NEEDS_CONFIG.comfort.max) * 100;
     const healthPercent = (gameState.needs.health / NEEDS_CONFIG.health.max) * 100;
 
     if (hungerPercent < 30) return "Персонаж слишком голоден!";
-    if (comfortPercent < 30) return "Персонаж бездомный! Восстановите комфорт.";
     if (healthPercent < 40) return "Персонаж слишком болен!";
+    
+    // 🔑 ГЛАВНОЕ: Сообщение только при реальном нуле
+    if (gameState.needs.comfort <= 0) {
+        return "Комфорт на нуле! Персонаж не может тренироваться в таких ужасных условиях.";
+    }
 
-    return "Персонаж не может тренироваться!";
+    return "Можно тренироваться";
 }
 
 export function getDefaultNeeds() {

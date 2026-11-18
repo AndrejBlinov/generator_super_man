@@ -9,17 +9,22 @@ let selectedCrystalZone = null;
 export function calculatePassiveIncome() {
     let baseIncome = 0;
 
-    gameState.crystals.forEach(c => { if (c) baseIncome += c.income; });
-    gameState.crystalsInventory.forEach(c => { if (c) baseIncome += c.income; });
+    // 🔑 Считаем доход ТОЛЬКО от активных слотов (gameState.crystals)
+    if (gameState.crystals && Array.isArray(gameState.crystals)) {
+        gameState.crystals.forEach(crystal => {
+            if (crystal && typeof crystal.income === 'number') {
+                baseIncome += crystal.income;
+            }
+        });
+    }
 
+    // 🔑 Применяем множитель от текущего жилья
     const currentHousing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
+    
+    // Округляем вниз, чтобы не было дробных чисел
     const finalIncome = Math.floor(baseIncome * currentHousing.incomeMult);
 
     return finalIncome;
-
-    // return gameState.crystals.reduce((sum, crystal) => {
-    //     return sum + (crystal ? crystal.income : 0);
-    // }, 0);
 }
 
 export function createCrystal() {
