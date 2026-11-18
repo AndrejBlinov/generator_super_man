@@ -64,9 +64,21 @@ function showMainMenu() {
 
     // 2. Кнопка "Начать новое поколение"
     if (hasLeg) {
+        // --- Чистая кнопка без текста в скобках ---
         const btn = document.createElement('button');
         btn.className = 'menu-btn secondary';
+        btn.textContent = '🧬 Начать новое поколение';
+        btn.onclick = () => {
+            openPanel('genderPanel');
+            window.pendingInheritance = true;
+        };
+        btnContainer.appendChild(btn);
 
+        // --- Аккордеон с наследуемой статистикой ---
+        const accordion = document.createElement('div');
+        accordion.className = 'legacy-accordion';
+        
+        // Собираем данные из объекта legacy
         const crystalsCount = (legacy.startingCrystals || []).length;
         const crystalLevels = (legacy.startingCrystals || [])
             .map(c => c.level)
@@ -74,19 +86,54 @@ function showMainMenu() {
             .slice(0, 3)
             .join(', ');
         const moreText = crystalsCount > 3 ? ` +${crystalsCount - 3} ещё` : '';
+        const crystalText = crystalsCount > 0 ? `${crystalsCount} шт. ${crystalLevels ? `[${crystalLevels}${moreText}]` : ''}` : 'Нет';
 
-        btn.textContent = `🧬 Начать новое поколение (+${legacy.exchangeRateBonus}% курс, ${crystalsCount} крист.${crystalLevels ? ` [${crystalLevels}${moreText}]` : ''})`;
+        const housingName = HOUSING_CONFIG[legacy.inheritedHousing]?.name || 'Картонная коробка';
+        const exchangeText = legacy.exchangeRateBonus > 0 ? `+${legacy.exchangeRateBonus}%` : 'Нет';
 
-        btn.onclick = () => {
-            // 🔑 Сбрасываем старые флаги
-            window.pendingNewGame = false;
-            window.pendingDifficultyAfterInheritance = false;
+        accordion.innerHTML = `
+            <button class="accordion-trigger" type="button">
+                <span>📦 Показать наследуемую статистику</span>
+                <span class="accordion-icon">▼</span>
+            </button>
+            <div class="accordion-content">
+                <div class="legacy-stats-grid">
+                    <div class="legacy-stat-item">
+                        <span class="legacy-icon">💰</span>
+                        <span class="legacy-label">Бонус к обмену</span>
+                        <span class="legacy-value">${exchangeText}</span>
+                    </div>
+                    <div class="legacy-stat-item">
+                        <span class="legacy-icon">💎</span>
+                        <span class="legacy-label">Кристаллы</span>
+                        <span class="legacy-value">${crystalText}</span>
+                    </div>
+                    <div class="legacy-stat-item">
+                        <span class="legacy-icon">🏠</span>
+                        <span class="legacy-label">Дом</span>
+                        <span class="legacy-value">${housingName}</span>
+                    </div>
+                </div>
+            </div>
+        `;
 
-            // 🔑 Сначала выбираем пол
-            openPanel('genderPanel');
-            window.pendingInheritance = true;
-        };
-        btnContainer.appendChild(btn);
+        // Логика открытия/закрытия аккордеона
+        const trigger = accordion.querySelector('.accordion-trigger');
+        trigger.addEventListener('click', () => {
+            const isActive = accordion.classList.toggle('active');
+            const textSpan = trigger.querySelector('span:first-child');
+            const iconSpan = trigger.querySelector('.accordion-icon');
+            
+            if (isActive) {
+                textSpan.textContent = '📦 Скрыть наследуемую статистику';
+                iconSpan.style.transform = 'rotate(180deg)';
+            } else {
+                textSpan.textContent = '📦 Показать наследуемую статистику';
+                iconSpan.style.transform = 'rotate(0deg)';
+            }
+        });
+
+        btnContainer.appendChild(accordion);
     }
 
     // 3. Кнопка "Новая игра"
