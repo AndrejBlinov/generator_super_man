@@ -63,11 +63,16 @@ export function loadLegacy() {
 }
 
 export function hasLegacy() {
-    const legacy = loadLegacy();
-    if (!legacy) return false;
-    return legacy.exchangeRateBonus > 0 ||
-           legacy.startingCrystalsCount > 0 ||
-           (legacy.startingAbilities && legacy.startingAbilities.length > 0);
+    // Загружаем актуальные данные наследия из localStorage
+    const savedLegacy = loadLegacy();
+    if (!savedLegacy) return false;
+
+    // 🔑 ТЕПЕРЬ ПРОВЕРЯЕМ ВСЕ ТРИ УСЛОВИЯ НАСЛЕДИЯ:
+    const hasExchangeBonus = (savedLegacy.exchangeRateBonus || 0) > 0;
+    const hasCrystals = Array.isArray(savedLegacy.startingCrystals) && savedLegacy.startingCrystals.length > 0;
+    const hasBetterHousing = savedLegacy.inheritedHousing && savedLegacy.inheritedHousing !== 'box';
+
+    return hasExchangeBonus || hasCrystals || hasBetterHousing;
 }
 
 export function clearLegacy() {
