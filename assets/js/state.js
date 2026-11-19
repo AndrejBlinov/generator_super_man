@@ -71,15 +71,15 @@ export const defaultGameState = {
 
     stats: { totalMoneyEarnedThisRun: 0 }, // Для отслеживания трат внутри одного прохождения
 
-    isGameOver: false,
-
     // 🔑 НОВЫЕ ПОЛЯ ДЛЯ СИСТЕМЫ СОБЫТИЙ
     karma: 40, // Будет перезаписано сложностью при старте
     flags: [], // Массив строк: ['married', 'engaged', 'has_dog']
     scheduledEvent: null, // { eventId, triggerAtAbsoluteDay, context }
     activeEvent: null, // { eventId, variantKey, choices } (если не null, игра на паузе)
     lastEventDay: 0, // Абсолютный день последнего события (для кулдауна)
-    pet: null 
+    pet: null, 
+
+    isGameOver: false,
 };
 
 // Текущее состояние игры
@@ -202,8 +202,9 @@ export function resetActiveGame(difficulty = 'medium') {
         ageInYears: diffConfig.startAge,
         absoluteAgeInYears: diffConfig.startAge,
         diseaseImmunityTicks: diffConfig.diseaseImmunityDays,
-        money: diffConfig.startMoney || 0,          // 🔑 Стартовые деньги
-        housing: 'box',                              // 🔑 Новая игра всегда с коробки
+        karma: diffConfig.startKarma || 40,
+        money: diffConfig.startMoney || 0,        
+        housing: 'box',
         lastSaveTimestamp: Date.now()
     };
 
@@ -227,11 +228,8 @@ export function resetAll() {
 }
 
 export function handleDeath() {
-    console.log('💀 [handleDeath] Персонаж умер. Возраст:', gameState.ageInYears);
 
     // Обновляем статистику
-    stats.totalDeaths += 1;
-    stats.runsCompleted += 1;
     stats.highestAgeReached = Math.max(stats.highestAgeReached, gameState.ageInYears);
     stats.totalMoneyEarnedAllTime += (gameState.stats?.totalMoneyEarnedThisRun || 0);
 

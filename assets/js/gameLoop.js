@@ -21,6 +21,7 @@ export function startGameLoop() {
         if (gameState.activeEvent) {
             return; 
         }
+         if (document.querySelector('.event-modal-backdrop.active')) return;
 
         // 🔑 2. ПАУЗА ПРИ ОТКРЫТЫХ ПАНЕЛЯХ
         const isAnyPanelOpen = document.querySelector('.side-panel.is-open') !== null;
@@ -98,14 +99,14 @@ export function startGameLoop() {
 
         // 🔑 10. ЛОГИКА ПИТОМЦЕВ (Собака и др.)
         if (gameState.pet) {
-            // Увеличиваем расход еды (например, на 0.5 за тик)
-            gameState.needs.food = Math.max(0, gameState.needs.food - 0.5);
+            gameState.needs.hunger = Math.max(0, gameState.needs.hunger - 0.5);
             
             gameState.pet.daysLived++;
             if (gameState.pet.daysLived >= gameState.pet.lifespanDays) {
                 showMessage(`😢 Ваш питомец (${gameState.pet.type === 'dog' ? 'пёс' : gameState.pet.type}) умер от старости.`);
-                gameState.karma = Math.max(0, gameState.karma - 5); // Немного грустно
-                gameState.pet = null; // Удаляем питомца
+                gameState.karma = Math.max(0, gameState.karma - 5);
+                gameState.flags = gameState.flags.filter(f => f !== "has_dog"); // Чистим флаг
+                gameState.pet = null;
             }
         }
 

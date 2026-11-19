@@ -43,7 +43,7 @@ export const COMPLEX_EVENTS = {
     },
     "marriage_proposal": {
         id: "marriage_proposal", icon: "💍",
-        conditions: { minAge: 20, maxAge: 65, requiresFlagPresent: "crisis_resolved", requiresFlagAbsent: "engaged", weight: 5 },
+        conditions: { minAge: 20, maxAge: 65, requiresFlagPresent: "crisis_resolved", requiresFlagAbsent: "married", weight: 5 },
         title: "Время сделать следующий шаг", description: "Отношения крепки как никогда. Вы чувствуете, что пора предложить руку и сердце.",
         choices: [
             { id: "ring_cheap", text: "Купить простое кольцо", effects: { moneyScaled: -1000, karma: 5, message: "Скромно, но с любовью.", setFlag: "engaged", scheduleEvent: { eventId: "wedding_planning", delayDays: 30, context: { ringTier: "cheap" } } } },
@@ -140,7 +140,7 @@ export const COMPLEX_EVENTS = {
     // ==========================================
     "roof_leak": {
         id: "roof_leak", icon: "🌧️",
-        conditions: { requiresFlagAbsent: "box", requiresFlagAbsent: "mansion", weight: 5 },
+        conditions: { minHousing: "shed", weight: 5 },
         title: "Протечка крыши", description: "После ливня на потолке появилось желтое пятно, которое начинает капать.",
         choices: [
             { id: "fix_now", text: "Вызвать мастера", effects: { moneyScaled: -1200, comfort: 5, message: "Проблема решена профессионально." } },
