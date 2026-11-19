@@ -32,6 +32,7 @@ export const EVENTS_CONFIG = {
     "first_date": {
         id: "first_date",
         icon: "🍷",
+        title: "Первое свидание",
         conditions: { requiresFlagPresent: "met_stranger", isScheduled: true },
         getDynamicTitle: () => "Первое свидание",
         getDynamicDescription: () => "Прошло несколько дней. Вы договариваетесь о встрече. Атмосфера немного неловкая, но перспективная.",
@@ -70,6 +71,7 @@ export const EVENTS_CONFIG = {
     "relationship_start": {
         id: "relationship_start",
         icon: "❤️",
+        title: "Начало романа",
         conditions: { requiresFlagPresent: "first_date_success", isScheduled: true },
         getDynamicTitle: () => "Начало романа",
         getDynamicDescription: () => "Вы официально начали встречаться! Жизнь заиграла новыми красками, но и расходы немного выросли.",

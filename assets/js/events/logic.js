@@ -20,8 +20,8 @@ export function checkAndTriggerDailyEvent() {
         }
     }
 
-    // 4. Шанс выпадения случайного события (например, 8% в день, если прошел кулдаун)
-    if (Math.random() > 0.08) return;
+    // 4. Шанс выпадения случайного события (например, 3% в день, если прошел кулдаун)
+    if (Math.random() > 0.03) return;
 
     // 5. Выбираем событие на основе весов
     const availableEvents = getAvailableEvents();
@@ -90,26 +90,34 @@ function activateEvent(eventId) {
     let variantKey = 'default';
     let displayData = config;
 
-    // Логика адаптации под карму
+    // 1. Определяем вариант (good/bad) на основе кармы
     if (config.variants) {
         if (config.variants.bad && gameState.karma <= (config.variants.bad.karmaMax || 39)) {
             variantKey = 'bad';
-            displayData = { ...config, ...config.variants.bad }; // Объединяем, чтобы взять title/description/choices
+            displayData = { ...config, ...config.variants.bad };
         } else if (config.variants.good && gameState.karma >= (config.variants.good.karmaMin || 40)) {
             variantKey = 'good';
             displayData = { ...config, ...config.variants.good };
         }
     }
 
-    // Динамические заголовки (для цепных событий)
-    let finalTitle = displayData.title;
-    let finalDesc = displayData.description;
+    // 2. Получаем контекст (безопасно, даже если его нет)
+    const ctx = (gameState.scheduledEvent && gameState.scheduledEvent.context) ? gameState.scheduledEvent.context : {};
 
-    // Если это цепное событие и у него есть функции генерации текста
-    if (config.isScheduled && gameState.scheduledEvent?.context) {
-        const ctx = gameState.scheduledEvent.context;
-        if (typeof displayData.getDynamicTitle === 'function') finalTitle = displayData.getDynamicTitle(ctx);
-        if (typeof displayData.getDynamicDescription === 'function') finalDesc = displayData.getDynamicDescription(ctx);
+    // 3. Вычисляем заголовок и описание (Приоритет: Динамическая функция > Статическое поле > Фоллбек)
+    let finalTitle = "Событие";
+    let finalDesc = "Что-то произошло...";
+
+    if (typeof displayData.getDynamicTitle === 'function') {
+        finalTitle = displayData.getDynamicTitle(ctx);
+    } else if (displayData.title) {
+        finalTitle = displayData.title;
+    }
+
+    if (typeof displayData.getDynamicDescription === 'function') {
+        finalDesc = displayData.getDynamicDescription(ctx);
+    } else if (displayData.description) {
+        finalDesc = displayData.description;
     }
 
     gameState.activeEvent = {
@@ -121,7 +129,6 @@ function activateEvent(eventId) {
         choices: displayData.choices
     };
 
-    // Обновляем UI, чтобы показать модалку и поставить игру на паузу
     if (typeof window.renderEventModal === 'function') {
         window.renderEventModal();
     }
@@ -152,24 +159,54 @@ export function resolveEventChoice(choiceIndex) {
         gameState.money += gain;
     }
 
-    // 3. Управление флагами
+    // 3. Азартные игры (Gamble)
+    if (effects.gamble) {
+        const g = effects.gamble;
+        if (g.cost > 0 && gameState.money < g.cost) {
+            // Если не хватает денег, прерываем выбор и показываем ошибку в модалке
+            if (typeof window.showEventResult === 'function') {
+                window.showEventResult("❌ Недостаточно денег для этого действия!");
+            }
+            return; 
+        }
+        
+        gameState.money -= g.cost;
+        if (Math.random() < g.winChance) {
+            const winAmount = g.winAmount || Math.floor(g.cost * g.winMult);
+            gameState.money += winAmount;
+            effects._resultMessage = `🎉 ${g.winMsg} (+${winAmount} 💰)`;
+        } else {
+            effects._resultMessage = `😞 ${g.loseMsg}`;
+        }
+    }
+
+    // 4. Добавление бесплатного кристалла (для НЛО и т.д.)
+    if (effects.addFreeCrystal) {
+        import('../crystals.js').then(module => {
+            const newCrystal = { id: Date.now(), level: 1, exp: 0 };
+            const emptySlot = gameState.crystalsInventory.findIndex(c => c === null);
+            if (emptySlot !== -1) {
+                gameState.crystalsInventory[emptySlot] = newCrystal;
+                effects._crystalMsg = " 💎 Вы получили странный кристалл!";
+            } else {
+                effects._crystalMsg = " 💎 Инвентарь полон, кристалл потерян.";
+            }
+        });
+    }
+
+    // 5. Управление флагами и питомцами
     if (effects.setFlag && !gameState.flags.includes(effects.setFlag)) {
         gameState.flags.push(effects.setFlag);
     }
     if (effects.removeFlag) {
         gameState.flags = gameState.flags.filter(f => f !== effects.removeFlag);
     }
-
-    // 4. Добавление питомца
     if (effects.setPet) {
-        gameState.pet = {
-            type: effects.setPet.type,
-            lifespanDays: effects.setPet.lifespanDays,
-            daysLived: 0
-        };
+        gameState.pet = { type: effects.setPet.type, lifespanDays: effects.setPet.lifespanDays, daysLived: 0 };
+        if (!gameState.flags.includes("has_dog")) gameState.flags.push("has_dog");
     }
 
-    // 5. Планирование цепного события
+    // 6. Планирование цепного события
     if (effects.scheduleEvent) {
         const currentAbsoluteDay = (gameState.absoluteAgeInYears * 365) + gameState.absoluteCurrentDayInYear;
         gameState.scheduledEvent = {
@@ -179,21 +216,24 @@ export function resolveEventChoice(choiceIndex) {
         };
     }
 
-    // 6. Показываем сообщение и очищаем активное событие
-    if (effects.message) {
-        showMessage(effects.message);
-    }
+    // 7. Формируем итоговое сообщение
+    let finalMessage = effects.message || "Вы сделали свой выбор.";
+    if (effects._resultMessage) finalMessage = effects._resultMessage;
+    if (effects._crystalMsg) finalMessage += effects._crystalMsg;
 
+    // 8. Обновляем день последнего события
     const currentAbsoluteDay = (gameState.absoluteAgeInYears * 365) + gameState.absoluteCurrentDayInYear;
     gameState.lastEventDay = currentAbsoluteDay;
+    
+    // Очищаем активное событие, но НЕ закрываем модалку сразу!
     gameState.activeEvent = null;
 
-    // Скрываем модалку и возобновляем игру
-    if (typeof window.closeEventModal === 'function') {
-        window.closeEventModal();
+    // 9. Показываем экран результата внутри той же модалки
+    if (typeof window.showEventResult === 'function') {
+        window.showEventResult(finalMessage);
     }
-
-    // Принудительно обновляем UI после изменений
+    
+    // Принудительно обновляем UI на фоне
     if (typeof window.updateUI === 'function') {
         window.updateUI();
     }
