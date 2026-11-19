@@ -32,34 +32,30 @@ export function calculateInheritanceBonuses() {
 }
 
 // 🔑 1. Вызывается при смерти. Сохраняет бонусы в наследие и УДАЛЯЕТ старую игру.
+// 🔑 1. Вызывается при смерти. Сохраняет бонусы в наследие и УДАЛЯЕТ старую игру.
 export function finalizeRunAndSaveLegacy() {
     console.log('🧬 [finalizeRunAndSaveLegacy] Обработка наследства после смерти');
     const bonuses = calculateInheritanceBonuses();
 
-    // Обновляем статистику
-    stats.highestAgeReached = Math.max(stats.highestAgeReached, gameState.ageInYears);
-    stats.totalDeaths += 1;
-    stats.runsCompleted += 1;
-    
-    const allCrystals = [...gameState.crystals, ...gameState.crystalsInventory];
-    const maxLvl = allCrystals.filter(c => c).reduce((max, c) => Math.max(max, c.level), 1);
-    stats.highestCrystalLevel = Math.max(stats.highestCrystalLevel, maxLvl);
+    // 🔑 Статистика (смерти, поколения, рекорды) уже обновлена в handleDeath() — не дублируем!
 
     // Добавляем бонусы в legacy
     legacy.exchangeRateBonus += bonuses.exchangeBonus;
-    legacy.inheritedHousing = gameState.housing || 'box'; // 🔑 НОВОЕ: сохраняем текущее жилье в наследие
-    
+
     if (!Array.isArray(legacy.startingCrystals)) legacy.startingCrystals = [];
     if (legacy.startingCrystalsCount > 0) {
         for (let i = 0; i < legacy.startingCrystalsCount; i++) legacy.startingCrystals.push({ level: 1, income: 1 });
         legacy.startingCrystalsCount = 0;
     }
     legacy.startingCrystals = legacy.startingCrystals.concat(bonuses.inheritanceCrystals);
-    
+
     const abilityIds = Object.keys(UPGRADES_CONFIG);
     for (let i = 0; i < bonuses.level5AbilitiesCount; i++) {
         legacy.startingAbilities.push(abilityIds[Math.floor(Math.random() * abilityIds.length)]);
     }
+
+    // 🔑 НОВОЕ: Наследуем дом этого поколения
+    legacy.inheritedHousing = gameState.housing || 'box';
 
     // Сохраняем только наследие и статистику
     saveLegacy(legacy);
@@ -160,35 +156,42 @@ function applyStartingBonuses() {
 }
 
 // 🔑 Текст превью наследия (ОБЯЗАТЕЛЬНО НУЖЕН ДЛЯ UI)
+// 🔑 Текст превью наследия (ОБЯЗАТЕЛЬНО НУЖЕН ДЛЯ UI)
+// 🔑 Показывает ФАКТИЧЕСКОЕ накопленное наследие в виде карточек
 export function getInheritancePreviewText() {
-    const bonuses = calculateInheritanceBonuses();
-    let text = `<p>Вы собираетесь начать новое поколение. Текущий прогресс будет сброшен, но вы получите:</p><ul>`;
-    
-    if (bonuses.exchangeBonus > 0) {
-        text += `<li>💱 <strong>+${bonuses.exchangeBonus}%</strong> к курсу обмена (всего: +${legacy.exchangeRateBonus + bonuses.exchangeBonus}%)</li>`;
-    } else {
-        text += `<li>💱 Потрачено ${bonuses.moneySpent} 💰 (нужно ${INHERITANCE_CONFIG.moneySpentPerBonus} для бонуса)</li>`;
+    const crystals = Array.isArray(legacy.startingCrystals) ? legacy.startingCrystals : [];
+    const abilities = Array.isArray(legacy.startingAbilities) ? legacy.startingAbilities : [];
+    const housingId = legacy.inheritedHousing || 'box';
+    const housing = HOUSING_CONFIG[housingId] || HOUSING_CONFIG.box;
+    const hasExchange = (legacy.exchangeRateBonus || 0) > 0;
+    const hasHousing = housingId !== 'box';
+
+    const cards = [];
+
+    if (hasExchange) {
+        cards.push({ icon: '💱', label: 'Курс обмена', value: `+${legacy.exchangeRateBonus}%` });
+    }
+    if (crystals.length > 0) {
+        const list = crystals.map(c => `${c.level} ур.`).join(', ');
+        cards.push({ icon: '💎', label: 'Кристаллы', value: `${crystals.length} шт. (${list})` });
+    }
+    if (abilities.length > 0) {
+        cards.push({ icon: '🧬', label: 'Способности', value: `${abilities.length} шт.` });
+    }
+    if (hasHousing) {
+        cards.push({ icon: '🏠', label: 'Дом', value: housing.name });
     }
 
-    if (bonuses.inheritanceCrystals.length > 0) {
-        const crystalList = bonuses.inheritanceCrystals
-            .map(c => `кристалл ${c.level} ур. (+${c.income} ОЭ/день)`)
-            .join(', ');
-        text += `<li>💎 <strong>${bonuses.inheritanceCrystals.length}</strong> кристалл(ов): ${crystalList}</li>`;
-    } else {
-        text += `<li>💎 Нет кристаллов 5+ уровня для наследия</li>`;
+    if (cards.length === 0) {
+        return `<div class="legacy-empty">⚠️ Пока нет бонусов. Прогресс этого поколения сохранится в следующем!</div>`;
     }
 
-    if (bonuses.level5AbilitiesCount > 0) {
-        text += `<li>🧬 <strong>${bonuses.level5AbilitiesCount}</strong> случайная(ых) способность(ей) 1-го уровня</li>`;
-    }
-
-    if (bonuses.exchangeBonus === 0 && bonuses.inheritanceCrystals.length === 0 && bonuses.level5AbilitiesCount === 0) {
-        text += `<li>⚠️ <em>Пока нет бонусов. Накопите больше ресурсов!</em></li>`;
-    }
-
-    text += `</ul>`;
-    text += `<p><strong>Статистика:</strong> Поколений: ${stats.runsCompleted + 1}, Смертей: ${stats.totalDeaths}</p>`;
-    
-    return text;
+    return `<div class="legacy-cards">` + cards.map(c => `
+        <div class="legacy-card">
+            <span class="legacy-card-icon">${c.icon}</span>
+            <div class="legacy-card-text">
+                <span class="legacy-card-label">${c.label}</span>
+                <span class="legacy-card-value">${c.value}</span>
+            </div>
+        </div>`).join('') + `</div>`;
 }

@@ -1,4 +1,4 @@
-import { gameState, getCurrentExchangeRate } from './state.js';
+import { gameState, legacy, stats, defaultGameState, saveGame, resetAll , getCurrentExchangeRate } from './state.js';
 import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST, DIFFICULTY_CONFIG, HOUSING_CONFIG } from './config.js';
 import { calculatePassiveIncome, getSelection, getMaxAffordableCrystals } from './crystals.js';
 import { calculateBulkCost, getMaxAffordableCount, getMaxAffordableItemCount } from './upgrades.js';
@@ -583,48 +583,76 @@ export function showInheritanceModal(isAfterDeath = false) {
     });
 }
 
-// 🔑 НОВАЯ ФУНКЦИЯ: Экран смерти с кнопкой "Вернуться в меню"
+// 🔑 ЭКРАН СМЕРТИ: наследие фиксируется всегда, кнопки имеют РАЗНЫЙ функционал
 export function showDeathScreen(reason) {
+    // 1. Фиксируем наследие СРАЗУ — независимо от выбора кнопки
+    try { finalizeRunAndSaveLegacy(); } catch (e) { console.error(e); }
+
     const overlay = document.createElement('div');
     overlay.className = 'game-over';
+
+    // 2. Статистика
+    const diffNames = { easy: 'Лёгкая 🌱', medium: 'Средняя ⚖️', hard: 'Тяжёлая 💀' };
+    const karma = gameState.karma ?? 50;
+    const karmaColor = karma < 35 ? '#e53e3e' : (karma > 65 ? '#38a169' : '#d69e2e');
+    const karmaLabel = karma < 35 ? 'Тёмная' : (karma > 65 ? 'Светлая' : 'Нейтральная');
 
     let inheritancePreview = '';
     try {
         inheritancePreview = getInheritancePreviewText();
     } catch (e) {
-        inheritancePreview = '<p>Бонусы недоступны.</p>';
+        inheritancePreview = '<div class="legacy-empty">Бонусы недоступны.</div>';
     }
 
     overlay.innerHTML = `
-        <div class="game-over-content" style="max-width: 600px; text-align: left; max-height: 85vh; overflow-y: auto;">
-            <h2 style="text-align: center; color: #dc3545; margin-bottom: 15px;">💀 Игра окончена</h2>
-            <p style="text-align: center; font-size: 18px; margin-bottom: 15px;"><strong>${reason}</strong></p>
-            
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                <p style="margin: 0 0 5px 0;"><strong>📊 Статистика этого поколения:</strong></p>
-                <p style="margin: 0;">Прожито лет: <strong>${gameState.ageInYears}</strong></p>
-                <p style="margin: 0;">Сложность: <strong>${gameState.difficulty}</strong></p>
-                <p style="margin: 0;">Всего заработано ОЭ: <strong>${Math.round(gameState.totalPointsEarned)}</strong></p>
-                <p style="margin: 0;">Всего заработано 💰: <strong>${Math.round(gameState.stats?.totalMoneyEarnedThisRun || 0)}</strong></p>
+        <div class="game-over-content death-screen">
+            <h2 class="death-title">💀 Игра окончена</h2>
+            <p class="death-reason">${reason}</p>
+
+            <div class="death-stats">
+                <h3>📊 Итоги поколения</h3>
+                <div class="death-stat-grid">
+                    <div class="death-stat">
+                        <span class="ds-label">Возраст</span>
+                        <span class="ds-value">${gameState.ageInYears} лет</span>
+                    </div>
+                    <div class="death-stat">
+                        <span class="ds-label">Сложность</span>
+                        <span class="ds-value">${diffNames[gameState.difficulty] || 'Средняя ⚖️'}</span>
+                    </div>
+                    <div class="death-stat">
+                        <span class="ds-label">Карма</span>
+                        <span class="ds-value" style="color:${karmaColor}">${karma} · ${karmaLabel}</span>
+                    </div>
+                    <div class="death-stat">
+                        <span class="ds-label">Заработано ОЭ</span>
+                        <span class="ds-value">${Math.round(gameState.totalPointsEarned).toLocaleString('ru-RU')}</span>
+                    </div>
+                    <div class="death-stat">
+                        <span class="ds-label">Заработано 💰</span>
+                        <span class="ds-value">${Math.round(gameState.stats?.totalMoneyEarnedThisRun || 0).toLocaleString('ru-RU')}</span>
+                    </div>
+                    <div class="death-stat">
+                        <span class="ds-label">Поколение №</span>
+                        <span class="ds-value">${stats.runsCompleted}</span>
+                    </div>
+                </div>
             </div>
-            
-            <div style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); padding: 15px; border-radius: 10px; border-left: 4px solid #9c27b0; margin-bottom: 15px;">
-                <h3 style="color: #6a1b9a; margin: 0 0 10px 0;">🧬 Бонусы наследия</h3>
+
+            <div class="death-legacy">
+                <h3>🧬 Наследие следующего поколения</h3>
                 ${inheritancePreview}
             </div>
-            
-            <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
-                <button id="inheritAfterDeathBtn" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
-                    🧬 Наследовать<br>
-                    <span style="font-size: 12px; font-weight: normal;">Получить бонусы</span>
+
+            <div class="death-buttons">
+                <button id="inheritAfterDeathBtn" class="death-btn death-btn-primary">
+                    🧬 Новое поколение<span>С бонусами · тот же пол и сложность</span>
                 </button>
-                <button id="restartFromDeathBtn" style="flex: 1; padding: 15px; background: #ed8936; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
-                    🔄 Начать заново<br>
-                    <span style="font-size: 12px; font-weight: normal;">Выбрать сложность</span>
+                <button id="backToMenuBtn" class="death-btn death-btn-secondary">
+                    🏠 В меню<span>Вернуться в главное меню</span>
                 </button>
-                <button id="backToMenuBtn" style="flex: 1; padding: 15px; background: #6c757d; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
-                    🏠 В меню<br>
-                    <span style="font-size: 12px; font-weight: normal;">Без бонусов</span>
+                <button id="fullResetBtn" class="death-btn death-btn-danger">
+                    🗑️ Сбросить всё<span>Удалить наследие и статистику</span>
                 </button>
             </div>
         </div>
@@ -632,29 +660,68 @@ export function showDeathScreen(reason) {
 
     document.body.appendChild(overlay);
 
-    // 🔑 Наследовать
+    // 🔑 Кнопка 1: МГНОВЕННЫЙ рестарт с бонусами (без перезагрузки страницы)
     document.getElementById('inheritAfterDeathBtn').addEventListener('click', () => {
         overlay.remove();
-        import('./inheritance.js').then(module => {
-            // 1. Сохраняем бонусы и удаляем старую игру
-            module.finalizeRunAndSaveLegacy();
-            // 2. Перезагружаем страницу, чтобы меню перестроилось
-            window.location.reload();
+
+        const savedGender = gameState.gender;
+        const savedDifficulty = gameState.difficulty || 'medium';
+
+        // Полный сброс состояния
+        Object.assign(gameState, JSON.parse(JSON.stringify(defaultGameState)));
+        gameState.gender = savedGender;
+        gameState.difficulty = savedDifficulty;
+        gameState.isGameOver = false;
+
+        // Стартовая карма по сложности
+        const diffConfig = DIFFICULTY_CONFIG[savedDifficulty] || DIFFICULTY_CONFIG.medium;
+        gameState.karma = diffConfig.startKarma ?? 40;
+
+        // 🔑 Применяем накопленное наследие (кристаллы)
+        (legacy.startingCrystals || []).forEach(c => {
+            const emptyActive = gameState.crystals.findIndex(cr => cr === null);
+            const emptyInv = gameState.crystalsInventory.findIndex(cr => cr === null);
+            if (emptyActive !== -1) {
+                gameState.crystals[emptyActive] = { level: c.level, income: c.income };
+            } else if (emptyInv !== -1) {
+                gameState.crystalsInventory[emptyInv] = { level: c.level, income: c.income };
+            }
         });
+        legacy.startingCrystals = [];
+
+        // 🔑 Стартовые способности
+        (legacy.startingAbilities || []).forEach(abilityId => {
+            if (gameState.upgrades[abilityId] !== undefined) gameState.upgrades[abilityId] += 1;
+        });
+        legacy.startingAbilities = [];
+
+        // 🔑 Наследуемый дом
+        gameState.housing = legacy.inheritedHousing || 'box';
+        const house = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
+        if (gameState.needs.comfort > house.maxComfort) {
+            gameState.needs.comfort = house.maxComfort;
+        }
+
+        saveLegacy(legacy);
+        saveGame();
+
+        // Запуск движка (глобальная функция из этого же файла)
+        window.startGameEngine();
     });
 
-    // 🔑 Начать заново (с выбором сложности)
-    document.getElementById('restartFromDeathBtn').addEventListener('click', () => {
-        overlay.remove();
-        // 🔑 handleDeath уже вызван в gameLoop, активная игра удалена
-        // Просто возвращаемся в меню
-        window.location.reload();
-    });
-
-    // 🔑 В меню (без бонусов)
+    // 🔑 Кнопка 2: В главное меню (наследие уже сохранено)
     document.getElementById('backToMenuBtn').addEventListener('click', () => {
         overlay.remove();
         window.location.reload();
+    });
+
+    // 🔑 Кнопка 3: Полный сброс (наследие + статистика)
+    document.getElementById('fullResetBtn').addEventListener('click', () => {
+        if (confirm("⚠️ Вы уверены? БУДУТ УДАЛЕНЫ: наследие, статистика поколений и все рекорды. Это действие необратимо!")) {
+            overlay.remove();
+            resetAll();
+            window.location.reload();
+        }
     });
 }
 

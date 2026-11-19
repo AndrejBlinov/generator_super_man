@@ -1,0 +1,163 @@
+/* === ЭКРАН СМЕРТИ === */
+.death-screen {
+    max-width: 620px;
+    text-align: left;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+.death-title {
+    text-align: center;
+    color: #dc3545;
+    margin: 0 0 8px 0;
+    font-size: 1.6rem;
+}
+
+.death-reason {
+    text-align: center;
+    font-size: 1.1rem;
+    margin-bottom: 18px;
+    color: #333;
+}
+
+.death-stats h3, .death-legacy h3 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+}
+
+.death-stats {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+}
+
+.death-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.death-stat {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+}
+
+.ds-label {
+    font-size: 0.72rem;
+    color: #868e96;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.ds-value {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #212529;
+}
+
+.death-legacy {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    padding: 16px;
+    border-radius: 12px;
+    border-left: 4px solid #9c27b0;
+    margin-bottom: 16px;
+}
+
+.death-legacy h3 { color: #6a1b9a; }
+
+.legacy-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.legacy-card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.legacy-card-icon { font-size: 1.4rem; }
+
+.legacy-card-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.legacy-card-label {
+    font-size: 0.7rem;
+    color: #6a1b9a;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.legacy-card-value {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #212529;
+}
+
+.legacy-empty {
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 0.9rem;
+    color: #666;
+    text-align: center;
+}
+
+.death-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.death-btn {
+    flex: 1;
+    min-width: 150px;
+    padding: 14px 10px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.death-btn span {
+    font-size: 0.72rem;
+    font-weight: 400;
+    opacity: 0.85;
+}
+
+.death-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.death-btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.death-btn-secondary { background: #6c757d; }
+.death-btn-danger { background: #dc3545; }
+
+@media (max-width: 480px) {
+    .death-stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .legacy-cards { grid-template-columns: 1fr; }
+}

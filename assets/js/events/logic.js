@@ -1,7 +1,6 @@
 // assets/js/events/logic.js
 import { gameState } from '../state.js';
 import { EVENTS_CONFIG, EVENT_WEIGHTS } from './config.js';
-import { showMessage } from '../ui.js'; // Убедись, что путь к ui.js правильный
 
 // 🔑 ГЛАВНАЯ ФУНКЦИЯ: Вызывается из gameLoop раз в день
 export function checkAndTriggerDailyEvent() {
@@ -143,8 +142,16 @@ export function resolveEventChoice(choiceIndex) {
 
     const effects = choice.effects || {};
 
-    // 1. Применяем числовые эффекты
-    if (effects.money) gameState.money += effects.money;
+    // 1. Применяем числовые эффекты (с умным масштабированием!)
+    if (effects.moneyScaled !== undefined) {
+        // Формула масштабирования: база * (1 + деньги/10000). Максимальный множитель x15.
+        const multiplier = Math.max(1, Math.min(15, 1 + Math.floor(gameState.money / 10000)));
+        const scaledAmount = Math.floor(effects.moneyScaled * multiplier);
+        gameState.money += scaledAmount;
+    } else if (effects.money) {
+        // Обычные статичные суммы (для мелких трат, которые должны оставаться фиксированными)
+        gameState.money += effects.money;
+    }
     if (effects.comfort) gameState.needs.comfort = Math.max(0, Math.min(100, gameState.needs.comfort + effects.comfort));
     if (effects.health) gameState.needs.health = Math.max(0, Math.min(100, gameState.needs.health + effects.health));
     if (effects.karma) gameState.karma = Math.max(0, Math.min(100, gameState.karma + effects.karma));
@@ -159,6 +166,11 @@ export function resolveEventChoice(choiceIndex) {
         gameState.money += gain;
     }
 
+    if (effects.setFlag === "course_done") {
+        gameState.clickPower += 2; // Или другой бонус, например, пассивный доход
+        showMessage("🧠 Ваши знания повысили силу клика на +2!");
+    }
+
     // 3. Азартные игры (Gamble)
     if (effects.gamble) {
         const g = effects.gamble;
@@ -167,9 +179,9 @@ export function resolveEventChoice(choiceIndex) {
             if (typeof window.showEventResult === 'function') {
                 window.showEventResult("❌ Недостаточно денег для этого действия!");
             }
-            return; 
+            return;
         }
-        
+
         gameState.money -= g.cost;
         if (Math.random() < g.winChance) {
             const winAmount = g.winAmount || Math.floor(g.cost * g.winMult);
@@ -224,7 +236,7 @@ export function resolveEventChoice(choiceIndex) {
     // 8. Обновляем день последнего события
     const currentAbsoluteDay = (gameState.absoluteAgeInYears * 365) + gameState.absoluteCurrentDayInYear;
     gameState.lastEventDay = currentAbsoluteDay;
-    
+
     // Очищаем активное событие, но НЕ закрываем модалку сразу!
     gameState.activeEvent = null;
 
@@ -232,7 +244,7 @@ export function resolveEventChoice(choiceIndex) {
     if (typeof window.showEventResult === 'function') {
         window.showEventResult(finalMessage);
     }
-    
+
     // Принудительно обновляем UI на фоне
     if (typeof window.updateUI === 'function') {
         window.updateUI();
