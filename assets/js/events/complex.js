@@ -140,7 +140,7 @@ export const COMPLEX_EVENTS = {
     // ==========================================
     "roof_leak": {
         id: "roof_leak", icon: "🌧️",
-        conditions: { requiresFlagAbsent: "box", requiresFlagAbsent: "mansion", weight: 5 },
+        conditions: { minHousing: "shed", weight: 5 },
         title: "Протечка крыши", description: "После ливня на потолке появилось желтое пятно, которое начинает капать.",
         choices: [
             { id: "fix_now", text: "Вызвать мастера", effects: { moneyScaled: -1200, comfort: 5, message: "Проблема решена профессионально." } },

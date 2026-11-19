@@ -221,7 +221,7 @@ export const SIMPLE_EVENTS = {
     },
     "wrong_delivery": {
         id: "wrong_delivery", icon: "📦",
-        conditions: { requiresFlagAbsent: "box", weight: 5 },
+        conditions: { minHousing: "shed", weight: 5 },
         title: "Чужая доставка", description: "Курьер оставил у вашей двери коробку с надписью 'Хрупкое: Коллекционные фигурки гоблинов'.",
         choices: [
             { id: "open", text: "Открыть и оставить себе", effects: { comfort: 5, karma: -5, message: "Теперь у вас есть армия гоблинов." } },

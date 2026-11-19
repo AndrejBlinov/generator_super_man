@@ -1,5 +1,6 @@
 // assets/js/events/logic.js
 import { gameState } from '../state.js';
+import { showMessage } from '../ui.js';
 import { EVENTS_CONFIG, EVENT_WEIGHTS } from './config.js';
 
 // 🔑 ГЛАВНАЯ ФУНКЦИЯ: Вызывается из gameLoop раз в день
@@ -200,6 +201,20 @@ export function resolveEventChoice(choiceIndex) {
                 effects._crystalMsg = " 💎 Вы получили странный кристалл!";
             } else {
                 effects._crystalMsg = " 💎 Инвентарь полон, кристалл потерян.";
+            }
+        });
+    }
+
+    // 4.1. Добавление случайного кристалла (например, притащил питомец)
+    if (effects.addRandomLowCrystal) {
+        import('../crystals.js').then(module => {
+            const newCrystal = { level: 1, income: 1 };
+            const emptySlot = gameState.crystalsInventory.findIndex(c => c === null);
+            if (emptySlot !== -1) {
+                gameState.crystalsInventory[emptySlot] = newCrystal;
+                effects._crystalMsg = " 💎 Ваш питомец притащил странный кристалл!";
+            } else {
+                effects._crystalMsg = " 💎 Инвентарь полон, находка потеряна.";
             }
         });
     }
