@@ -46,38 +46,37 @@ export function checkAndTriggerDailyEvent() {
 // 🔑 ПРОВЕРКА УСЛОВИЙ (САФГАРДЫ)
 function getAvailableEvents() {
     const available = [];
-    const currentAbsoluteDay = (gameState.absoluteAgeInYears * 365) + gameState.absoluteCurrentDayInYear;
 
     for (const [id, config] of Object.entries(EVENTS_CONFIG)) {
-        // Пропускаем события, которые вызываются только по расписанию
-        if (config.isScheduled) continue;
+        // 🔑 P0-3: isScheduled лежит внутри conditions
+        if (config.conditions?.isScheduled) continue;
 
         const cond = config.conditions || {};
 
-        // Сафгард 1: Возраст
+        // P0-5: Проверка жилья (вместо несуществующих флагов "box"/"mansion")
+        if (cond.minHousing && gameState.housing === 'box') continue;
+
         if (cond.minAge && gameState.ageInYears < cond.minAge) continue;
         if (cond.maxAge && gameState.ageInYears > cond.maxAge) continue;
-
-        // Сафгард 2: Ресурсы (не бьем нищих)
         if (cond.minMoney && gameState.money < cond.minMoney) continue;
 
-        // Сафгард 3: Блокировка при тяжелых болезнях
-        if (cond.blockedByDiseases && Array.isArray(cond.blockedByDiseases)) {
-            const hasBlockedDisease = gameState.activeDiseases.some(d =>
-                cond.blockedByDiseases.includes(d.id) || d.severity === 'heavy' // Универсальная защита
+        // 🔑 P0-6: Универсальная защита "не бить лежачего" (проверяем категорию болезни)
+        if (cond.blockedByDiseases) {
+            const hasHeavyDisease = gameState.activeDiseases.some(d =>
+                DISEASES_CONFIG[d.id]?.category === 'heavy'
             );
-            if (hasBlockedDisease) continue;
+            if (hasHeavyDisease) continue;
         }
 
-        // Сафгард 4: Флаги (например, не предлагать свадьбу, если уже женат)
         if (cond.requiresFlagAbsent && gameState.flags.includes(cond.requiresFlagAbsent)) continue;
         if (cond.requiresFlagPresent && !gameState.flags.includes(cond.requiresFlagPresent)) continue;
 
-        // Если все проверки пройдены, добавляем с его весом
-        const weight = EVENT_WEIGHTS[id] || 10;
-        available.push({ id, weight });
+        // 🔑 P0-4: Корректная обработка веса 0 (чтобы scheduled события не лезли в рандом)
+        const weight = EVENT_WEIGHTS[id] !== undefined ? EVENT_WEIGHTS[id] : 10;
+        if (weight > 0) {
+            available.push({ id, weight });
+        }
     }
-
     return available;
 }
 
@@ -144,14 +143,13 @@ export function resolveEventChoice(choiceIndex) {
 
     // 1. Применяем числовые эффекты (с умным масштабированием!)
     if (effects.moneyScaled !== undefined) {
-        // Формула масштабирования: база * (1 + деньги/10000). Максимальный множитель x15.
         const multiplier = Math.max(1, Math.min(15, 1 + Math.floor(gameState.money / 10000)));
         const scaledAmount = Math.floor(effects.moneyScaled * multiplier);
-        gameState.money += scaledAmount;
+        gameState.money = Math.max(0, gameState.money + scaledAmount); // 🔑 Защита от ухода в минус
     } else if (effects.money) {
-        // Обычные статичные суммы (для мелких трат, которые должны оставаться фиксированными)
-        gameState.money += effects.money;
+        gameState.money = Math.max(0, gameState.money + effects.money);
     }
+
     if (effects.comfort) gameState.needs.comfort = Math.max(0, Math.min(100, gameState.needs.comfort + effects.comfort));
     if (effects.health) gameState.needs.health = Math.max(0, Math.min(100, gameState.needs.health + effects.health));
     if (effects.karma) gameState.karma = Math.max(0, Math.min(100, gameState.karma + effects.karma));
@@ -236,9 +234,6 @@ export function resolveEventChoice(choiceIndex) {
     // 8. Обновляем день последнего события
     const currentAbsoluteDay = (gameState.absoluteAgeInYears * 365) + gameState.absoluteCurrentDayInYear;
     gameState.lastEventDay = currentAbsoluteDay;
-
-    // Очищаем активное событие, но НЕ закрываем модалку сразу!
-    gameState.activeEvent = null;
 
     // 9. Показываем экран результата внутри той же модалки
     if (typeof window.showEventResult === 'function') {

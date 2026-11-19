@@ -540,6 +540,10 @@ if (versionDisplay) {
 bindEvents();
 showMainMenu();
 
+if (gameState.activeEvent) {
+    window.renderEventModal();
+}
+
 // ==========================================
 // ЛОГИКА МОДАЛЬНОГО ОКНА СОБЫТИЙ
 // ==========================================
@@ -629,14 +633,9 @@ window.closeEventModal = function() {
         backdrop.classList.remove('active');
         backdrop.setAttribute('aria-hidden', 'true');
     }
-};
-
-window.closeEventModal = function() {
-    const backdrop = document.getElementById('eventModalBackdrop');
-    if (backdrop) {
-        backdrop.classList.remove('active');
-        backdrop.setAttribute('aria-hidden', 'true');
-    }
+    // 🔑 P0-8: Очищаем флаг только при реальном закрытии модалки
+    gameState.activeEvent = null;
+    if (typeof window.updateUI === 'function') window.updateUI();
 };
 
 window.startGameEngine = startGameEngine;
