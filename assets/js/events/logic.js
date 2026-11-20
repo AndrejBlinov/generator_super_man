@@ -2,6 +2,7 @@
 import { gameState } from '../state.js';
 import { showMessage } from '../ui.js';
 import { EVENTS_CONFIG, EVENT_WEIGHTS } from './config.js';
+import { DISEASES_CONFIG } from './../needs/diseases/config.js';
 
 // 🔑 ГЛАВНАЯ ФУНКЦИЯ: Вызывается из gameLoop раз в день
 export function checkAndTriggerDailyEvent() {
@@ -252,7 +253,7 @@ export function resolveEventChoice(choiceIndex) {
 
     // 9. Показываем экран результата внутри той же модалки
     if (typeof window.showEventResult === 'function') {
-        window.showEventResult(finalMessage);
+        window.showEventResult(finalMessage, effects);
     }
 
     // Принудительно обновляем UI на фоне

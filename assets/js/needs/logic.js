@@ -7,15 +7,29 @@ export function decayNeed(needId) {
     const config = NEEDS_CONFIG[needId];
     let decay = config.decayPerDay;
 
-    // 🔑 Для здоровья — бонус от болезней
+    // 🔑 Для здоровья — бонус от болезней и предметов роскоши
     if (needId === 'health') {
         decay += getDiseaseHealthDecayBonus();
+        
+        // Бонус от абонементов в спортзал
+        if (gameState.maxHealthBonus) {
+            // Увеличиваем максимальное здоровье
+            config.max = 100 + gameState.maxHealthBonus;
+        }
     }
 
-    // 🔑 Для комфорта — применяем множитель жилья
+    // Для комфорта — применяем множитель жилья и бонусы роскоши
     if (needId === 'comfort') {
         const housing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
         decay = decay * housing.decayMult;
+        
+        // Бонус от машины/яхты
+        if (gameState.luxuryItems.includes('sports_car')) {
+            decay *= 0.9; // Комфорт падает на 10% медленнее
+        }
+        if (gameState.luxuryItems.includes('yacht')) {
+            decay *= 0.8; // Комфорт падает на 20% медленнее
+        }
     }
 
     gameState.needs[needId] = Math.max(0, gameState.needs[needId] - decay);

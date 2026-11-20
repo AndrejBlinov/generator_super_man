@@ -20,7 +20,7 @@ export function calculatePassiveIncome() {
 
     // 🔑 Применяем множитель от текущего жилья
     const currentHousing = HOUSING_CONFIG[gameState.housing] || HOUSING_CONFIG.box;
-    
+
     // Округляем вниз, чтобы не было дробных чисел
     const finalIncome = Math.floor(baseIncome * currentHousing.incomeMult);
 
@@ -232,4 +232,52 @@ function tryMerge(zone1, index1, zone2, index2) {
 export function getSelection() {
     return { index: selectedCrystalIndex, zone: selectedCrystalZone };
 }
+
+export function getCrystalLevelCost(level) {
+    return CRYSTAL_COST * Math.pow(3, level - 1); // 1 ур=100, 2 ур=300, 3 ур=900
+}
+
+// 🔑 НОВОЕ: Создание кристалла высокого уровня сразу
+export function createCrystalLevel(level) {
+    const cost = getCrystalLevelCost(level);
+
+    if (gameState.evolutionPoints < cost) {
+        showMessage(`❌ Недостаточно ОЭ! Нужно ${cost}`);
+        return false;
+    }
+
+    let emptySlotIndex = gameState.crystals.findIndex(c => c === null);
+    let zone = 'active';
+
+    if (emptySlotIndex === -1) {
+        emptySlotIndex = gameState.crystalsInventory.findIndex(c => c === null);
+        zone = 'inventory';
+    }
+
+    if (emptySlotIndex === -1) {
+        showMessage("❌ Нет свободных слотов!");
+        return false;
+    }
+
+    gameState.evolutionPoints -= cost;
+    const income = Math.pow(2, level - 1);
+    const newCrystal = { level: level, income: income };
+
+    if (zone === 'active') {
+        gameState.crystals[emptySlotIndex] = newCrystal;
+    } else {
+        gameState.crystalsInventory[emptySlotIndex] = newCrystal;
+    }
+
+    showMessage(`✨ Создан кристалл ${level} уровня!`);
+
+    // Обновляем UI
+    import('./ui.js').then(module => {
+        module.renderCrystals();
+        module.updateUI();
+    });
+
+    return true;
+}
+
 // © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).
