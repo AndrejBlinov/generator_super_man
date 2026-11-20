@@ -6,6 +6,7 @@ import { getCurrentExchangeRate } from './state.js';
 import { updateCharacterStateFromGame } from './character/index.js';
 import { checkAndTriggerDailyEvent } from './events/logic.js';
 import { checkTutorialCondition } from './tutorial.js';
+import { checkAndUnlockAchievements } from './achievements.js';
 
 let gameLoopInterval = null;
 
@@ -139,6 +140,7 @@ export function startGameLoop() {
         if (gameState.tutorialEnabled && gameState.tutorialStep > 0 && typeof checkTutorialCondition === 'function') {
             checkTutorialCondition();
         }
+        checkAndUnlockAchievements();
 
         updateCharacterStateFromGame();
         updateUI();

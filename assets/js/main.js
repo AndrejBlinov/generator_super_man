@@ -9,6 +9,7 @@ import { canTrain, getTrainingBlockReason, restoreNeedManual, renderNeeds, handl
 import { initCharacter, updateCharacterStateFromGame, updateHousingInfo } from './character/index.js';
 import { initTutorial, checkTutorialCondition } from './tutorial.js';
 import { GAME_VERSION, HOUSING_CONFIG } from './config.js';
+import { loadAchievements, checkAndUnlockAchievements, renderAchievementsModal } from './achievements.js';
 
 // 🔑 ЗАГРУЗКА ИНСТРУКЦИИ (выполняется 1 раз при старте модуля)
 const helpResponse = await fetch('./include/instruction.html');
@@ -158,6 +159,16 @@ function showMainMenu() {
         window.pendingNewGame = true; // 🔑 Новый флаг
     };
     btnContainer.appendChild(newGameBtn);
+
+    // 5. Кнопка Ачивки
+    const achBtn = document.createElement('button');
+    achBtn.className = 'menu-btn secondary';
+    achBtn.textContent = '🏆 Достижения';
+    achBtn.onclick = () => {
+        renderAchievementsModal();
+        openPanel('achievementsPanel');
+    };
+    btnContainer.appendChild(achBtn);
 
     // Отображаем статистику
     const footer = menu.querySelector('.menu-footer');
@@ -540,6 +551,8 @@ const versionDisplay = document.getElementById('versionDisplay');
 if (versionDisplay) {
     versionDisplay.textContent = GAME_VERSION;
 }
+
+loadAchievements();
 
 bindEvents();
 showMainMenu();

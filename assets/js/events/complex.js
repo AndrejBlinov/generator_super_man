@@ -4,7 +4,7 @@ export const COMPLEX_EVENTS = {
     // ==========================================
     "meet_stranger": {
         id: "meet_stranger", icon: "☕",
-        conditions: { minAge: 18, maxAge: 70, requiresFlagAbsent: "in_relationship", weight: 6 },
+        conditions: { minAge: 18, maxAge: 70, minHousing: "dilapidated", requiresFlagAbsent: "in_relationship", weight: 6 },
         title: "Случайная встреча", description: "Вы случайно сталкиваетесь с приятным незнакомцем. Ваша чашка кофе оказывается на земле.",
         choices: [
             { id: "apologize_and_treat", text: "Извиниться и угостить новым кофе", effects: { moneyScaled: -100, karma: 5, message: "Лед тронулся! Вы обменялись номерами.", setFlag: "met_stranger", scheduleEvent: { eventId: "first_date", delayDays: 5, context: {} } } },

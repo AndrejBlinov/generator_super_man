@@ -1,0 +1,45 @@
+/* === МОДАЛКА АЧИВОК === */
+.ach-section { margin-bottom: 24px; }
+.ach-section h3 { font-size: 16px; color: #4b56b2; margin-bottom: 12px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
+.ach-list { display: flex; flex-direction: column; gap: 10px; }
+
+.ach-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px; border-radius: 10px;
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    transition: transform 0.2s;
+}
+.ach-item.obtained { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: #86efac; }
+.ach-item.unobtained { opacity: 0.6; filter: grayscale(0.8); }
+
+.ach-icon { font-size: 28px; width: 40px; text-align: center; }
+.ach-info { flex: 1; }
+.ach-title { font-weight: 700; color: #1e293b; font-size: 14px; }
+.ach-desc { color: #64748b; font-size: 12px; margin-top: 2px; }
+.ach-date { color: #16a34a; font-size: 11px; font-weight: 600; margin-top: 4px; }
+
+/* === ТОСТ-УВЕДОМЛЕНИЕ (СНИЗУ) === */
+.achievement-toast {
+    position: fixed; bottom: -150px; left: 50%; transform: translateX(-50%);
+    width: 90%; max-width: 400px;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #fff; border-radius: 12px; padding: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    border: 1px solid #fbbf24;
+    z-index: 9999;
+    transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+}
+
+.achievement-toast.active { bottom: 30px; }
+
+.toast-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.toast-icon { font-size: 32px; animation: toastBounce 0.6s ease; }
+.toast-label { font-size: 10px; font-weight: 800; color: #fbbf24; letter-spacing: 1px; }
+.toast-title { font-size: 16px; font-weight: 700; color: #fff; }
+.toast-desc { font-size: 13px; color: #cbd5e1; line-height: 1.4; }
+
+@keyframes toastBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}

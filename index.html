@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="assets/css/effects.css">
     <link rel="stylesheet" href="assets/css/instruction.css">
     <link rel="stylesheet" href="assets/css/tutorial.css">
+    <link rel="stylesheet" href="assets/css/archivments.css">
 </head>
 
 <body>
@@ -328,6 +329,40 @@
             <path d="M 20 5 L 35 20 L 25 20 L 25 35 L 15 35 L 15 20 L 5 20 Z" fill="#667eea" stroke="#4b56b2"
                 stroke-width="2" />
         </svg>
+    </div>
+
+    <!-- МОДАЛКА АЧИВОК -->
+    <aside class="side-panel" id="achievementsPanel" aria-hidden="true">
+        <div class="side-panel-header">
+            <div>
+                <h2>🏆 Достижения</h2>
+                <p>Ваши успехи на пути к сверхчеловеку</p>
+            </div>
+            <button class="side-panel-close" data-panel-close>✕</button>
+        </div>
+        <div class="side-panel-content">
+            <div class="ach-section">
+                <h3>✅ Полученные</h3>
+                <div id="achievementsObtained" class="ach-list"></div>
+            </div>
+            <div class="ach-section">
+                <h3>🔒 В процессе</h3>
+                <div id="achievementsUnobtained" class="ach-list"></div>
+            </div </div>
+    </aside>
+
+    <!-- ТОСТ-УВЕДОМЛЕНИЕ ОБ АЧИВКЕ (СНИЗУ) -->
+    <div class="achievement-toast" id="achievementToast">
+        <div class="toast-content">
+            <div class="toast-header">
+                <span class="toast-icon" id="toastIcon">🏆</span>
+                <div>
+                    <div class="toast-label">ПОЗДРАВЛЯЕМ!</div>
+                    <div class="toast-title" id="toastTitle">Название ачивки</div>
+                </div>
+            </div>
+            <div class="toast-desc" id="toastDesc">Описание достижения</div>
+        </div>
     </div>
 
     <script type="module" src="./assets/js/main.js"></script>
