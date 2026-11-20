@@ -1,0 +1,19 @@
+.event-effects-preview {
+    font-size: 0.8rem;
+    color: #a0aec0;
+    margin-top: 4px;
+    font-weight: 500;
+}
+.event-effects-preview .positive { color: #48bb78; }
+.event-effects-preview .negative { color: #f56565; }
+
+.event-result-summary {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: #cbd5e0;
+    text-align: left;
+}
+.event-result-summary strong { color: #f6e05e; }

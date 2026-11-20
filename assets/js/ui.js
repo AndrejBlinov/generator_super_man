@@ -384,36 +384,36 @@ export function updateCrystalCreateButton() {
     const createBtn = document.getElementById('createCrystalBtn');
     if (!createBtn) return;
 
-    const maxAffordable = getMaxAffordableCrystals();
+    // 🔑 НЕЗАВИСИМЫЕ ПРОВЕРКИ
+    const emptyActiveSlots = gameState.crystals.filter(c => c === null).length;
+    const emptyInventorySlots = gameState.crystalsInventory.filter(c => c === null).length;
+    const totalEmptySlots = emptyActiveSlots + emptyInventorySlots;
+    
+    const canAffordOne = gameState.evolutionPoints >= CRYSTAL_COST;
 
-    // Определяем, сколько кристаллов мы реально можем создать с учётом множителя
-    let actualCount = 0;
-    if (gameState.purchaseMultiplier === 'max') {
-        actualCount = maxAffordable;
-    } else {
-        actualCount = Math.min(parseInt(gameState.purchaseMultiplier), maxAffordable);
-    }
-
-    const totalCost = actualCount * CRYSTAL_COST;
-
-    // Если создать нельзя вообще
-    if (actualCount <= 0) {
+    // 1. Сначала проверяем место (это абсолютное ограничение)
+    if (totalEmptySlots === 0) {
         createBtn.disabled = true;
-        if (maxAffordable === 0) {
-            createBtn.textContent = '❌ Нет свободных слотов (15/15)';
-        } else {
-            createBtn.textContent = `❌ Недостаточно ОЭ (нужно ${CRYSTAL_COST})`;
-        }
+        createBtn.textContent = '❌ Нет свободных слотов (15/15)';
         return;
     }
 
-    createBtn.disabled = false;
+    // 2. Затем проверяем деньги
+    if (!canAffordOne) {
+        createBtn.disabled = true;
+        createBtn.textContent = `❌ Недостаточно ОЭ (нужно ${CRYSTAL_COST})`;
+        return;
+    }
 
-    // Формируем понятный текст кнопки
+    // 3. Если всё ок, показываем опции покупки
+    createBtn.disabled = false;
+    const maxAffordable = Math.min(Math.floor(gameState.evolutionPoints / CRYSTAL_COST), totalEmptySlots);
+
     if (gameState.purchaseMultiplier === 'max') {
-        createBtn.textContent = `⚡ Создать МАКС (${actualCount} шт.) за ${totalCost} ОЭ`;
-    } else if (actualCount > 1) {
-        createBtn.textContent = `✨ Создать ${actualCount} шт. за ${totalCost} ОЭ`;
+        createBtn.textContent = `⚡ Создать МАКС (${maxAffordable} шт.) за ${maxAffordable * CRYSTAL_COST} ОЭ`;
+    } else if (parseInt(gameState.purchaseMultiplier) > 1) {
+        const actualCount = Math.min(parseInt(gameState.purchaseMultiplier), maxAffordable);
+        createBtn.textContent = `✨ Создать ${actualCount} шт. за ${actualCount * CRYSTAL_COST} ОЭ`;
     } else {
         createBtn.textContent = `Создать 1 кристалл за ${CRYSTAL_COST} ОЭ`;
     }

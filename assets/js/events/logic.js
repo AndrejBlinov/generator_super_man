@@ -252,7 +252,7 @@ export function resolveEventChoice(choiceIndex) {
 
     // 9. Показываем экран результата внутри той же модалки
     if (typeof window.showEventResult === 'function') {
-        window.showEventResult(finalMessage);
+        window.showEventResult(finalMessage, effects);
     }
 
     // Принудительно обновляем UI на фоне

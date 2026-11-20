@@ -77,7 +77,7 @@ function showMainMenu() {
         // --- Аккордеон с наследуемой статистикой ---
         const accordion = document.createElement('div');
         accordion.className = 'legacy-accordion';
-        
+
         // Собираем данные из объекта legacy
         const crystalsCount = (legacy.startingCrystals || []).length;
         const crystalLevels = (legacy.startingCrystals || [])
@@ -123,7 +123,7 @@ function showMainMenu() {
             const isActive = accordion.classList.toggle('active');
             const textSpan = trigger.querySelector('span:first-child');
             const iconSpan = trigger.querySelector('.accordion-icon');
-            
+
             if (isActive) {
                 textSpan.textContent = '📦 Скрыть наследуемую статистику';
                 iconSpan.style.transform = 'rotate(180deg)';
@@ -196,6 +196,14 @@ function bindEvents() {
         if (e.key === 'Escape' && donateModal.classList.contains('is-open')) {
             closeDonateModal();
         }
+    });
+
+    document.getElementById('createCrystalLvl2Btn').addEventListener('click', () => {
+        import('./crystals.js').then(module => module.createCrystalLevel(2));
+    });
+
+    document.getElementById('createCrystalLvl3Btn').addEventListener('click', () => {
+        import('./crystals.js').then(module => module.createCrystalLevel(3));
     });
 
     // 🔑 ОБРАБОТЧИК ВЫБОРА ПОЛА (УНИВЕРСАЛЬНЫЙ)
@@ -507,7 +515,7 @@ function bindEvents() {
             },
             { threshold: [1], rootMargin: '-1px 0px 0px 0px' }
         );
-        
+
         const anchor = document.createElement('div');
         anchor.style.position = 'absolute';
         anchor.style.top = '-1px';
@@ -547,7 +555,40 @@ if (gameState.activeEvent) {
 // ==========================================
 // ЛОГИКА МОДАЛЬНОГО ОКНА СОБЫТИЙ
 // ==========================================
-window.renderEventModal = function() {
+// 🔑 ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ: Форматирует эффекты для превью
+function getEffectsPreview(effects) {
+    if (!effects) return '';
+    let parts = [];
+
+    // Расчет денег (учитываем moneyScaled)
+    let moneyChange = effects.money || 0;
+    if (effects.moneyScaled !== undefined) {
+        const multiplier = Math.max(1, Math.min(15, 1 + Math.floor(gameState.money / 10000)));
+        moneyChange = Math.floor(effects.moneyScaled * multiplier);
+    }
+    if (moneyChange !== 0) {
+        const sign = moneyChange > 0 ? '+' : '';
+        parts.push(`<span class="${moneyChange > 0 ? 'positive' : 'negative'}">${sign}${moneyChange} 💰</span>`);
+    }
+    if (effects.karma) {
+        const sign = effects.karma > 0 ? '+' : '';
+        parts.push(`<span class="${effects.karma > 0 ? 'positive' : 'negative'}">${sign}${effects.karma} ⚖️</span>`);
+    }
+    if (effects.health) {
+        const sign = effects.health > 0 ? '+' : '';
+        parts.push(`<span class="${effects.health > 0 ? 'positive' : 'negative'}">${sign}${effects.health} ❤️</span>`);
+    }
+    if (effects.comfort) {
+        const sign = effects.comfort > 0 ? '+' : '';
+        parts.push(`<span class="${effects.comfort > 0 ? 'positive' : 'negative'}">${sign}${effects.comfort} 🛋️</span>`);
+    }
+    if (effects.setPet) parts.push(`<span class="positive">🐕 Питомец</span>`);
+    if (effects.addFreeCrystal || effects.addRandomLowCrystal) parts.push(`<span class="positive">💎 Кристалл</span>`);
+
+    return parts.length > 0 ? `<div class="event-effects-preview">[${parts.join(', ')}]</div>` : '';
+}
+
+window.renderEventModal = function () {
     const backdrop = document.getElementById('eventModalBackdrop');
     const icon = document.getElementById('eventIcon');
     const title = document.getElementById('eventTitle');
@@ -560,20 +601,22 @@ window.renderEventModal = function() {
     icon.textContent = ev.icon;
     title.textContent = ev.title;
     desc.textContent = ev.description;
-    
+
     choicesContainer.innerHTML = '';
 
     ev.choices.forEach((choice, index) => {
         const btn = document.createElement('button');
         btn.className = 'event-choice-btn';
-        
+
         let btnText = choice.text;
-        // Проверка требований (например, комфорта)
         if (choice.reqComfort && gameState.needs.comfort < choice.reqComfort) {
             btnText += `<span class="req">⚠️ Требуется комфорт: ${choice.reqComfort} (У вас: ${gameState.needs.comfort})</span>`;
             btn.disabled = true;
             btn.style.opacity = '0.5';
             btn.style.cursor = 'not-allowed';
+        } else {
+            // 🔑 ДОБАВЛЯЕМ ПРЕВЮ ЭФФЕКТОВ ПРЯМО В КНОПКУ
+            btnText += getEffectsPreview(choice.effects);
         }
 
         btn.innerHTML = btnText;
@@ -589,8 +632,7 @@ window.renderEventModal = function() {
     backdrop.setAttribute('aria-hidden', 'false');
 };
 
-// 🔑 НОВАЯ ФУНКЦИЯ: Показывает результат выбора и ждет нажатия ОК
-window.showEventResult = function(message) {
+window.showEventResult = function (message, appliedEffects) {
     const backdrop = document.getElementById('eventModalBackdrop');
     const icon = document.getElementById('eventIcon');
     const title = document.getElementById('eventTitle');
@@ -599,35 +641,49 @@ window.showEventResult = function(message) {
 
     if (!backdrop) return;
 
-    // Меняем содержимое на результат
     icon.textContent = "✅";
     title.textContent = "Результат";
-    desc.textContent = message;
-    desc.style.lineHeight = "1.5"; // Делаем текст чуть более читаемым
-    
-    // Очищаем старые кнопки выбора
+
+    // 🔑 ФОРМИРУЕМ КРАСИВЫЙ ИТОГ
+    let summaryHtml = `<p>${message}</p>`;
+    if (appliedEffects) {
+        const preview = getEffectsPreview(appliedEffects);
+        if (preview) {
+            summaryHtml += `<div class="event-result-summary"><strong>Изменения:</strong> ${preview.replace(/<div class="event-effects-preview">/, '').replace('</div>', '')}</div>`;
+        }
+    }
+
+    desc.innerHTML = summaryHtml;
     choicesContainer.innerHTML = '';
-    
-    // Добавляем одну кнопку "ОК"
+
     const okBtn = document.createElement('button');
     okBtn.className = 'event-choice-btn';
     okBtn.style.textAlign = 'center';
     okBtn.style.fontWeight = 'bold';
-    okBtn.style.backgroundColor = '#48bb78'; // Приятный зеленый цвет
+    okBtn.style.backgroundColor = '#48bb78';
     okBtn.style.color = '#ffffff';
     okBtn.style.border = 'none';
     okBtn.style.marginTop = '10px';
     okBtn.textContent = 'Понятно (OK)';
-    
+
     okBtn.onclick = () => {
         window.closeEventModal();
     };
-    
+
     choicesContainer.appendChild(okBtn);
-    // Модалка уже имеет класс 'active', мы просто обновили её внутренности
 };
 
-window.closeEventModal = function() {
+window.closeEventModal = function () {
+    const backdrop = document.getElementById('eventModalBackdrop');
+    if (backdrop) {
+        backdrop.classList.remove('active');
+        backdrop.setAttribute('aria-hidden', 'true');
+    }
+    gameState.activeEvent = null;
+    if (typeof window.updateUI === 'function') window.updateUI();
+};
+
+window.closeEventModal = function () {
     const backdrop = document.getElementById('eventModalBackdrop');
     if (backdrop) {
         backdrop.classList.remove('active');
