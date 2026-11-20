@@ -221,6 +221,11 @@ export function resolveEventChoice(choiceIndex) {
     }
 
     // 5. Управление флагами и питомцами
+    if (effects.setFlag) {
+        const flagsToSet = Array.isArray(effects.setFlag) ? effects.setFlag : [effects.setFlag];
+        flagsToSet.forEach(f => { if (!gameState.flags.includes(f)) gameState.flags.push(f); });
+    }
+
     if (effects.setFlag && !gameState.flags.includes(effects.setFlag)) {
         gameState.flags.push(effects.setFlag);
     }
@@ -250,6 +255,7 @@ export function resolveEventChoice(choiceIndex) {
     // 8. Обновляем день последнего события
     const currentAbsoluteDay = (gameState.absoluteAgeInYears * 365) + gameState.absoluteCurrentDayInYear;
     gameState.lastEventDay = currentAbsoluteDay;
+    gameState.eventsCompleted = (gameState.eventsCompleted || 0) + 1;
 
     // 9. Показываем экран результата внутри той же модалки
     if (typeof window.showEventResult === 'function') {

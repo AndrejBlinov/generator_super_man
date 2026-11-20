@@ -33,6 +33,8 @@ export const defaultGameState = {
     totalPointsEarned: 0,
     money: 0,
 
+    diseasesTreated: 0,
+
     tutorialEnabled: false,
     tutorialStep: 0,
 
@@ -81,6 +83,7 @@ export const defaultGameState = {
     scheduledEvent: null, // { eventId, triggerAtAbsoluteDay, context }
     activeEvent: null, // { eventId, variantKey, choices } (если не null, игра на паузе)
     lastEventDay: 0, // Абсолютный день последнего события (для кулдауна)
+    eventsCompleted: 0,
     pet: null,
 
     isGameOver: false,
@@ -152,6 +155,8 @@ function applyMigrations(state) {
     if (!Array.isArray(state.luxuryItems)) {
         state.luxuryItems = [];
     }
+    if (state.eventsCompleted === undefined) state.eventsCompleted = 0;
+    if (state.diseasesTreated === undefined) state.diseasesTreated = 0;
     if (state.karma === undefined) state.karma = 40;
     if (gameState.tutorialEnabled === undefined) gameState.tutorialEnabled = false;
     if (gameState.tutorialStep === undefined) gameState.tutorialStep = 0;

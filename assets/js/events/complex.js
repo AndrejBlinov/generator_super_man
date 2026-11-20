@@ -57,7 +57,7 @@ export const COMPLEX_EVENTS = {
         getDynamicDescription: (ctx) => ctx.ringTier === 'expensive' ? "После роскошного кольца ожидания завышены до небес." : "Вы хотите уютную и камерную свадьбу.",
         choices: [
             { id: "wedding_modest", text: "Скромный банкет дома или в кафе", effects: { moneyScaled: -2000, karma: 5, message: "Теплая, уютная свадьба в кругу самых близких.", setFlag: "married", removeFlag: "engaged" } },
-            { id: "wedding_grand", text: "Ресторан, тамада и ледяной лебедь", effects: { moneyScaled: -10000, karma: 10, message: "Грандиозная вечеринка! Все соседи завидуют.", setFlag: "married", removeFlag: "engaged" } }
+            { id: "wedding_grand", text: "Ресторан, тамада и ледяной лебедь", effects: { moneyScaled: -10000, karma: 10, message: "Грандиозная вечеринка! Все соседи завидуют.", setFlag: ["married", "grand_wedding"], removeFlag: "engaged" } }
         ]
     },
 
@@ -172,7 +172,7 @@ export const COMPLEX_EVENTS = {
         getDynamicTitle: () => "Ответ из Австралии",
         getDynamicDescription: () => "Пришел финальный документ.",
         choices: [
-            { id: "win", text: "Забрать наследство", effects: { moneyScaled: 15000, karma: 5, message: "Невероятно! Дядя оставил вам деньги и коллекцию бумерангов.", removeFlag: "claiming_inheritance" } }
+            { id: "win", text: "Забрать наследство", effects: { moneyScaled: 15000, karma: 5, message: "Невероятно! Дядя оставил вам деньги и коллекцию бумерангов.", setFlag: "inheritance_won", removeFlag: "claiming_inheritance" } }
         ]
     }
 };

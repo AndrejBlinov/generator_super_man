@@ -278,7 +278,7 @@ export const SIMPLE_EVENTS = {
         conditions: { minAge: 25, maxAge: 60, weight: 2 },
         title: "Яркий свет в окне", description: "Вы просыпаетесь посреди поля. Рядом лежит странный светящийся камень.",
         choices: [
-            { id: "take_stone", text: "Забрать камень", effects: { health: -10, karma: 0, message: "Вы получили странный артефакт!", addFreeCrystal: 1 } },
+            { id: "take_stone", text: "Забрать камень", effects: { health: -10, karma: 0, message: "Вы получили странный артефакт!", addFreeCrystal: 1, setFlag: "alien_contact" } },
             { id: "run", text: "Бежать домой", effects: { health: -5, karma: 2, message: "Вы дома. Странные сны вам обеспечены." } }
         ]
     }

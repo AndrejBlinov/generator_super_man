@@ -117,6 +117,7 @@ export function processDiseasesTick() {
             else {
                 if (config.category == 'light') {
                     if (Math.random() < 0.05) {
+                        if (!gameState.flags.includes('self_healed')) gameState.flags.push('self_healed');
                         toRemove.push(index);
                         result.selfHealed.push(config);
                     }
@@ -169,6 +170,7 @@ export function treatDisease(diseaseId) {
     if (!gameState.activeDiseases) {
         return { success: false, message: "Нет активной болезни" };
     }
+    gameState.flags.push('treated');
 
     const index = gameState.activeDiseases.findIndex(d => d.id === diseaseId);
     if (index === -1) {
