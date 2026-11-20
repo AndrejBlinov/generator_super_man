@@ -33,6 +33,9 @@ export const defaultGameState = {
     totalPointsEarned: 0,
     money: 0,
 
+    tutorialEnabled: false,
+    tutorialStep: 0,
+
     autoExchangeAmount: 0,
     autoSpendEnabled: false,
     autoTreatEnabled: false,
@@ -150,6 +153,8 @@ function applyMigrations(state) {
         state.luxuryItems = [];
     }
     if (state.karma === undefined) state.karma = 40;
+    if (gameState.tutorialEnabled === undefined) gameState.tutorialEnabled = false;
+    if (gameState.tutorialStep === undefined) gameState.tutorialStep = 0;
     if (state.doubleClickChance === undefined) state.doubleClickChance = 0.0;
     if (state.diseaseResistance === undefined) state.diseaseResistance = 0.0;
     if (state.extraTrainingChance === undefined) state.extraTrainingChance = 0.0;
@@ -177,10 +182,10 @@ export function saveGame() {
         clearActiveGame();
         return;
     }
-    
+
     // 🔑 Принудительно обновляем timestamp перед сохранением
     gameState.lastSaveTimestamp = Date.now();
-    
+
     try {
         saveActiveGame(gameState);
     } catch (e) {

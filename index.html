@@ -18,6 +18,8 @@
     <link rel="stylesheet" href="assets/css/messages.css">
     <link rel="stylesheet" href="assets/css/death_screen.css">
     <link rel="stylesheet" href="assets/css/effects.css">
+    <link rel="stylesheet" href="assets/css/instruction.css">
+    <link rel="stylesheet" href="assets/css/tutorial.css">
 </head>
 
 <body>
@@ -200,6 +202,13 @@
                     <div class="gender-name">Женский</div>
                 </div>
             </div>
+
+            <div class="tutorial-checkbox-wrapper">
+                <label class="tutorial-checkbox-label">
+                    <input type="checkbox" id="tutorialCheckbox" checked>
+                    <span>📚 Включить обучение для новичков</span>
+                </label>
+            </div>
         </div>
     </aside>
 
@@ -322,6 +331,26 @@
     </div>
 
     <div class="message" id="message"></div>
+
+    <!-- МОДАЛКА ТУТОРИАЛА -->
+    <div class="tutorial-modal" id="tutorialModal" aria-hidden="true">
+        <div class="tutorial-content">
+            <h3 id="tutorialTitle">Заголовок</h3>
+            <p id="tutorialText">Текст подсказки</p>
+            <div class="tutorial-buttons">
+                <button class="tutorial-skip-btn" id="tutorialSkipBtn">Пропустить обучение</button>
+                <button class="tutorial-next-btn" id="tutorialNextBtn">Далее</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- СТРЕЛКА-УКАЗАТЕЛЬ -->
+    <div class="tutorial-arrow" id="tutorialArrow">
+        <svg viewBox="0 0 40 40" width="40" height="40">
+            <path d="M 20 5 L 35 20 L 25 20 L 25 35 L 15 35 L 15 20 L 5 20 Z" fill="#667eea" stroke="#4b56b2"
+                stroke-width="2" />
+        </svg>
+    </div>
 
     <script type="module" src="./assets/js/main.js"></script>
 </body>

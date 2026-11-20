@@ -7,6 +7,7 @@ import { createCrystalBulk, selectCrystal, getMaxAffordableCrystals } from './cr
 import { initPanels, setOnPanelOpenCallback, openPanel, closePanel } from './panels.js';
 import { canTrain, getTrainingBlockReason, restoreNeedManual, renderNeeds, handleTreatDisease, renderDiseaseBlock } from './needs/index.js';
 import { initCharacter, updateCharacterStateFromGame, updateHousingInfo } from './character/index.js';
+import { initTutorial, checkTutorialCondition } from './tutorial.js';
 import { GAME_VERSION, HOUSING_CONFIG } from './config.js';
 
 // 🔑 ЗАГРУЗКА ИНСТРУКЦИИ (выполняется 1 раз при старте модуля)
@@ -25,6 +26,8 @@ function startGameEngine() {
     updateCharacterStateFromGame();
     renderUI();
     startGameLoop();
+
+    initTutorial();
 }
 function stopGameEngine() {
     stopGameLoop();
@@ -164,6 +167,14 @@ function showMainMenu() {
             <p>Автосохранение каждые 30 секунд</p>
         `;
     }
+
+    const hasAnyProgress = hasLegacy() || stats.runsCompleted > 0;
+
+    // Если есть прогресс — чекбокс выключен, иначе включён
+    const tutorialCheckbox = document.getElementById('tutorialCheckbox');
+    if (tutorialCheckbox) {
+        tutorialCheckbox.checked = !hasAnyProgress;
+    }
 }
 
 // ==========================================
@@ -221,6 +232,13 @@ function bindEvents() {
             card.classList.add('selected');
 
             gameState.gender = gender;
+
+            const tutorialCheckbox = document.getElementById('tutorialCheckbox');
+            if (tutorialCheckbox) {
+                gameState.tutorialEnabled = tutorialCheckbox.checked;
+                gameState.tutorialStep = 1; // Начинаем с первого шага
+            }
+
             closePanel(); // Закрываем панель пола
 
             if (window.pendingInheritance) {
@@ -486,7 +504,7 @@ function bindEvents() {
 
                 import('./inheritance.js').then(module => {
                     // Передаем и сложность, и выбранный пол
-                    return module.startInheritedGame(difficulty, currentGender); 
+                    return module.startInheritedGame(difficulty, currentGender);
                 }).then(() => {
                     startGameEngine();
                     console.log(`✅ Игра с наследием запущена. Сложность: ${difficulty}, Пол: ${currentGender}`);
@@ -611,7 +629,7 @@ function getEffectsPreview(effects, showValues = false) {
     return `<div class="event-effects-preview">${prefix}[${parts.join(', ')}]</div>`;
 }
 
-window.renderEventModal = function() {
+window.renderEventModal = function () {
     const backdrop = document.getElementById('eventModalBackdrop');
     const icon = document.getElementById('eventIcon');
     const title = document.getElementById('eventTitle');
@@ -624,13 +642,13 @@ window.renderEventModal = function() {
     icon.textContent = ev.icon;
     title.textContent = ev.title;
     desc.textContent = ev.description;
-    
+
     choicesContainer.innerHTML = '';
 
     ev.choices.forEach((choice, index) => {
         const btn = document.createElement('button');
         btn.className = 'event-choice-btn';
-        
+
         let btnText = choice.text;
         let isBlocked = false;
         const effects = choice.effects || {};
@@ -644,7 +662,7 @@ window.renderEventModal = function() {
             // Симулируем применение эффектов
             let simulatedHealth = gameState.needs.health + (effects.health || 0);
             let simulatedHunger = gameState.needs.hunger + (effects.hunger || 0);
-            
+
             let moneyChange = effects.money || 0;
             if (effects.moneyScaled !== undefined) {
                 const multiplier = Math.max(1, Math.min(15, 1 + Math.floor(gameState.money / 10000)));
@@ -663,7 +681,7 @@ window.renderEventModal = function() {
         }
 
         btn.innerHTML = btnText;
-        
+
         if (isBlocked) {
             btn.disabled = true;
             btn.style.opacity = '0.4';
@@ -683,7 +701,7 @@ window.renderEventModal = function() {
     backdrop.setAttribute('aria-hidden', 'false');
 };
 
-window.showEventResult = function(message, appliedEffects) {
+window.showEventResult = function (message, appliedEffects) {
     const backdrop = document.getElementById('eventModalBackdrop');
     const icon = document.getElementById('eventIcon');
     const title = document.getElementById('eventTitle');
@@ -694,16 +712,16 @@ window.showEventResult = function(message, appliedEffects) {
 
     icon.textContent = "✅";
     title.textContent = "Результат";
-    
+
     // 🔑 ФОРМИРУЕМ ИТОГ С ТЕМ ЖЕ СКРЫТЫМ ФОРМАТОМ
     let summaryHtml = `<p>${message}</p>`;
     if (appliedEffects) {
         summaryHtml += getEffectsPreview(appliedEffects, true);
     }
-    
+
     desc.innerHTML = summaryHtml;
     choicesContainer.innerHTML = '';
-    
+
     const okBtn = document.createElement('button');
     okBtn.className = 'event-choice-btn';
     okBtn.style.textAlign = 'center';
@@ -713,15 +731,15 @@ window.showEventResult = function(message, appliedEffects) {
     okBtn.style.border = 'none';
     okBtn.style.marginTop = '10px';
     okBtn.textContent = 'Понятно';
-    
+
     okBtn.onclick = () => {
         window.closeEventModal();
     };
-    
+
     choicesContainer.appendChild(okBtn);
 };
 
-window.closeEventModal = function() {
+window.closeEventModal = function () {
     const backdrop = document.getElementById('eventModalBackdrop');
     if (backdrop) {
         backdrop.classList.remove('active');

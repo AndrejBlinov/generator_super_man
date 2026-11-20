@@ -19,9 +19,9 @@ export function startGameLoop() {
     gameLoopInterval = setInterval(() => {
         // 🔑 1. ГЛАВНАЯ ПАУЗА: Если активно событие, пропускаем тик ПОЛНОСТЬЮ
         if (gameState.activeEvent) {
-            return; 
+            return;
         }
-         if (document.querySelector('.event-modal-backdrop.active')) return;
+        if (document.querySelector('.event-modal-backdrop.active')) return;
 
         // 🔑 2. ПАУЗА ПРИ ОТКРЫТЫХ ПАНЕЛЯХ
         const isAnyPanelOpen = document.querySelector('.side-panel.is-open') !== null;
@@ -42,7 +42,7 @@ export function startGameLoop() {
 
         // 4. ПРОВЕРКА СОБЫТИЙ
         checkAndTriggerDailyEvent();
-        
+
         // 🔑 КРИТИЧЕСКИ ВАЖНО: Если событие только что сработало, 
         // НЕМЕДЛЕННО прерываем тик. Иначе начислятся ресурсы и пройдет день.
         if (gameState.activeEvent) {
@@ -100,7 +100,7 @@ export function startGameLoop() {
         // 🔑 10. ЛОГИКА ПИТОМЦЕВ (Собака и др.)
         if (gameState.pet) {
             gameState.needs.hunger = Math.max(0, gameState.needs.hunger - 0.5);
-            
+
             gameState.pet.daysLived++;
             if (gameState.pet.daysLived >= gameState.pet.lifespanDays) {
                 showMessage(`😢 Ваш питомец (${gameState.pet.type === 'dog' ? 'пёс' : gameState.pet.type}) умер от старости.`);
@@ -129,6 +129,10 @@ export function startGameLoop() {
                 handleDeath();
                 showGameOver("Персонаж умер от старости!");
             }
+        }
+
+        if (gameState.tutorialEnabled && gameState.tutorialStep > 0) {
+            checkTutorialCondition();
         }
 
         updateCharacterStateFromGame();
