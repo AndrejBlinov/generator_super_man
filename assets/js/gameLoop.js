@@ -17,18 +17,26 @@ export function startGameLoop() {
     }
 
     gameLoopInterval = setInterval(() => {
-        // 🔑 1. ГЛАВНАЯ ПАУЗА: Если активно событие, пропускаем тик ПОЛНОСТЬЮ
-        if (gameState.activeEvent) {
-            return;
+        // 🔑 0. ПРОВЕРКА ТУТОРИАЛА (Приоритет №1)
+        const isTutorialModalOpen = document.getElementById('tutorialModal')?.classList.contains('active');
+        
+        if (isTutorialModalOpen) {
+            // Игра на паузе! Проверяем только условие туториала и обновляем UI (чтобы рос счетчик ОЭ при клике)
+            if (gameState.tutorialEnabled && typeof checkTutorialCondition === 'function') {
+                checkTutorialCondition();
+            }
+            updateUI();
+            return; // ⛔ ОСТАНАВЛИВАЕМ цикл здесь. Никаких событий, старения или падения потребностей.
         }
+
+        // 🔑 1. ГЛАВНАЯ ПАУЗА: Если активно сюжетное событие
+        if (gameState.activeEvent) return; 
         if (document.querySelector('.event-modal-backdrop.active')) return;
 
         // 🔑 2. ПАУЗА ПРИ ОТКРЫТЫХ ПАНЕЛЯХ
         const isAnyPanelOpen = document.querySelector('.side-panel.is-open') !== null;
         const isDonateModalOpen = document.querySelector('.donate-modal.is-open') !== null;
-        if (isAnyPanelOpen || isDonateModalOpen) {
-            return;
-        }
+        if (isAnyPanelOpen || isDonateModalOpen) return;
 
         if (gameState.isGameOver) return;
 
@@ -42,12 +50,9 @@ export function startGameLoop() {
 
         // 4. ПРОВЕРКА СОБЫТИЙ
         checkAndTriggerDailyEvent();
-
-        // 🔑 КРИТИЧЕСКИ ВАЖНО: Если событие только что сработало, 
-        // НЕМЕДЛЕННО прерываем тик. Иначе начислятся ресурсы и пройдет день.
-        if (gameState.activeEvent) {
-            return;
-        }
+        
+        // Если событие только что сработало, прерываем тик
+        if (gameState.activeEvent) return;
 
         // 5. Пассивный доход
         const passiveIncome = calculatePassiveIncome();
@@ -97,15 +102,14 @@ export function startGameLoop() {
             return;
         }
 
-        // 🔑 10. ЛОГИКА ПИТОМЦЕВ (Собака и др.)
+        // 10. ЛОГИКА ПИТОМЦЕВ
         if (gameState.pet) {
             gameState.needs.hunger = Math.max(0, gameState.needs.hunger - 0.5);
-
             gameState.pet.daysLived++;
             if (gameState.pet.daysLived >= gameState.pet.lifespanDays) {
                 showMessage(`😢 Ваш питомец (${gameState.pet.type === 'dog' ? 'пёс' : gameState.pet.type}) умер от старости.`);
                 gameState.karma = Math.max(0, gameState.karma - 5);
-                gameState.flags = gameState.flags.filter(f => f !== "has_dog"); // Чистим флаг
+                gameState.flags = gameState.flags.filter(f => f !== "has_dog");
                 gameState.pet = null;
             }
         }
@@ -131,6 +135,7 @@ export function startGameLoop() {
             }
         }
 
+        // 🔑 ПРОВЕРКА ТУТОРИАЛА (для шагов, которые не блокируют UI, хотя сейчас все блокируют)
         if (gameState.tutorialEnabled && gameState.tutorialStep > 0 && typeof checkTutorialCondition === 'function') {
             checkTutorialCondition();
         }

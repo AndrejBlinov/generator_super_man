@@ -122,14 +122,10 @@ export function showTutorialModal(step) {
             gameState.tutorialStep++;
             saveTutorialProgress();
             
-            // 🔑 Показываем следующий шаг
+            // 🔑 Показываем следующий шаг СРАЗУ, чтобы пользователь знал, что делать
             const nextStep = TUTORIAL_STEPS.find(s => s.id === gameState.tutorialStep);
             if (nextStep) {
-                // Если следующий шаг автопереходный или без условия — показываем сразу
-                if (nextStep.autoAdvance || !nextStep.condition) {
-                    setTimeout(() => showTutorialModal(nextStep), 300);
-                }
-                // Иначе ждём выполнения условия в gameLoop
+                setTimeout(() => showTutorialModal(nextStep), 300);
             }
         } else {
             gameState.tutorialEnabled = false;
@@ -146,7 +142,13 @@ export function showTutorialModal(step) {
 }
 
 // 🔑 Скрыть модалку
+// 🔑 Скрыть модалку
 export function hideTutorialModal() {
+    // 🔑 Сбрасываем фокус с кнопки, чтобы избежать предупреждения aria-hidden
+    if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+    }
+
     const modal = document.getElementById('tutorialModal');
     const arrow = document.getElementById('tutorialArrow');
     
