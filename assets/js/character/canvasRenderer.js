@@ -1,3 +1,6 @@
+import { ITEMS_CONFIG } from '../config.js';
+import { gameState } from '../state.js';
+
 export class CharacterCanvasRenderer {
     constructor(canvas) {
         this.canvas = canvas;
@@ -60,6 +63,7 @@ export class CharacterCanvasRenderer {
         this.drawBackground();
         this.drawHousing();
         this.drawCharacter();
+        this.drawLuxuryItems();
     }
 
     // ================= ФОН =================
@@ -746,5 +750,106 @@ export class CharacterCanvasRenderer {
         g = Math.max(0, Math.min(255, g));
         b = Math.max(0, Math.min(255, b));
         return `rgb(${r},${g},${b})`;
+    }
+
+    // 🔑 НОВОЕ: Отрисовка предметов роскоши на персонаже
+    drawLuxuryItems(ctx, x, y, scale) {
+        if (!gameState.luxuryItems || gameState.luxuryItems.length === 0) return;
+
+        const itemSize = 20 * scale;
+
+        gameState.luxuryItems.forEach((itemId, index) => {
+            const config = ITEMS_CONFIG[itemId];
+            if (!config.visual) return;
+
+            ctx.save();
+
+            switch (config.visual) {
+                case 'watch':
+                    // Часы на запястье
+                    ctx.translate(x + 30 * scale, y + 60 * scale);
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, itemSize / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // Циферблат
+                    ctx.fillStyle = '#FFF';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, itemSize / 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'ring':
+                    // Кольцо на пальце
+                    ctx.translate(x + 25 * scale, y + 70 * scale);
+                    ctx.strokeStyle = '#FFD700';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, itemSize / 3, 0, Math.PI * 2);
+                    ctx.stroke();
+                    // Бриллиант
+                    ctx.fillStyle = '#E0F7FF';
+                    ctx.beginPath();
+                    ctx.moveTo(0, -itemSize / 3);
+                    ctx.lineTo(itemSize / 4, 0);
+                    ctx.lineTo(0, itemSize / 4);
+                    ctx.lineTo(-itemSize / 4, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    break;
+
+                case 'car':
+                    // Машина рядом с персонажем
+                    ctx.translate(x + 80 * scale, y + 80 * scale);
+                    ctx.fillStyle = '#FF4444';
+                    ctx.fillRect(0, 0, itemSize * 2, itemSize);
+                    // Окна
+                    ctx.fillStyle = '#87CEEB';
+                    ctx.fillRect(itemSize * 0.3, 0, itemSize * 0.6, itemSize * 0.5);
+                    // Колёса
+                    ctx.fillStyle = '#333';
+                    ctx.beginPath();
+                    ctx.arc(itemSize * 0.4, itemSize, itemSize / 4, 0, Math.PI * 2);
+                    ctx.arc(itemSize * 1.6, itemSize, itemSize / 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'yacht':
+                    // Яхта рядом с персонажем
+                    ctx.translate(x + 80 * scale, y + 70 * scale);
+                    ctx.fillStyle = '#FFF';
+                    ctx.beginPath();
+                    ctx.moveTo(0, itemSize);
+                    ctx.lineTo(itemSize * 2, itemSize);
+                    ctx.lineTo(itemSize * 1.8, 0);
+                    ctx.lineTo(itemSize * 0.2, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    // Парус
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.moveTo(itemSize, 0);
+                    ctx.lineTo(itemSize * 1.5, itemSize * 0.8);
+                    ctx.lineTo(itemSize, itemSize);
+                    ctx.closePath();
+                    ctx.fill();
+                    break;
+
+                case 'gym':
+                    // Гантели рядом (абонемент в спортзал)
+                    ctx.translate(x + 70 * scale, y + 90 * scale);
+                    ctx.fillStyle = '#666';
+                    ctx.fillRect(0, 0, itemSize * 1.5, itemSize / 4);
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(0, -itemSize / 4, itemSize / 3, itemSize / 2);
+                    ctx.fillRect(itemSize * 1.2, -itemSize / 4, itemSize / 3, itemSize / 2);
+                    break;
+            }
+
+            ctx.restore();
+        });
     }
 }

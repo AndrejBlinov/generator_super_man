@@ -2571,7 +2571,8 @@ body.panel-open {
 
 .character-stage canvas#characterCanvasMain {
     width: 100%;
-    max-width: 300px; /* 🔑 Увеличили максимальный размер */
+    max-width: 300px;
+    /* 🔑 Увеличили максимальный размер */
     height: auto;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
@@ -2592,17 +2593,17 @@ body.panel-open {
     position: sticky;
     top: 0;
     z-index: 50;
-    
+
     background: rgba(255, 255, 255, 0.97);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    
+
     padding: 16px 20px;
     margin-bottom: 16px;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid rgba(0, 0, 0, 0.05);
-    
+
     transition: all 0.3s ease;
 }
 
@@ -2648,14 +2649,29 @@ body.panel-open {
         padding: 12px 14px;
         margin-bottom: 12px;
     }
-    
+
     .top-sticky-panel.is-stuck {
         padding: 8px 12px;
     }
-    
+
     .top-sticky-panel.is-stuck .train-button {
         padding: 8px 16px;
         font-size: 13px;
     }
 }
+
+/* Ряд кнопок кристаллов 2/3 уровня */
+.advanced-crystal-btns {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+/* Только размеры/шрифт — цвет и disabled приходят из .create-crystal-btn */
+.create-crystal-btn.create-crystal-btn-adv {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+}
+
 /* © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved). */

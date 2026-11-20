@@ -42,6 +42,7 @@ export const defaultGameState = {
     activeDiseases: [],
     housing: 'box',
     gender: 'male',
+    luxuryItems: [],
 
     diseaseImmunityTicks: 0,
     difficulty: 'medium',
@@ -77,7 +78,7 @@ export const defaultGameState = {
     scheduledEvent: null, // { eventId, triggerAtAbsoluteDay, context }
     activeEvent: null, // { eventId, variantKey, choices } (если не null, игра на паузе)
     lastEventDay: 0, // Абсолютный день последнего события (для кулдауна)
-    pet: null, 
+    pet: null,
 
     isGameOver: false,
 };
@@ -145,6 +146,9 @@ function applyMigrations(state) {
     }
 
     // Миграции примитивов
+    if (!Array.isArray(state.luxuryItems)) {
+        state.luxuryItems = [];
+    }
     if (state.karma === undefined) state.karma = 40;
     if (state.doubleClickChance === undefined) state.doubleClickChance = 0.0;
     if (state.diseaseResistance === undefined) state.diseaseResistance = 0.0;
@@ -203,7 +207,7 @@ export function resetActiveGame(difficulty = 'medium') {
         absoluteAgeInYears: diffConfig.startAge,
         diseaseImmunityTicks: diffConfig.diseaseImmunityDays,
         karma: diffConfig.startKarma || 40,
-        money: diffConfig.startMoney || 0,        
+        money: diffConfig.startMoney || 0,
         housing: 'box',
         lastSaveTimestamp: Date.now()
     };

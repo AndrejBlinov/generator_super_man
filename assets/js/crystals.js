@@ -233,9 +233,13 @@ export function getSelection() {
     return { index: selectedCrystalIndex, zone: selectedCrystalZone };
 }
 
+export function getCrystalLevelCost(level) {
+    return CRYSTAL_COST * Math.pow(3, level - 1); // 1 ур=100, 2 ур=300, 3 ур=900
+}
+
 // 🔑 НОВОЕ: Создание кристалла высокого уровня сразу
 export function createCrystalLevel(level) {
-    const cost = CRYSTAL_COST * Math.pow(3, level - 1);
+    const cost = getCrystalLevelCost(level);
 
     if (gameState.evolutionPoints < cost) {
         showMessage(`❌ Недостаточно ОЭ! Нужно ${cost}`);

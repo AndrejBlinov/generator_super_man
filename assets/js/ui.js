@@ -1,9 +1,10 @@
 import { gameState, legacy, stats, defaultGameState, saveGame, resetAll , getCurrentExchangeRate } from './state.js';
 import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST, DIFFICULTY_CONFIG, HOUSING_CONFIG } from './config.js';
-import { calculatePassiveIncome, getSelection, getMaxAffordableCrystals } from './crystals.js';
+import { calculatePassiveIncome, getSelection, getCrystalLevelCost } from './crystals.js';
 import { calculateBulkCost, getMaxAffordableCount, getMaxAffordableItemCount } from './upgrades.js';
 import { getInheritancePreviewText, finalizeRunAndSaveLegacy, startInheritedGame } from './inheritance.js';
 import { getCrystalIcon } from './crystalIcons.js';
+import { saveLegacy } from './storage.js';
 
 // 🔑 Импортируем из needs-модуля
 import {
@@ -198,6 +199,9 @@ export function renderUpgrades() {
     const container = document.getElementById('upgradesContainer');
     container.innerHTML = '';
 
+    // 🔑 Единый расчёт курса — доступен во всём методе
+    const currentRate = getCurrentExchangeRate();
+
     // 1. Переключатель множителя
     const multiplierSwitcher = document.createElement('div');
     multiplierSwitcher.className = 'multiplier-switcher';
@@ -218,59 +222,48 @@ export function renderUpgrades() {
 
     const housingLevels = Object.keys(HOUSING_CONFIG);
     const currentIndex = housingLevels.indexOf(gameState.housing);
+    const nextIndex = currentIndex + 1;
 
-    Object.values(HOUSING_CONFIG).forEach((house, index) => {
-        const isCurrent = gameState.housing === house.id;
-        const isPast = index < currentIndex; // Уже пройденные уровни
-        const isFuture = index > currentIndex; // Ещё не купленные
+    // 🔑 Показываем только следующий дом для покупки
+    if (nextIndex < housingLevels.length) {
+        const nextHouseId = housingLevels[nextIndex];
+        const house = HOUSING_CONFIG[nextHouseId];
+        const canAfford = gameState.money >= house.cost;
 
         const item = document.createElement('div');
         item.className = 'upgrade-item item-item';
 
-        let btnText = '';
-        let statusHtml = '';
-        let isDisabled = false;
+        const decayText = house.decayMult < 1.0 ? `📉 Комфорт падает на ${Math.round((1 - house.decayMult) * 100)}% медленнее` : '⚠️ Комфорт падает быстрее';
+        const incomeText = house.incomeMult > 1.0 ? `📈 +${Math.round((house.incomeMult - 1) * 100)}% к доходу` : '';
 
-        if (isCurrent) {
-            btnText = '✅ Текущее';
-            const decayText = house.decayMult < 1.0 ? `📉 Комфорт падает на ${Math.round((1 - house.decayMult) * 100)}% медленнее` : '⚠️ Комфорт падает быстрее';
-            const incomeText = house.incomeMult > 1.0 ? `📈 +${Math.round((house.incomeMult - 1) * 100)}% к доходу` : '';
-            statusHtml = `<div style="font-size: 11px; color: #28a745; margin-top: 4px;">
-                Макс. комфорт: <strong>${house.maxComfort}</strong><br>
-                ${decayText}<br>
-                ${incomeText}
-            </div>`;
-            isDisabled = true;
-        } else if (isPast) {
-            btnText = '✅ Куплено';
-            statusHtml = `<div style="font-size: 11px; color: #6c757d; margin-top: 4px;">
-                Макс. комфорт: ${house.maxComfort}
-            </div>`;
-            isDisabled = true;
-        } else {
-            const canAfford = gameState.money >= house.cost;
-            const decayText = house.decayMult < 1.0 ? `📉 Комфорт падает на ${Math.round((1 - house.decayMult) * 100)}% медленнее` : '⚠️ Комфорт падает быстрее';
-            const incomeText = house.incomeMult > 1.0 ? `📈 +${Math.round((house.incomeMult - 1) * 100)}% к доходу` : '';
-
-            btnText = `Купить за ${house.cost.toLocaleString()} 💰`;
-            statusHtml = `<div style="font-size: 11px; color: #666; margin-top: 4px;">
-                Макс. комфорт: <strong>${house.maxComfort}</strong><br>
-                ${decayText}<br>
-                ${incomeText}
-            </div>`;
-            isDisabled = !canAfford;
-        }
+        const btnText = canAfford ? `Купить за ${house.cost.toLocaleString()} 💰` : `❌ Нужно ${house.cost.toLocaleString()} 💰`;
+        const statusHtml = `<div style="font-size: 11px; color: #666; margin-top: 4px;">
+            Макс. комфорт: <strong>${house.maxComfort}</strong><br>
+            ${decayText}<br>
+            ${incomeText}
+        </div>`;
 
         item.innerHTML = `
             <div class="upgrade-info">
                 <div class="upgrade-name">${house.name} ${statusHtml}</div>
             </div>
-            <button class="upgrade-btn item-btn" data-housing="${house.id}" ${isDisabled ? 'disabled' : ''}>
+            <button class="upgrade-btn item-btn" data-housing="${house.id}" ${!canAfford ? 'disabled' : ''}>
                 ${btnText}
             </button>
         `;
         container.appendChild(item);
-    });
+    } else {
+        // Максимальный уровень достигнут
+        const maxHouse = HOUSING_CONFIG[housingLevels[housingLevels.length - 1]];
+        const item = document.createElement('div');
+        item.className = 'upgrade-item item-item';
+        item.innerHTML = `
+            <div class="upgrade-info">
+                <div class="upgrade-name">✅ ${maxHouse.name} — максимальный уровень</div>
+            </div>
+        `;
+        container.appendChild(item);
+    }
 
     // 2. Заголовок Способностей
     const abilitiesHeader = document.createElement('div');
@@ -333,36 +326,57 @@ export function renderUpgrades() {
     // 5. Отрисовка Вещей (ITEMS_CONFIG)
     Object.keys(ITEMS_CONFIG).forEach(itemId => {
         const config = ITEMS_CONFIG[itemId];
+        
+        // Для предметов роскоши — своя логика
+        if (config.karmaBonus || config.comfortBonus || config.healthBonus) {
+            const isPurchased = gameState.luxuryItems.includes(itemId);
+            const canAfford = gameState.money >= config.cost && !isPurchased;
+            
+            const item = document.createElement('div');
+            item.className = 'upgrade-item item-item';
+            
+            let btnText = `Купить за ${config.cost.toLocaleString()} 💰`;
+            if (isPurchased) {
+                btnText = '✅ Куплено';
+            } else if (!canAfford) {
+                btnText = `❌ Нужно ${config.cost.toLocaleString()} 💰`;
+            }
+            
+            item.innerHTML = `
+                <div class="upgrade-info">
+                    <div class="upgrade-name">${config.icon} ${config.name}</div>
+                    <div class="upgrade-desc">${config.desc}</div>
+                </div>
+                <button class="upgrade-btn item-btn" data-item="${itemId}" data-count="1" ${!canAfford ? 'disabled' : ''}>
+                    ${btnText}
+                </button>
+            `;
+            container.appendChild(item);
+            return; // Пропускаем стандартную логику
+        }
+        
+        // Стандартная логика для обычных предметов
         const maxAffordable = getMaxAffordableItemCount(itemId);
         const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
-
-        // 🔑 Динамический курс обмена
-        const currentRate = getCurrentExchangeRate();
-        const amountToExchange = actualCount > 0 ? actualCount : 1;
-
-        const totalCost = config.cost * amountToExchange;
-        const totalReward = Math.floor(currentRate * amountToExchange);
-
+        const totalCost = config.cost * (actualCount > 0 ? actualCount : 1);
+        const totalReward = Math.floor(currentRate * (actualCount > 0 ? actualCount : 1));
         const canAfford = gameState.evolutionPoints >= totalCost && actualCount > 0;
-
+        
         const item = document.createElement('div');
         item.className = 'upgrade-item item-item';
-
-        // 🔑 Динамическое описание с актуальным курсом
+        
         let descText = config.desc;
         if (itemId === 'money_exchange' || config.name === 'Обмен на деньги') {
             descText = `1 ОЭ = ${Math.floor(currentRate)} денег`;
         }
-
+        
         let btnText = `Купить за ${config.cost} ОЭ`;
         if (gameState.purchaseMultiplier === 'max') {
-            btnText = maxAffordable > 0
-                ? `+${totalReward} 💰 за ${totalCost} ОЭ`
-                : 'Недоступно';
+            btnText = maxAffordable > 0 ? `+${totalReward} 💰 за ${totalCost} ОЭ` : 'Недоступно';
         } else if (parseInt(gameState.purchaseMultiplier) > 1) {
             btnText = `+${totalReward} 💰 за ${totalCost} ОЭ`;
         }
-
+        
         item.innerHTML = `
             <div class="upgrade-info">
                 <div class="upgrade-name">${config.icon} ${config.name}</div>
@@ -382,40 +396,65 @@ export function updateShopButtons() {
 
 export function updateCrystalCreateButton() {
     const createBtn = document.getElementById('createCrystalBtn');
-    if (!createBtn) return;
+    const lvl2Btn = document.getElementById('createCrystalLvl2Btn');
+    const lvl3Btn = document.getElementById('createCrystalLvl3Btn');
 
-    // 🔑 НЕЗАВИСИМЫЕ ПРОВЕРКИ
+    // 🔑 Независимые проверки (место vs деньги) — как в P0-фиксе
     const emptyActiveSlots = gameState.crystals.filter(c => c === null).length;
     const emptyInventorySlots = gameState.crystalsInventory.filter(c => c === null).length;
     const totalEmptySlots = emptyActiveSlots + emptyInventorySlots;
-    
-    const canAffordOne = gameState.evolutionPoints >= CRYSTAL_COST;
+    const points = gameState.evolutionPoints;
 
-    // 1. Сначала проверяем место (это абсолютное ограничение)
-    if (totalEmptySlots === 0) {
-        createBtn.disabled = true;
-        createBtn.textContent = '❌ Нет свободных слотов (15/15)';
-        return;
+    // --- Основная кнопка (1 ур.) ---
+    if (createBtn) {
+        if (totalEmptySlots === 0) {
+            createBtn.disabled = true;
+            createBtn.textContent = '❌ Нет свободных слотов (15/15)';
+        } else if (points < CRYSTAL_COST) {
+            createBtn.disabled = true;
+            createBtn.textContent = `❌ Недостаточно ОЭ (нужно ${CRYSTAL_COST})`;
+        } else {
+            createBtn.disabled = false;
+            const maxAffordable = Math.min(Math.floor(points / CRYSTAL_COST), totalEmptySlots);
+            if (gameState.purchaseMultiplier === 'max') {
+                createBtn.textContent = `⚡ Создать МАКС (${maxAffordable} шт.) за ${maxAffordable * CRYSTAL_COST} ОЭ`;
+            } else if (parseInt(gameState.purchaseMultiplier) > 1) {
+                const actualCount = Math.min(parseInt(gameState.purchaseMultiplier), maxAffordable);
+                createBtn.textContent = `✨ Создать ${actualCount} шт. за ${actualCount * CRYSTAL_COST} ОЭ`;
+            } else {
+                createBtn.textContent = `Создать 1 кристалл за ${CRYSTAL_COST} ОЭ`;
+            }
+        }
     }
 
-    // 2. Затем проверяем деньги
-    if (!canAffordOne) {
-        createBtn.disabled = true;
-        createBtn.textContent = `❌ Недостаточно ОЭ (нужно ${CRYSTAL_COST})`;
-        return;
+    // --- Кнопка 2 уровня ---
+    if (lvl2Btn) {
+        const cost2 = getCrystalLevelCost(2);
+        if (totalEmptySlots === 0) {
+            lvl2Btn.disabled = true;
+            lvl2Btn.textContent = '❌ Нет слотов';
+        } else if (points < cost2) {
+            lvl2Btn.disabled = true;
+            lvl2Btn.textContent = `❌ Нужно ${cost2} ОЭ`;
+        } else {
+            lvl2Btn.disabled = false;
+            lvl2Btn.textContent = `Создать 2 ур. (${cost2} ОЭ)`;
+        }
     }
 
-    // 3. Если всё ок, показываем опции покупки
-    createBtn.disabled = false;
-    const maxAffordable = Math.min(Math.floor(gameState.evolutionPoints / CRYSTAL_COST), totalEmptySlots);
-
-    if (gameState.purchaseMultiplier === 'max') {
-        createBtn.textContent = `⚡ Создать МАКС (${maxAffordable} шт.) за ${maxAffordable * CRYSTAL_COST} ОЭ`;
-    } else if (parseInt(gameState.purchaseMultiplier) > 1) {
-        const actualCount = Math.min(parseInt(gameState.purchaseMultiplier), maxAffordable);
-        createBtn.textContent = `✨ Создать ${actualCount} шт. за ${actualCount * CRYSTAL_COST} ОЭ`;
-    } else {
-        createBtn.textContent = `Создать 1 кристалл за ${CRYSTAL_COST} ОЭ`;
+    // --- Кнопка 3 уровня ---
+    if (lvl3Btn) {
+        const cost3 = getCrystalLevelCost(3);
+        if (totalEmptySlots === 0) {
+            lvl3Btn.disabled = true;
+            lvl3Btn.textContent = '❌ Нет слотов';
+        } else if (points < cost3) {
+            lvl3Btn.disabled = true;
+            lvl3Btn.textContent = `❌ Нужно ${cost3} ОЭ`;
+        } else {
+            lvl3Btn.disabled = false;
+            lvl3Btn.textContent = `Создать 3 ур. (${cost3} ОЭ)`;
+        }
     }
 }
 

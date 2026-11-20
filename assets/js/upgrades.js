@@ -92,28 +92,65 @@ export function buyItemBulk(itemId, count) {
     const config = ITEMS_CONFIG[itemId];
     if (!config) return false;
     
-    // Проверяем, хватает ли ОЭ
     const totalCost = config.cost * count;
-    if (gameState.evolutionPoints < totalCost) return false;
     
-    // Списываем ОЭ
-    gameState.evolutionPoints -= totalCost;
-    
-    // 🔑 Начисляем награду с учётом бонуса наследия
-    const currentRate = getCurrentExchangeRate();
-    
-    if (itemId === 'money_exchange' || config.name === 'Обмен на деньги') {
-        // Начисляем деньги по актуальному курсу
-        const moneyGained = Math.floor(currentRate * count);
-        gameState.money += moneyGained;
-        
-        if (!gameState.stats) gameState.stats = { totalMoneyEarnedThisRun: 0 };
-        gameState.stats.totalMoneyEarnedThisRun += moneyGained;
-        
-        showMessage(`💰 Получено ${moneyGained} денег за ${count} ОЭ`);
+    // Для предметов роскоши проверяем деньги, для остального — ОЭ
+    if (config.karmaBonus || config.comfortBonus || config.healthBonus) {
+        if (gameState.money < totalCost) {
+            showMessage("❌ Недостаточно денег!");
+            return false;
+        }
     } else {
-        // Другие предметы (если есть)
-        // ... твоя логика
+        if (gameState.evolutionPoints < totalCost) {
+            showMessage("❌ Недостаточно очков!");
+            return false;
+        }
+    }
+    
+    // Списываем ресурсы
+    if (config.karmaBonus || config.comfortBonus || config.healthBonus) {
+        gameState.money -= totalCost;
+    } else {
+        gameState.evolutionPoints -= totalCost;
+    }
+    
+    const currentRate = getCurrentExchangeRate();
+    const amountToExchange = count;
+    const totalReward = Math.floor(currentRate * amountToExchange);
+
+    // Обмен на деньги
+    if (itemId === 'money_exchange' || config.name === 'Обмен на деньги') {
+        gameState.money += totalReward;
+        if (!gameState.stats) gameState.stats = { totalMoneyEarnedThisRun: 0 };
+        gameState.stats.totalMoneyEarnedThisRun += totalReward;
+        showMessage(`💰 Получено ${totalReward} денег за ${count} ОЭ`);
+    }
+    // 🔑 НОВОЕ: Предметы роскоши
+    else if (config.karmaBonus || config.comfortBonus || config.healthBonus) {
+        // Проверяем, не куплен ли уже этот предмет
+        if (gameState.luxuryItems.includes(itemId)) {
+            showMessage("⚠️ Этот предмет уже куплен!");
+            gameState.money += totalCost; // Возвращаем деньги
+            return false;
+        }
+        
+        // Добавляем предмет
+        gameState.luxuryItems.push(itemId);
+        
+        // Применяем бонусы
+        if (config.karmaBonus) {
+            gameState.karma = Math.min(100, gameState.karma + config.karmaBonus);
+        }
+        if (config.comfortBonus) {
+            gameState.needs.comfort = Math.min(100, gameState.needs.comfort + config.comfortBonus);
+        }
+        if (config.healthBonus) {
+            // Увеличиваем максимальное здоровье (храним в отдельном поле)
+            if (!gameState.maxHealthBonus) gameState.maxHealthBonus = 0;
+            gameState.maxHealthBonus += config.healthBonus;
+        }
+        
+        showMessage(`✨ Куплено: ${config.name}!`);
     }
     
     return true;
@@ -122,6 +159,16 @@ export function buyItemBulk(itemId, count) {
 // 🔑 Максимальное количество вещей, которое можно купить
 export function getMaxAffordableItemCount(itemId) {
     const config = ITEMS_CONFIG[itemId];
+    
+    // Для предметов роскоши — только 1 штука и проверяем деньги
+    if (config.karmaBonus || config.comfortBonus || config.healthBonus) {
+        if (gameState.luxuryItems.includes(itemId)) {
+            return 0; // Уже куплен
+        }
+        return Math.floor(gameState.money / config.cost);
+    }
+    
+    // Для остального — проверяем ОЭ
     return Math.floor(gameState.evolutionPoints / config.cost);
 }
 // © 2024–2026 Андрей Блинов. Все права защищены (All rights reserved).

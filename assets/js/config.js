@@ -107,9 +107,50 @@ export const ITEMS_CONFIG = {
     money_exchange: {
         icon: '💰',
         name: 'Обмен на деньги',
-        desc: '1 ОЭ = 10 денег', // Это перезапишется в UI
+        desc: '1 ОЭ = 10 денег',
         cost: 1,
-        reward: 10 // Это тоже перезапишется
+        reward: 10
+    },
+    // 🔑 НОВОЕ: Предметы роскоши
+    luxury_watch: {
+        icon: '⌚',
+        name: 'Люксовые часы',
+        desc: '+10 к карме',
+        cost: 15000,
+        karmaBonus: 10,
+        visual: 'watch'
+    },
+    sports_car: {
+        icon: '🏎️',
+        name: 'Спортивная машина',
+        desc: '+15 к комфорту',
+        cost: 50000,
+        comfortBonus: 15,
+        visual: 'car'
+    },
+    gym_membership: {
+        icon: '🏋️',
+        name: 'Абонемент в спортзал',
+        desc: '+15 к максимальному здоровью',
+        cost: 8000,
+        healthBonus: 5,
+        visual: 'gym'
+    },
+    diamond_ring: {
+        icon: '💍',
+        name: 'Бриллиантовое кольцо',
+        desc: '+20 к карме',
+        cost: 30000,
+        karmaBonus: 20,
+        visual: 'ring'
+    },
+    yacht: {
+        icon: '🛥️',
+        name: 'Яхта',
+        desc: '+25 к комфорту',
+        cost: 100000,
+        comfortBonus: 25,
+        visual: 'yacht'
     }
 };
 
