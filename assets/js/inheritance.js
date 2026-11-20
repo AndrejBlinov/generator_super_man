@@ -69,20 +69,21 @@ export function finalizeRunAndSaveLegacy() {
 }
 
 // 🔑 2. Вызывается из главного меню. Создает чистую новую игру с бонусами.
-export function startInheritedGame(difficulty = 'medium', forcedGender = null) {
-    console.log('🧬 [startInheritedGame] Запуск нового поколения. Сложность:', difficulty, 'Пол:', forcedGender);
+export function startInheritedGame(difficulty = 'medium', forcedGender = null, tutorialEnabled = false, tutorialStep = 0) {
+    console.log('🧬 [startInheritedGame] Запуск нового поколения. Сложность:', difficulty, 'Пол:', forcedGender, 'Туториал:', tutorialEnabled);
     
     const savedGender = forcedGender || gameState.gender || 'male';
     
     // 🔑 ИСПОЛЬЗУЕМ УЖЕ ГОТОВУЮ И БЕЗОПАСНУЮ ФУНКЦИЮ СБРОСА ИЗ state.js
-    // Она корректно обновляет внутреннюю ссылку gameState и применяет сложность + пол
-    resetActiveGame(difficulty, savedGender);
+    resetActiveGame(difficulty, savedGender, tutorialEnabled, tutorialStep);
     
     console.log('✅ [startInheritedGame] Состояние после сброса:', {
         age: gameState.ageInYears,
         immunity: gameState.diseaseImmunityTicks,
         difficulty: gameState.difficulty,
-        gender: gameState.gender
+        gender: gameState.gender,
+        tutorialEnabled: gameState.tutorialEnabled,
+        tutorialStep: gameState.tutorialStep
     });
 
     // Применяем стартовые бонусы (жилье, комфорт, кристаллы, способности)

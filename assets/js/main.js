@@ -181,33 +181,6 @@ function showMainMenu() {
 // 3. ПРИВЯЗКА СОБЫТИЙ (выполняется 1 раз)
 // ==========================================
 function bindEvents() {
-    // 🔑 ЛОГИКА МОДАЛКИ ПОДДЕРЖКИ
-    const donateModal = document.getElementById('donateModal');
-    const donateModalClose = document.getElementById('donateModalClose');
-    const donateModalBackdrop = document.getElementById('donateModalBackdrop');
-    const donateFromMenu = document.getElementById('donateFromMenuBtn');
-    const donateFromHelp = document.getElementById('donateFromHelpBtn');
-
-    function openDonateModal() {
-        donateModal.classList.add('is-open');
-        donateModal.setAttribute('aria-hidden', 'false');
-    }
-
-    function closeDonateModal() {
-        donateModal.classList.remove('is-open');
-        donateModal.setAttribute('aria-hidden', 'true');
-    }
-
-    if (donateFromMenu) donateFromMenu.addEventListener('click', openDonateModal);
-    if (donateFromHelp) donateFromHelp.addEventListener('click', openDonateModal);
-    if (donateModalClose) donateModalClose.addEventListener('click', closeDonateModal);
-    if (donateModalBackdrop) donateModalBackdrop.addEventListener('click', closeDonateModal);
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && donateModal.classList.contains('is-open')) {
-            closeDonateModal();
-        }
-    });
 
     document.getElementById('createCrystalLvl2Btn').addEventListener('click', () => {
         import('./crystals.js').then(module => module.createCrystalLevel(2));
@@ -504,7 +477,7 @@ function bindEvents() {
 
                 import('./inheritance.js').then(module => {
                     // Передаем и сложность, и выбранный пол
-                    return module.startInheritedGame(difficulty, currentGender);
+                    return module.startInheritedGame(difficulty, currentGender, gameState.tutorialEnabled, gameState.tutorialStep);
                 }).then(() => {
                     startGameEngine();
                     console.log(`✅ Игра с наследием запущена. Сложность: ${difficulty}, Пол: ${currentGender}`);
@@ -515,7 +488,7 @@ function bindEvents() {
             } else {
                 // 🔑 ОБЫЧНЫЙ ЗАПУСК НОВОЙ ИГРЫ
                 // Передаем выбранный пол вторым аргументом!
-                resetActiveGame(difficulty, currentGender);
+                resetActiveGame(difficulty, currentGender, gameState.tutorialEnabled, gameState.tutorialStep);
                 console.log(`✅ Новая игра запущена. Сложность: ${difficulty}, Пол: ${currentGender}`);
                 saveGame();
                 startGameEngine();

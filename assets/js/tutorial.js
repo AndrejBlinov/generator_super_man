@@ -121,6 +121,16 @@ export function showTutorialModal(step) {
         if (!step.isFinal) {
             gameState.tutorialStep++;
             saveTutorialProgress();
+            
+            // 🔑 Показываем следующий шаг
+            const nextStep = TUTORIAL_STEPS.find(s => s.id === gameState.tutorialStep);
+            if (nextStep) {
+                // Если следующий шаг автопереходный или без условия — показываем сразу
+                if (nextStep.autoAdvance || !nextStep.condition) {
+                    setTimeout(() => showTutorialModal(nextStep), 300);
+                }
+                // Иначе ждём выполнения условия в gameLoop
+            }
         } else {
             gameState.tutorialEnabled = false;
             saveTutorialProgress();
@@ -207,9 +217,15 @@ function saveTutorialProgress() {
 
 // 🔑 Инициализация туториала при загрузке
 export function initTutorial() {
+    console.log('📚 [initTutorial] Проверка туториала:', {
+        enabled: gameState.tutorialEnabled,
+        step: gameState.tutorialStep
+    });
+    
     if (gameState.tutorialEnabled && gameState.tutorialStep > 0) {
         const currentStep = TUTORIAL_STEPS.find(s => s.id === gameState.tutorialStep);
         if (currentStep) {
+            console.log('📚 [initTutorial] Показываем шаг:', currentStep.id);
             showTutorialModal(currentStep);
         }
     }

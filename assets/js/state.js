@@ -206,7 +206,7 @@ export function getCurrentExchangeRate() {
 // ==========================================
 
 // Сброс активной игры (при смерти или начале новой)
-export function resetActiveGame(difficulty = 'medium', gender = 'male') {
+export function resetActiveGame(difficulty = 'medium', gender = 'male', tutorialEnabled = false, tutorialStep = 0) {
     const diffConfig = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.medium;
 
     console.log(`🔄 [resetActiveGame] Сброс: ${difficulty}, возраст: ${diffConfig.startAge}, деньги: ${diffConfig.startMoney}`);
@@ -222,7 +222,9 @@ export function resetActiveGame(difficulty = 'medium', gender = 'male') {
         karma: diffConfig.startKarma || 40,
         money: diffConfig.startMoney || 0,
         housing: 'box',
-        lastSaveTimestamp: Date.now()
+        lastSaveTimestamp: Date.now(),
+        tutorialEnabled: tutorialEnabled,
+        tutorialStep: tutorialStep  
     };
 
     // 🔑 Обрезаем комфорт под лимит жилья (коробка = 20)
