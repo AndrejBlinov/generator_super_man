@@ -177,8 +177,15 @@ export function saveGame() {
         clearActiveGame();
         return;
     }
-
-    saveActiveGame(gameState);
+    
+    // 🔑 Принудительно обновляем timestamp перед сохранением
+    gameState.lastSaveTimestamp = Date.now();
+    
+    try {
+        saveActiveGame(gameState);
+    } catch (e) {
+        console.error("Ошибка сохранения:", e);
+    }
 }
 
 
@@ -194,7 +201,7 @@ export function getCurrentExchangeRate() {
 // ==========================================
 
 // Сброс активной игры (при смерти или начале новой)
-export function resetActiveGame(difficulty = 'medium') {
+export function resetActiveGame(difficulty = 'medium', gender = 'male') {
     const diffConfig = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.medium;
 
     console.log(`🔄 [resetActiveGame] Сброс: ${difficulty}, возраст: ${diffConfig.startAge}, деньги: ${diffConfig.startMoney}`);
@@ -205,6 +212,7 @@ export function resetActiveGame(difficulty = 'medium') {
         difficulty: difficulty,
         ageInYears: diffConfig.startAge,
         absoluteAgeInYears: diffConfig.startAge,
+        gender: gender,
         diseaseImmunityTicks: diffConfig.diseaseImmunityDays,
         karma: diffConfig.startKarma || 40,
         money: diffConfig.startMoney || 0,

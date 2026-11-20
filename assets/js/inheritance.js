@@ -1,6 +1,6 @@
-import { gameState, legacy, stats, defaultGameState, saveGame } from './state.js';
-import { UPGRADES_CONFIG, INHERITANCE_CONFIG, HOUSING_CONFIG, DIFFICULTY_CONFIG } from './config.js'; // 🔑 Добавлены HOUSING_CONFIG и DIFFICULTY_CONFIG
-import { saveLegacy, saveStats, clearActiveGame } from './storage.js';
+import { gameState, legacy, stats, saveGame, resetActiveGame } from './state.js';
+import { UPGRADES_CONFIG, INHERITANCE_CONFIG, HOUSING_CONFIG} from './config.js'; // 🔑 Добавлены HOUSING_CONFIG и DIFFICULTY_CONFIG
+import { saveLegacy, saveStats } from './storage.js';
 
 // 🔑 Расчет бонусов текущего прохождения
 export function calculateInheritanceBonuses() {
@@ -69,33 +69,27 @@ export function finalizeRunAndSaveLegacy() {
 }
 
 // 🔑 2. Вызывается из главного меню. Создает чистую новую игру с бонусами.
-export function startInheritedGame(difficulty = 'medium') {
-    console.log('🧬 [startInheritedGame] Запуск нового поколения на сложности:', difficulty);
+export function startInheritedGame(difficulty = 'medium', forcedGender = null) {
+    console.log('🧬 [startInheritedGame] Запуск нового поколения. Сложность:', difficulty, 'Пол:', forcedGender);
     
-    const savedGender = gameState.gender || 'male';
-    const diffConfig = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.medium;
+    const savedGender = forcedGender || gameState.gender || 'male';
     
-    return import('./state.js').then(stateModule => {
-        // Полный сброс gameState
-        Object.assign(stateModule.gameState, JSON.parse(JSON.stringify(stateModule.defaultGameState)));
-        
-        // 🔑 Применяем НОВУЮ сложность и стартовые параметры
-        stateModule.gameState.difficulty = difficulty;
-        stateModule.gameState.money = diffConfig.startMoney || 0;
-        stateModule.gameState.isGameOver = false;
-        stateModule.gameState.gender = savedGender;
-        
-        // 🔑 КЛЮЧЕВОЕ: Устанавливаем возраст и иммунитет по сложности
-        stateModule.gameState.ageInYears = diffConfig.startAge;
-        stateModule.gameState.absoluteAgeInYears = diffConfig.startAge;
-        stateModule.gameState.diseaseImmunityTicks = diffConfig.diseaseImmunityDays;
-        
-        // Применяем стартовые бонусы (жилье, комфорт, кристаллы)
-        applyStartingBonuses();
-        
-        // Сохраняем новое состояние
-        stateModule.saveGame();
+    // 🔑 ИСПОЛЬЗУЕМ УЖЕ ГОТОВУЮ И БЕЗОПАСНУЮ ФУНКЦИЮ СБРОСА ИЗ state.js
+    // Она корректно обновляет внутреннюю ссылку gameState и применяет сложность + пол
+    resetActiveGame(difficulty, savedGender);
+    
+    console.log('✅ [startInheritedGame] Состояние после сброса:', {
+        age: gameState.ageInYears,
+        immunity: gameState.diseaseImmunityTicks,
+        difficulty: gameState.difficulty,
+        gender: gameState.gender
     });
+
+    // Применяем стартовые бонусы (жилье, комфорт, кристаллы, способности)
+    applyStartingBonuses();
+
+    // Сохраняем новое состояние
+    saveGame();
 }
 
 // 🔑 Применение стартовых бонусов (жилье, комфорт, кристаллы + способности)

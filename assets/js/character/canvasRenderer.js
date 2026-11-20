@@ -753,16 +753,20 @@ export class CharacterCanvasRenderer {
     }
 
     // 🔑 НОВОЕ: Отрисовка предметов роскоши на персонаже
-    drawLuxuryItems(ctx, x, y, scale) {
-        if (!gameState.luxuryItems || gameState.luxuryItems.length === 0) return;
+    drawLuxuryItems(x, y, scale) {
+        // 🔑 БЕЗОПАСНОСТЬ: Берем контекст из экземпляра класса и проверяем его
+        const ctx = this.ctx;
+        if (!ctx || !gameState.luxuryItems || gameState.luxuryItems.length === 0) {
+            return; // Если контекста нет или предметов нет — просто выходим, не ломая игру
+        }
 
         const itemSize = 20 * scale;
 
-        gameState.luxuryItems.forEach((itemId, index) => {
+        gameState.luxuryItems.forEach((itemId) => {
             const config = ITEMS_CONFIG[itemId];
-            if (!config.visual) return;
+            if (!config || !config.visual) return;
 
-            ctx.save();
+            ctx.save(); // Теперь ctx гарантированно существует
 
             switch (config.visual) {
                 case 'watch':
@@ -775,7 +779,6 @@ export class CharacterCanvasRenderer {
                     ctx.strokeStyle = '#333';
                     ctx.lineWidth = 2;
                     ctx.stroke();
-                    // Циферблат
                     ctx.fillStyle = '#FFF';
                     ctx.beginPath();
                     ctx.arc(0, 0, itemSize / 3, 0, Math.PI * 2);
@@ -790,7 +793,6 @@ export class CharacterCanvasRenderer {
                     ctx.beginPath();
                     ctx.arc(0, 0, itemSize / 3, 0, Math.PI * 2);
                     ctx.stroke();
-                    // Бриллиант
                     ctx.fillStyle = '#E0F7FF';
                     ctx.beginPath();
                     ctx.moveTo(0, -itemSize / 3);
@@ -806,10 +808,8 @@ export class CharacterCanvasRenderer {
                     ctx.translate(x + 80 * scale, y + 80 * scale);
                     ctx.fillStyle = '#FF4444';
                     ctx.fillRect(0, 0, itemSize * 2, itemSize);
-                    // Окна
                     ctx.fillStyle = '#87CEEB';
                     ctx.fillRect(itemSize * 0.3, 0, itemSize * 0.6, itemSize * 0.5);
-                    // Колёса
                     ctx.fillStyle = '#333';
                     ctx.beginPath();
                     ctx.arc(itemSize * 0.4, itemSize, itemSize / 4, 0, Math.PI * 2);
@@ -828,7 +828,6 @@ export class CharacterCanvasRenderer {
                     ctx.lineTo(itemSize * 0.2, 0);
                     ctx.closePath();
                     ctx.fill();
-                    // Парус
                     ctx.fillStyle = '#FFD700';
                     ctx.beginPath();
                     ctx.moveTo(itemSize, 0);

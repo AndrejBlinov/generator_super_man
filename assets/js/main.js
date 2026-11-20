@@ -477,23 +477,28 @@ function bindEvents() {
             menu.style.display = 'none';
             app.style.display = '';
 
+            // 🔑 Читаем текущий выбранный пол ПЕРЕД любым сбросом состояния!
+            const currentGender = gameState.gender || 'male';
+
             if (window.pendingDifficultyAfterInheritance) {
-                // 🔑 ЗАПУСК С НАСЛЕДИЕМ И ВЫБРАННОЙ СЛОЖНОСТЬЮ
+                // 🔑 ЗАПУСК С НАСЛЕДИЕМ
                 window.pendingDifficultyAfterInheritance = false;
 
                 import('./inheritance.js').then(module => {
-                    return module.startInheritedGame(difficulty); // Передаем именно выбранную сложность!
+                    // Передаем и сложность, и выбранный пол
+                    return module.startInheritedGame(difficulty, currentGender); 
                 }).then(() => {
                     startGameEngine();
-                    console.log(`✅ Игра с наследием запущена на сложности: ${difficulty}`);
+                    console.log(`✅ Игра с наследием запущена. Сложность: ${difficulty}, Пол: ${currentGender}`);
                 }).catch(err => {
                     console.error('❌ Ошибка запуска наследия:', err);
                 });
 
             } else {
                 // 🔑 ОБЫЧНЫЙ ЗАПУСК НОВОЙ ИГРЫ
-                resetActiveGame(difficulty);
-                console.log(`✅ Новая игра запущена на сложности: ${difficulty}`);
+                // Передаем выбранный пол вторым аргументом!
+                resetActiveGame(difficulty, currentGender);
+                console.log(`✅ Новая игра запущена. Сложность: ${difficulty}, Пол: ${currentGender}`);
                 saveGame();
                 startGameEngine();
             }
@@ -548,7 +553,7 @@ if (versionDisplay) {
 bindEvents();
 showMainMenu();
 
-if (gameState.activeEvent) {
+if (gameState.activeEvent && typeof window.renderEventModal === 'function') {
     window.renderEventModal();
 }
 
