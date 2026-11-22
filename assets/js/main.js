@@ -10,7 +10,7 @@ import { initCharacter, updateCharacterStateFromGame, updateHousingInfo } from '
 import { initTutorial, checkTutorialCondition } from './tutorial.js';
 import { GAME_VERSION, HOUSING_CONFIG } from './config.js';
 import { loadAchievements, checkAndUnlockAchievements, renderAchievementsModal } from './achievements.js';
-import { initYandexSDK } from './yandex.js';
+//import { initYandexSDK } from './yandex.js';
 import { audioManager } from './audio.js';
 
 // 🔑 ЗАГРУЗКА ИНСТРУКЦИИ (выполняется 1 раз при старте модуля)
@@ -556,7 +556,7 @@ if (versionDisplay) {
 
 loadAchievements();
 
-initYandexSDK();
+//initYandexSDK();
 bindEvents();
 audioManager.init();
 showMainMenu();
