@@ -19,7 +19,6 @@ function encrypt(text) {
     for (let i = 0; i < text.length; i++) {
         result += String.fromCharCode(text.charCodeAt(i) ^ SECRET_KEY.charCodeAt(i % SECRET_KEY.length));
     }
-    // Современный способ кодирования Unicode в Base64
     return btoa(new TextEncoder().encode(result).reduce((data, byte) => data + String.fromCharCode(byte), ''));
 }
 
@@ -38,11 +37,13 @@ function decrypt(base64Text) {
         }
         return result;
     } catch (e) {
-        return null; // Возвращаем null при ошибке или попытке подделки
+        return null;
     }
 }
 
-// --- Активная игра ---
+// ==========================================
+// АКТИВНАЯ ИГРА
+// ==========================================
 export function saveActiveGame(state) {
     try {
         const { legacy, stats, ...activeState } = state;
@@ -64,7 +65,6 @@ export function loadActiveGame() {
         if (!decrypted) return null;
         const payload = JSON.parse(decrypted);
         
-        // Проверка целостности данных
         if (generateChecksum(payload.data) !== payload.checksum) {
             console.warn('⚠️ Обнаружена попытка подделки сохранения! Загрузка отменена.');
             return null;
@@ -76,7 +76,17 @@ export function loadActiveGame() {
     }
 }
 
-// --- Наследие и Статистика (аналогично защищаем) ---
+export function hasActiveGame() {
+    return localStorage.getItem(KEY_ACTIVE) !== null;
+}
+
+export function clearActiveGame() { // <-- ДОБАВЛЕНО
+    localStorage.removeItem(KEY_ACTIVE);
+}
+
+// ==========================================
+// НАСЛЕДИЕ
+// ==========================================
 export function saveLegacy(legacy) {
     try {
         const jsonStr = JSON.stringify(legacy);
@@ -104,9 +114,13 @@ export function hasLegacy() {
            (savedLegacy.inheritedHousing && savedLegacy.inheritedHousing !== 'box');
 }
 
-export function clearLegacy() { localStorage.removeItem(KEY_LEGACY); }
+export function clearLegacy() {
+    localStorage.removeItem(KEY_LEGACY);
+}
 
-// --- Статистика ---
+// ==========================================
+// СТАТИСТИКА
+// ==========================================
 export function saveStats(stats) {
     try {
         const jsonStr = JSON.stringify(stats);
@@ -126,14 +140,19 @@ export function loadStats() {
     } catch (e) { return null; }
 }
 
-export function clearStats() { localStorage.removeItem(KEY_STATS); }
+export function clearStats() {
+    localStorage.removeItem(KEY_STATS);
+}
+
+// ==========================================
+// ОБЩИЕ ФУНКЦИИ
+// ==========================================
 export function clearAll() {
     localStorage.removeItem(KEY_ACTIVE);
     localStorage.removeItem(KEY_LEGACY);
     localStorage.removeItem(KEY_STATS);
 }
 
-// Миграция со старого формата (удалит старые незащищенные сейвы и создаст защищенные)
 export function migrateFromOldFormat() {
     const oldSave = localStorage.getItem('evolutionGame');
     if (!oldSave) return false;
