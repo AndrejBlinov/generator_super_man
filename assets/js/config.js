@@ -173,7 +173,7 @@ export const BASE_EXCHANGE_RATE = 10;
 export const CRYSTAL_COST = 100;
 export const MAX_ACTIVE_CRYSTALS = 5;
 export const MAX_INVENTORY_CRYSTALS = 10;
-export const GAME_VERSION = "2.0.1"; // Обновляем версию
+export const GAME_VERSION = "2.2.1"; // Обновляем версию
 
 export const GAME_START_DATE = {
     year: 2026,
