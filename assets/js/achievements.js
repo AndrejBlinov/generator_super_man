@@ -1,4 +1,5 @@
 import { gameState, stats } from './state.js';
+import { audioManager } from './audio.js';
 
 const ACHIEVEMENTS_KEY = 'evolutionGame_achievements';
 export let unlockedAchievements = {};
@@ -130,6 +131,8 @@ function showAchievementToast(ach, onDone) {
     document.getElementById('toastIcon').textContent = ach.icon;
     document.getElementById('toastTitle').textContent = ach.title;
     document.getElementById('toastDesc').textContent = ach.desc;
+
+    audioManager.playAchievement();
 
     toast.classList.add('active');
     setTimeout(() => {

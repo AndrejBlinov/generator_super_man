@@ -1,5 +1,6 @@
 import { gameState } from '../../state.js';
 import { DISEASES_CONFIG, DISEASES_BY_CATEGORY, AGE_BRACKETS, MAX_ACTIVE_DISEASES } from './config.js';
+import { audioManager } from '../audio.js';
 
 function getAgeBracket() {
     const age = gameState.ageInYears;
@@ -46,6 +47,8 @@ export function trySpawnDiseases() {
             };
 
             gameState.activeDiseases.push(newDisease);
+            audioManager.playDisease();
+
             spawned.push(config);
         }
     }
