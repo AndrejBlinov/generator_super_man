@@ -10,7 +10,7 @@ import { initCharacter, updateCharacterStateFromGame, updateHousingInfo } from '
 import { initTutorial, checkTutorialCondition } from './tutorial.js';
 import { GAME_VERSION, HOUSING_CONFIG } from './config.js';
 import { loadAchievements, checkAndUnlockAchievements, renderAchievementsModal } from './achievements.js';
-//import { initYandexSDK } from './yandex.js';
+import { initYandexSDK, setGameplayState, showRewardedAd, isYandex } from './yandex.js';
 import { audioManager } from './audio.js';
 
 // 🔑 ЗАГРУЗКА ИНСТРУКЦИИ (выполняется 1 раз при старте модуля)
@@ -241,53 +241,6 @@ function bindEvents() {
             }
         });
     }
-
-    // 🔑 ОБРАБОТЧИК ОТПРАВКИ ФОРМЫ БАГА (без изменений)
-    document.getElementById('bugForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const submitBtn = document.getElementById('submitBugBtn');
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.textContent = '⏳ Отправка...';
-
-        const formData = {
-            name: document.getElementById('bugName').value.trim() || 'Аноним',
-            email: document.getElementById('bugEmail').value.trim() || 'Не указан',
-            description: document.getElementById('bugDescription').value.trim(),
-            steps: document.getElementById('bugSteps').value.trim() || 'Не указаны',
-            timestamp: new Date().toISOString(),
-            userAgent: navigator.userAgent,
-            gameState: {
-                age: gameState.ageInYears,
-                difficulty: gameState.difficulty,
-                evolutionPoints: Math.round(gameState.evolutionPoints),
-                version: gameState.gameVersion
-            }
-        };
-
-        try {
-            const response = await fetch('./api/submit-bug.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-            if (!response.ok) throw new Error(`HTTP ошибка! Статус: ${response.status}`);
-            const result = await response.json();
-            if (!result.success) throw new Error(result.message || 'Ошибка на стороне сервера');
-
-            showMessage('✅ Спасибо! Отчет о баге успешно отправлен.');
-            document.getElementById('bugForm').reset();
-            closePanel();
-        } catch (error) {
-            console.error('❌ Ошибка отправки:', error);
-            showMessage('⚠️ Сервер недоступен, но отчет сохранен локально.');
-            document.getElementById('bugForm').reset();
-            closePanel();
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
-        }
-    });
 
     // 🔑 ОБРАБОТЧИК ТРЕНИРОВКИ
     document.getElementById('trainBtn').addEventListener('click', (event) => {
@@ -554,12 +507,17 @@ if (versionDisplay) {
     versionDisplay.textContent = GAME_VERSION;
 }
 
-loadAchievements();
+initYandexSDK().then(() => {
+    loadAchievements();
+    bindEvents();
+    audioManager.init();
+    showMainMenu();
+});
 
-//initYandexSDK();
-bindEvents();
-audioManager.init();
-showMainMenu();
+// loadAchievements();
+// bindEvents();
+// audioManager.init();
+// showMainMenu();
 
 if (gameState.activeEvent && typeof window.renderEventModal === 'function') {
     window.renderEventModal();

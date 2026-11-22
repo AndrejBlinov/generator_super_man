@@ -1,0 +1,18 @@
+/* Кнопка воскрешения за рекламу должна быть самой заметной */
+.death-btn-revive {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
+    border: 2px solid #2f855a !important;
+    animation: pulse-revive 2s infinite;
+    order: -1; /* Поднимает кнопку выше остальных в flex-контейнере */
+}
+
+.death-btn-revive:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(72, 187, 120, 0.5);
+}
+
+@keyframes pulse-revive {
+    0% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(72, 187, 120, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); }
+}

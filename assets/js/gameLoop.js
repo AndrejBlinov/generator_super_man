@@ -8,6 +8,8 @@ import { checkAndTriggerDailyEvent } from './events/logic.js';
 import { checkTutorialCondition } from './tutorial.js';
 import { checkAndUnlockAchievements } from './achievements.js';
 
+import { setGameplayState } from './yandex.js';
+
 let gameLoopInterval = null;
 
 export function startGameLoop() {
@@ -21,18 +23,15 @@ export function startGameLoop() {
         // 🔑 0. ПРОВЕРКА ТУТОРИАЛА (Приоритет №1)
         const isTutorialModalOpen = document.getElementById('tutorialModal')?.classList.contains('active');
         
-        if (isTutorialModalOpen) {
+           if (isTutorialModalOpen || gameState.activeEvent || document.querySelector('.event-modal-backdrop.active') || document.querySelector('.side-panel.is-open') !== null || document.querySelector('.donate-modal.is-open') !== null) {
             // Игра на паузе! Проверяем только условие туториала и обновляем UI (чтобы рос счетчик ОЭ при клике)
             if (gameState.tutorialEnabled && typeof checkTutorialCondition === 'function') {
                 checkTutorialCondition();
             }
+            setGameplayState(false);
             updateUI();
             return; // ⛔ ОСТАНАВЛИВАЕМ цикл здесь. Никаких событий, старения или падения потребностей.
         }
-
-        // 🔑 1. ГЛАВНАЯ ПАУЗА: Если активно сюжетное событие
-        if (gameState.activeEvent) return; 
-        if (document.querySelector('.event-modal-backdrop.active')) return;
 
         // 🔑 2. ПАУЗА ПРИ ОТКРЫТЫХ ПАНЕЛЯХ
         const isAnyPanelOpen = document.querySelector('.side-panel.is-open') !== null;
@@ -41,6 +40,7 @@ export function startGameLoop() {
 
         if (gameState.isGameOver) return;
 
+        setGameplayState(true);
         // 3. Уменьшаем счетчик иммунитета
         if (gameState.diseaseImmunityTicks > 0) {
             gameState.diseaseImmunityTicks--;
