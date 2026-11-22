@@ -3,6 +3,7 @@ import { UPGRADES_CONFIG, ITEMS_CONFIG, AGING_SLOWDOWN_RATES } from './config.js
 import { showMessage } from './ui.js';
 import { renderUpgrades } from './ui.js';
 import { createCrystalBulk } from './crystals.js';
+import { updateCharacterStateFromGame } from './character/index.js';
 
 export function recalculateStats() {
     const slowAgingLevel = gameState.upgrades.slowAging;
@@ -149,6 +150,7 @@ export function buyItemBulk(itemId, count) {
             if (!gameState.maxHealthBonus) gameState.maxHealthBonus = 0;
             gameState.maxHealthBonus += config.healthBonus;
         }
+        updateCharacterStateFromGame();
         
         showMessage(`✨ Куплено: ${config.name}!`);
     }

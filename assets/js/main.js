@@ -685,6 +685,11 @@ window.renderEventModal = function () {
 
     backdrop.classList.add('active');
     backdrop.setAttribute('aria-hidden', 'false');
+
+    choicesContainer.classList.add('locked');
+    setTimeout(() => {
+        choicesContainer.classList.remove('locked');
+    }, 1000);
 };
 
 window.showEventResult = function (message, appliedEffects) {
@@ -695,6 +700,21 @@ window.showEventResult = function (message, appliedEffects) {
     const choicesContainer = document.getElementById('eventChoices');
 
     if (!backdrop) return;
+
+    if (backdrop) {
+        backdrop.classList.remove('active');
+        backdrop.setAttribute('aria-hidden', 'true');
+    }
+
+    // 🔑 Сбрасываем блокировку и убираем «призрачные» inline-стили
+    if (choicesContainer) {
+        choicesContainer.classList.remove('locked');
+        choicesContainer.style.pointerEvents = '';   // очищаем inline
+        choicesContainer.style.opacity = '';         // очищаем inline
+    }
+
+    gameState.activeEvent = null;
+    if (typeof window.updateUI === 'function') window.updateUI();
 
     icon.textContent = "✅";
     title.textContent = "Результат";

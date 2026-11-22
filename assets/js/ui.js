@@ -1,4 +1,4 @@
-import { gameState, legacy, stats, defaultGameState, saveGame, resetAll , getCurrentExchangeRate } from './state.js';
+import { gameState, legacy, stats, defaultGameState, saveGame, resetAll, getCurrentExchangeRate } from './state.js';
 import { UPGRADES_CONFIG, ITEMS_CONFIG, GAME_START_DATE, CRYSTAL_COST, DIFFICULTY_CONFIG, HOUSING_CONFIG } from './config.js';
 import { calculatePassiveIncome, getSelection, getCrystalLevelCost } from './crystals.js';
 import { calculateBulkCost, getMaxAffordableCount, getMaxAffordableItemCount } from './upgrades.js';
@@ -326,22 +326,22 @@ export function renderUpgrades() {
     // 5. Отрисовка Вещей (ITEMS_CONFIG)
     Object.keys(ITEMS_CONFIG).forEach(itemId => {
         const config = ITEMS_CONFIG[itemId];
-        
+
         // Для предметов роскоши — своя логика
         if (config.karmaBonus || config.comfortBonus || config.healthBonus) {
             const isPurchased = gameState.luxuryItems.includes(itemId);
             const canAfford = gameState.money >= config.cost && !isPurchased;
-            
+
             const item = document.createElement('div');
             item.className = 'upgrade-item item-item';
-            
+
             let btnText = `Купить за ${config.cost.toLocaleString()} 💰`;
             if (isPurchased) {
                 btnText = '✅ Куплено';
             } else if (!canAfford) {
                 btnText = `❌ Нужно ${config.cost.toLocaleString()} 💰`;
             }
-            
+
             item.innerHTML = `
                 <div class="upgrade-info">
                     <div class="upgrade-name">${config.icon} ${config.name}</div>
@@ -354,29 +354,29 @@ export function renderUpgrades() {
             container.appendChild(item);
             return; // Пропускаем стандартную логику
         }
-        
+
         // Стандартная логика для обычных предметов
         const maxAffordable = getMaxAffordableItemCount(itemId);
         const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
         const totalCost = config.cost * (actualCount > 0 ? actualCount : 1);
         const totalReward = Math.floor(currentRate * (actualCount > 0 ? actualCount : 1));
         const canAfford = gameState.evolutionPoints >= totalCost && actualCount > 0;
-        
+
         const item = document.createElement('div');
         item.className = 'upgrade-item item-item';
-        
+
         let descText = config.desc;
         if (itemId === 'money_exchange' || config.name === 'Обмен на деньги') {
             descText = `1 ОЭ = ${Math.floor(currentRate)} денег`;
         }
-        
+
         let btnText = `Купить за ${config.cost} ОЭ`;
         if (gameState.purchaseMultiplier === 'max') {
             btnText = maxAffordable > 0 ? `+${totalReward} 💰 за ${totalCost} ОЭ` : 'Недоступно';
         } else if (parseInt(gameState.purchaseMultiplier) > 1) {
             btnText = `+${totalReward} 💰 за ${totalCost} ОЭ`;
         }
-        
+
         item.innerHTML = `
             <div class="upgrade-info">
                 <div class="upgrade-name">${config.icon} ${config.name}</div>
@@ -464,6 +464,26 @@ export function updateItemButtons() {
         if (!itemId) return;
 
         const config = ITEMS_CONFIG[itemId];
+        if (!config) return;
+
+        if (config.karmaBonus || config.comfortBonus || config.healthBonus) {
+            const isPurchased = gameState.luxuryItems.includes(itemId);
+            const canAfford = gameState.money >= config.cost;
+
+            // Блокируем, если уже куплено или не хватает денег
+            btn.disabled = isPurchased || !canAfford;
+
+            // Обновляем текст кнопки, чтобы он не сбивался
+            if (isPurchased) {
+                btn.textContent = '✅ Куплено';
+            } else if (!canAfford) {
+                btn.textContent = `❌ Нужно ${config.cost.toLocaleString()} 💰`;
+            } else {
+                btn.textContent = `Купить за ${config.cost.toLocaleString()} 💰`;
+            }
+            return; // Пропускаем стандартную логику ниже
+        }
+
         const maxAffordable = getMaxAffordableItemCount(itemId);
         const actualCount = getActualCount(gameState.purchaseMultiplier, maxAffordable);
         const totalCost = config.cost * (actualCount > 0 ? actualCount : 1);
