@@ -674,7 +674,8 @@ window.renderEventModal = function () {
             btn.style.cursor = 'not-allowed';
             btn.style.borderColor = '#f56565'; // Красная рамка для опасных/невозможных выборов
         } else {
-            btn.onclick = () => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
                 import('./events/logic.js').then(module => {
                     module.resolveEventChoice(index);
                 });
@@ -700,18 +701,6 @@ window.showEventResult = function (message, appliedEffects) {
     const choicesContainer = document.getElementById('eventChoices');
 
     if (!backdrop) return;
-
-    if (backdrop) {
-        backdrop.classList.remove('active');
-        backdrop.setAttribute('aria-hidden', 'true');
-    }
-
-    // 🔑 Сбрасываем блокировку и убираем «призрачные» inline-стили
-    if (choicesContainer) {
-        choicesContainer.classList.remove('locked');
-        choicesContainer.style.pointerEvents = '';   // очищаем inline
-        choicesContainer.style.opacity = '';         // очищаем inline
-    }
 
     gameState.activeEvent = null;
     if (typeof window.updateUI === 'function') window.updateUI();
