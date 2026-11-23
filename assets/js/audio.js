@@ -3,14 +3,16 @@ class AudioManager {
         this.sounds = {
             ambience: new Audio('assets/audio/ambience.ogg'),
             achievement: new Audio('assets/audio/achievement.ogg'),
-            disease: new Audio('assets/audio/disease.ogg')
+            disease: new Audio('assets/audio/disease.ogg'),
+            event: new Audio('assets/audio/event.ogg')
         };
         
         // Настройка циклов и громкости
         this.sounds.ambience.loop = true;
-        this.sounds.ambience.volume = 0.2; // Тихий фон
+        this.sounds.ambience.volume = 0.4; // Тихий фон
         this.sounds.achievement.volume = 0.6;
         this.sounds.disease.volume = 0.5;
+        this.sounds.event.volume = 0.5;
 
         this.isMuted = false;
         this.ambienceStarted = false;
@@ -34,6 +36,12 @@ class AudioManager {
         if (this.isMuted) return;
         this.sounds.achievement.currentTime = 0;
         this.sounds.achievement.play().catch(e => console.warn('Не удалось воспроизвести звук ачивки'));
+    }
+
+    playEvent() {
+        if (this.isMuted) return;
+        this.sounds.event.currentTime = 0;
+        this.sounds.event.play().catch(e => console.warn('Не удалось воспроизвести звук события'));
     }
 
     playDisease() {

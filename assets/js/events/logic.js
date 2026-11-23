@@ -3,6 +3,7 @@ import { gameState } from '../state.js';
 import { showMessage } from '../ui.js';
 import { EVENTS_CONFIG, EVENT_WEIGHTS } from './config.js';
 import { DISEASES_CONFIG } from './../needs/diseases/config.js';
+import { audioManager } from './../audio.js';
 
 // 🔑 ГЛАВНАЯ ФУНКЦИЯ: Вызывается из gameLoop раз в день
 export function checkAndTriggerDailyEvent() {
@@ -41,6 +42,7 @@ export function checkAndTriggerDailyEvent() {
     }
 
     if (chosenEvent) {
+        audioManager.playEvent();
         activateEvent(chosenEvent.id);
     }
 }
